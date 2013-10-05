@@ -54,7 +54,7 @@ namespace Landru
 //		MessageQueue*	messageQueue;
 	};
     
-    Landru::VarObj::FnTable Engine::functions;
+    //    Landru::VarObj::FnTable Engine::functions;
 	
 	Engine::Engine(const char* name)
     : VarObj(name, &functions)
@@ -252,9 +252,10 @@ namespace Landru
 	
 } // Landru
 
-EXTERNC void* landruCreateEngine()
+EXTERNC void* landruCreateEngine(char const*const workingDir)
 {
     Landru::Engine* e = new Landru::Engine("engine");
+    e->workingDir.assign(workingDir);
     return e;
 }
 

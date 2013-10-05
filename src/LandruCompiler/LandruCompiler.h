@@ -18,7 +18,7 @@ namespace Json { class Value; }
 EXTERNC void* landruCreateRootNode();
 EXTERNC void  landruParseProgram(void* rootNode, 
                                  std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
-                                 char const* buff, unsigned int len);
+                                 char const* buff, size_t len);
 EXTERNC void  landruPrintAST(void* rootNode);
 EXTERNC void  landruPrintRawAST(void* rootNode);
 EXTERNC void  landruToJson(void* rootNode);

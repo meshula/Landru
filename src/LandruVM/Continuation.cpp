@@ -72,15 +72,15 @@ void QueueDeregister(ContinuationList* cl)
 void UpdateQueues(Engine* engine, float elapsedTime)
 {
     std::vector<QueueRecord>& q = queues();
-	for (std::vector<QueueRecord>::iterator i = q.begin(); i != q.end(); ++i)
-		(*i).queue->update(engine, elapsedTime);
+	for (auto i : q)
+		i.queue->update(engine, elapsedTime);
 }
 
 void ClearQueues(VarObjPtr* f)
 {
     std::vector<QueueRecord>& q = queues();
-	for (std::vector<QueueRecord>::iterator i = q.begin(); i != q.end(); ++i)
-		(*i).queue->clearContinuation(f);
+	for (auto i : q)
+		i.queue->clearContinuation(f);
 }
 	
     

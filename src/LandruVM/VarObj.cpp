@@ -199,6 +199,34 @@ namespace Landru
         (_instanceFunctions->functionPtrs)[unique] = fn;
     }
 
+    VarObjPtr* VarPool::varObj(const void* key, const char* name) const
+    {
+        if (!name)
+            return 0;
+        
+        try {
+            std::lock_guard<std::mutex> lock(poolLock);
+            
+            for (int i = 0; i < poolSize; ++i) {
+                if (pool[i].prevFree != pool[i].nextFree)
+                    continue;
+                
+                if (pool[i].key != key)
+                    continue;
+                
+                if (pool[i].vo->name() && !strcmp(name, pool[i].vo->name()))
+                    return &pool[i];
+            }
+            
+        }
+        catch(std::exception&e) {
+            std::cout << e.what();
+        }
+        
+        return 0;
+    }
+    
+    
 
 } // Landru
 

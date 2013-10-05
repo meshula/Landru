@@ -26,7 +26,7 @@
 #include <vector>
 
 
-#define LVERBOSE
+//#define LVERBOSE
 #ifdef LVERBOSE
 const bool verboseTrace = true;
 # define TRACE(f, pc, op) printf("%d:%s\n", pc, Instructions::opName(op));

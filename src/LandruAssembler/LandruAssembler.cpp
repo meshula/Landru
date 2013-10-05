@@ -694,9 +694,7 @@ public:
         bson_init(b);
         compileBsonData(rootNode, b);
         bson_finish(b);
-        printf("yay begin---------------------------\n");
         bson_print(b);
-        printf("yay   end---------------------------\n");
         return b;
     }
     

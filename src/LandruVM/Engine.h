@@ -12,7 +12,7 @@
 # endif
 #endif
 
-EXTERNC void* landruCreateEngine();
+EXTERNC void* landruCreateEngine(char const*const workingDir);
 EXTERNC void  landrUDestroyEngine(void* engine);
 EXTERNC void  landruRun(void* engine, const char* machine);
 EXTERNC void  landruUpdate(void* engine, float dt);
@@ -82,7 +82,9 @@ namespace Landru
         
         LVarPool* lvarPool() const { return (LVarPool*) _vars; }
         
-        static FnTable functions;
+        FnTable functions;
+        
+        std::string workingDir;
         
 	private:
         

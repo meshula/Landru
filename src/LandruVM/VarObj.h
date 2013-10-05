@@ -16,6 +16,8 @@
 
 #include <map>
 #include <string>
+#include <mutex>
+#include <iostream>
 
 // put t&his in the class declaration in the header
 #define VAROBJ_FACTORY(name, c) static const char* Name() { return #name; } \
@@ -240,7 +242,9 @@ namespace Landru {
     
     class VarPool
     {
-    public:        
+        mutable std::mutex poolLock;
+        
+    public:
         VarPool(int s)
         : poolSize(s)
         {
@@ -248,8 +252,7 @@ namespace Landru {
             initPool();
         }
         
-        void initPool()
-        {
+        void initPool() {
             firstFree = 0;
             for (int i = 0; i < poolSize; ++i) {
                 pool[i].vo = 0;
@@ -262,34 +265,29 @@ namespace Landru {
             }
         }
         
-        int varKey(VarObjPtr* v)
-        {
-            int i = (((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr);
+        int varKey(VarObjPtr* v) const {
+            int i = int((((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr));
             return i;
         }
         
-        VarObjPtr* fromKey(int i)
-        {
+        VarObjPtr* fromKey(int i) const {
             if (i < 0 || i >= poolSize || (pool[i].prevFree != pool[i].nextFree))
                 RaiseError(0, "Bad key to pool", "varpool");
             
             return &pool[i];
         }
         
-        void dumpPool()
-        {
-            printf("\n\n\n\nPool size %d\n", poolSize);
-            for (int i = 0; i < poolSize; ++i) {
-                if (pool[i].strong > 0)
-                    printf("[%d/%d] %s\n", i, pool[i].strong, pool[i].vo->TypeName());
-            }
+        // for external debugging use
+        void dumpPool() const {
+            std::lock_guard<std::mutex> lock(poolLock);
+            _dumpPool();
         }
         
-        VarObjPtr* allocVarObjSlot(const void* key, VarObj* vo, bool strong)
-        {
+        VarObjPtr* allocVarObjSlot(const void* key, VarObj* vo, bool strong) {
+            std::lock_guard<std::mutex> lock(poolLock);
             int ret = firstFree;
             if (ret == poolSize) {
-                dumpPool();
+                _dumpPool();
                 RaiseError(0, "Pool full", "varpool");
                 return 0;
             }
@@ -310,34 +308,17 @@ namespace Landru {
         
         // The Landru compiler preallocates slots for fibers, this routine
         // allows for that.
-        VarObjPtr* setSlot(const void* key, int i, VarObj* vo, bool strong)
-        {
+        VarObjPtr* setSlot(const void* key, int i, VarObj* vo, bool strong) {
             VarObjPtr* vop = allocVarObjSlot(key, vo, strong);
             vop->i = i;
             return vop;
         }
                 
-        VarObjPtr* varObj(const void* key, const char* name) const
-        {
-            if (!name)
-                return 0;
-            
-            for (int i = 0; i < poolSize; ++i) {
-                if (pool[i].prevFree != pool[i].nextFree)
-                    continue;
-                
-                if (pool[i].key != key)
-                    continue;
-                
-                if (pool[i].vo->name() && !strcmp(name, pool[i].vo->name()))
-                    return &pool[i];
-            }
-            
-            return 0;
-        }
+        VarObjPtr* varObj(const void* key, const char* name) const;
         
-        VarObjPtr* varObj(const void* key, int id) const
-        {
+        VarObjPtr* varObj(const void* key, int id) const {
+            std::lock_guard<std::mutex> lock(poolLock);
+            
             for (int i = 0; i < poolSize; ++i) {
                 if (pool[i].prevFree != pool[i].nextFree)
                     continue;
@@ -349,8 +330,7 @@ namespace Landru {
             return 0;
         }
         
-        void addStrongRef(VarObjPtr* v)
-        {
+        void addStrongRef(VarObjPtr* v) {
             if (v) {
                 if (v->prevFree == v->nextFree)
                     ++v->strong;
@@ -359,8 +339,7 @@ namespace Landru {
                 RaiseError(0, "Adding a strong reference to NULL", 0);
         }
         
-        void addWeakRef(VarObjPtr* v)
-        {
+        void addWeakRef(VarObjPtr* v) {
             if (v) {
                 if (v->prevFree == v->nextFree)
                     ++v->weak;
@@ -369,43 +348,62 @@ namespace Landru {
                 RaiseError(0, "Adding a weak reference to NULL", 0);
         }
         
-        void releaseStrongRef(VarObjPtr* v)
-        {
+        void releaseStrongRef(VarObjPtr* v) {
             if (!v)
                 RaiseError(0, "Releasing a strong reference to NULL", 0);
             
-            int i = (((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr);
-            if (pool[i].prevFree == pool[i].nextFree) {
-                if (pool[i].strong <= 0)
-                    RaiseError(0, "unbalanced strong release", "VarPool");
+            VarObj* deleteMe = 0;
+            {
+                std::lock_guard<std::mutex> lock(poolLock);
                 
-                --pool[i].strong;
-                releaseInternal(i);
+                int i = int((((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr));
+                if (pool[i].prevFree == pool[i].nextFree) {
+                    if (pool[i].strong <= 0)
+                        RaiseError(0, "unbalanced strong release", "VarPool");
+                    
+                    --pool[i].strong;
+                    deleteMe = releaseInternal_(i);
+                }
             }
+            if (deleteMe)
+                delete deleteMe;
         }
         
-        void releaseWeakRef(VarObjPtr* v)
-        {
+        void releaseWeakRef(VarObjPtr* v) {
             if (!v)
                 RaiseError(0, "Releasing a weak reference to NULL", 0);
 
-            int i = (((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr);
-            if (pool[i].prevFree == pool[i].nextFree) {
-                if (pool[i].weak <= 0)
-                    RaiseError(0, "unbalanced weak release", "VarPool");
-                --pool[i].weak;
-                releaseInternal(i);
+            VarObj* deleteMe = 0;
+            {
+                std::lock_guard<std::mutex> lock(poolLock);
+                
+                int i = int((((ptrdiff_t) v) - (ptrdiff_t) pool) / sizeof(VarObjPtr));
+                if (pool[i].prevFree == pool[i].nextFree) {
+                    if (pool[i].weak <= 0)
+                        RaiseError(0, "unbalanced weak release", "VarPool");
+                    --pool[i].weak;
+                    deleteMe = releaseInternal_(i);
+                }
             }
+            if (deleteMe)
+                delete deleteMe;
         }
 
-        ~VarPool()
-        {
+        ~VarPool() {
+            std::lock_guard<std::mutex> lock(poolLock);
             free(pool);
         }
         
     private:
-        void stitch(int ret)
-        {
+        void _dumpPool() const {
+            printf("\n\n\n\nPool size %d\n", poolSize);
+            for (int i = 0; i < poolSize; ++i) {
+                if (pool[i].strong > 0)
+                    printf("[%d/%d] %s\n", i, pool[i].strong, pool[i].vo->TypeName());
+            }
+        }
+        
+        void stitch(int ret) {
             if (ret < 0 || ret >= poolSize)
                 return;
             
@@ -433,11 +431,12 @@ namespace Landru {
                 }
         }
         
-        void releaseInternal(int i)
+        VarObj* releaseInternal_(int i)
         {
+            VarObj* deleteMe = 0;
             if (pool[i].prevFree == pool[i].nextFree) {
                 if (!pool[i].strong) {
-                    delete pool[i].vo;
+                    deleteMe = pool[i].vo;
                     pool[i].vo = 0;
                 }
                 if (!pool[i].strong && !pool[i].weak) {
@@ -448,6 +447,7 @@ namespace Landru {
                     firstFree = i;
                 }
             }
+            return deleteMe;
         }
         
         VarObjPtr* pool;
@@ -495,7 +495,7 @@ namespace Landru {
     {
     public:
         VarObjWeakRef(VarObjPtr* vo)
-        : v(v), vo(vo)
+        : vo(vo)
         {
             if (vo && vo->vo)
                 vo->vo->_vars->addWeakRef(vo);
@@ -508,9 +508,6 @@ namespace Landru {
         }
         
         VarObjPtr* vo;
-        
-    private:
-        VarPool* v;
     };
 
 } // Landru

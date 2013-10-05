@@ -1447,7 +1447,7 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
                 require[length] = '\0';
             }
             curr = tsSkipCommentsAndWhitespace(curr, end);
-            if (!getChar(')', curr, end) == ')') {
+            if (!getChar(')', curr, end)) {
                 lcRaiseError("Poorly formed require", curr, 32);
             }
         }
@@ -1538,7 +1538,7 @@ void parseMachine(CurrPtr& curr, EndPtr end)
 extern "C"
 void landruParseProgram(void* rootNode, 
                         std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
-                        char const* buff, unsigned int len)
+                        char const* buff, size_t len)
 {	
 	currNode = (Landru::ASTNode*) rootNode;
 	

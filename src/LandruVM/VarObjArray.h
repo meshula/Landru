@@ -73,7 +73,7 @@ namespace Landru {
         
         int size() const
         {
-            return _array.size();
+            return int(_array.size());
         }
         
         VarObjPtr* get(int i)
