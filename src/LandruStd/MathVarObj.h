@@ -21,6 +21,8 @@ namespace Landru
         VAROBJ_FACTORY(math, MathVarObj)
 
         LANDRU_DECL_BINDING_BEGIN
+            LANDRU_DECL_BINDING(cos)
+            LANDRU_DECL_BINDING(sin)
             LANDRU_DECL_BINDING(v2)
             LANDRU_DECL_BINDING(v3)
             LANDRU_DECL_BINDING(scalev2)

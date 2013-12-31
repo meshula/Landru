@@ -11,11 +11,25 @@
 #include "LandruVM/Stack.h"
 #include "LandruVM/VarObjStackUtil.h"
 
+#include <math.h>
+
 namespace Landru {
 
     MathVarObj::MathVarObj(const char* name)
     : VarObj(name, &functions)
     {
+    }
+
+    LANDRU_DECL_FN(MathVarObj, sin) {
+        VarObjArray* voa;
+        Pop<VarObjArray> t1(p, voa);
+        pushReal(p, sinf(voa->getReal(-1)));
+    }
+
+    LANDRU_DECL_FN(MathVarObj, cos) {
+        VarObjArray* voa;
+        Pop<VarObjArray> t1(p, voa);
+        pushReal(p, cosf(voa->getReal(-1)));
     }
 
 	LANDRU_DECL_FN(MathVarObj, v2)
@@ -75,6 +89,8 @@ namespace Landru {
     }
 
     LANDRU_DECL_TABLE_BEGIN(MathVarObj)
+        LANDRU_DECL_ENTRY(MathVarObj, cos)
+        LANDRU_DECL_ENTRY(MathVarObj, sin)
         LANDRU_DECL_ENTRY(MathVarObj, v2)
         LANDRU_DECL_ENTRY(MathVarObj, v3)
         LANDRU_DECL_ENTRY(MathVarObj, scalev2)

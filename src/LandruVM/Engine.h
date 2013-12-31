@@ -85,7 +85,9 @@ namespace Landru
         FnTable functions;
         
         std::string workingDir;
-        
+
+        std::mutex renderMutex;
+
 	private:
         
 		class Detail;

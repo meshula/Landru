@@ -187,7 +187,7 @@ namespace Landru {
         VarObjPtr* libObj;
         int index = findFunctionS(self, engine, funcName, &libObj);
 
-        if (libObj) {
+        if (libObj && index >= 0) {
             result->ref = new VarObjWeakRef(libObj);
             result->fn = libObj->vo->Func(index);
         }
