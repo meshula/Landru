@@ -34,6 +34,7 @@
 		71D214E0013F59347D510A03 /* Stack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF4C0311AC3781177541BB /* Stack.cpp */; };
 		740F1DF703CA007339B54068 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 797F35AF0FD31E91654C1B3F /* Engine.cpp */; };
 		74B9417169915EC90F490F22 /* StackPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C0A396660B66B7D64CE3B0B /* StackPrint.cpp */; };
+		E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2F51121187518A100D181A2 /* FileVarObj.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,6 +100,8 @@
 		797F35AF0FD31E91654C1B3F /* Engine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Engine.cpp; sourceTree = "<group>"; };
 		7C8730795B1A085D23DE564D /* Fiber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Fiber.h; sourceTree = "<group>"; };
 		7D4A2E1A4144040F1EEF0367 /* Exemplar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Exemplar.h; sourceTree = "<group>"; };
+		E2F51121187518A100D181A2 /* FileVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileVarObj.cpp; sourceTree = "<group>"; };
+		E2F51122187518A100D181A2 /* FileVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileVarObj.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -209,6 +212,8 @@
 				020A697D288942483A7A4A24 /* ColorVarObj.cpp */,
 				0CE91D1915E45466083D7385 /* ColorVarObj.h */,
 				4F8074DD61D448B65EFA7C74 /* ConcurrentQueue.h */,
+				E2F51121187518A100D181A2 /* FileVarObj.cpp */,
+				E2F51122187518A100D181A2 /* FileVarObj.h */,
 				389827BF15AD430B1167351D /* IntVarObj.cpp */,
 				6441281068865AD426141D0D /* IntVarObj.h */,
 				730F7AF433990CD6508F6A6E /* IoVarObj.cpp */,
@@ -295,6 +300,7 @@
 				16305EF5653B16B979A34487 /* Parser.cpp in Sources */,
 				68C776893695779033DF2477 /* Tokens.cpp in Sources */,
 				70C85E2C41BD6BFE1FD30FD2 /* lcRaiseError.cpp in Sources */,
+				E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */,
 				155F4433256800FE518D3FF7 /* ColorVarObj.cpp in Sources */,
 				292E45F2175832AE5E20070B /* IntVarObj.cpp in Sources */,
 				5E844C33679A5E8905676AFB /* IoVarObj.cpp in Sources */,

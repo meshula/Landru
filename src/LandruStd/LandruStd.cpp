@@ -6,6 +6,7 @@
 
 #include "ColorVarObj.h"
 #include "Fiber.h"
+#include "FileVarObj.h"
 #include "IntVarObj.h"
 #include "IoVarObj.h"
 #include "JsonVarObj.h"
@@ -21,6 +22,7 @@ void init_LandruStd()
 {
     ColorVarObj::InitVarObj();
     Fiber::InitVarObj();
+    FileVarObj::InitVarObj();
     IntVarObj::InitVarObj();
     IoVarObj::InitVarObj();
     JsonVarObj::InitVarObj();
