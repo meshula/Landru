@@ -30,12 +30,16 @@
 #ifdef LVERBOSE
 const bool verboseTrace = true;
 # define TRACE(f, pc, op) printf("%d:%s\n", pc, Instructions::opName(op));
+# define VERBOSE(fmt, args...) printf(fmt, ## args...)
 #else
 const bool verboseTrace = false;
+# define VERBOSE(fmt, args...)
 # define TRACE(f, pc, op)
 #endif
 
 namespace Landru {
+
+    using namespace std;
 
 	namespace {
 
@@ -117,218 +121,46 @@ namespace Landru {
     
     }
 	
-    VarObjPtr* Fiber::main = 0;
-
-
-    std::set<Fiber*>& Fiber::ActiveFibers()
-    {
-        static std::set<Fiber*> fibers;
-        return fibers;
-    }
     
-    
-    void Fiber::Create(VarPool* varpool, int maxStackDepth, int maxVars, VarObjPtr* self, const MachineCacheEntry* mce_)
+    void Fiber::Create(VarObjFactory* factory, int maxStackDepth, int maxVars, std::shared_ptr<MachineCacheEntry> mce_)
     {
         _suspendedPC = -1;
         mce = mce_;
-		
-        _vars = varpool;
+
+        if (mce->exemplar->varCount > 0)
+            _vars = unique_ptr<VarObjArray>(new VarObjArray(""));
+
 		for (int i = 0; i < mce->exemplar->varCount; ++i) {
 			const char* varType = &mce->exemplar->stringData[mce->exemplar->stringArray[mce->exemplar->varTypeIndex[i]]];
 			const char* varName = &mce->exemplar->stringData[mce->exemplar->stringArray[mce->exemplar->varNameIndex[i]]];
-			VarObjPtr* v = VarObj::Factory(_vars, this, i, varType, varName);
-			if (v == 0)
+            std::shared_ptr<VarObj> v(factory->make(varType, varName));
+			if (!v)
 				RaiseError(0, "Unknown variable type", varType);
+            _vars->add(v);
 		}
-        
-        if (!strcmp(mce->exemplar->name(), "main"))
-            main = self;
-
-        resolvedFunctionArray = (FnRuntime*) malloc(sizeof(FnRuntime) * mce->exemplar->stringArrayLength);
-        memset(resolvedFunctionArray, 0, sizeof(FnRuntime) * mce->exemplar->stringArrayLength);
-        
-        ActiveFibers().insert(this);
     }
 
     Fiber::~Fiber()
     {
-        std::set<Fiber*>& fibers = ActiveFibers();
-        std::set<Fiber*>::iterator i = fibers.find(this);
-        if (i != fibers.end())
-            fibers.erase(i);
     }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    int Fiber::findFunction(FnRuntime* result,
-                            VarObjPtr* self, 
-                            Engine* engine, const char* funcName)
-    {
-        if (!result)
-            return -1;
-
-        VarObjPtr* libObj;
-        int index = findFunctionS(self, engine, funcName, &libObj);
-
-        if (libObj && index >= 0) {
-            result->ref = new VarObjWeakRef(libObj);
-            result->fn = libObj->vo->Func(index);
-        }
-        
-        return index;
-    }
-
-
-
-
-    int Fiber::findFunctionS(VarObjPtr* self, Engine* engine,
-                            const char* funcName,
-                            VarObjPtr** libObj)
-    {
-        if (!self)
-            return 0;
-        
-        std::vector<std::string> parts = Split(funcName, '.', false, false);
-        return findFunctionR(self, engine, parts, 0, libObj);
-    }
-    
-    // a function can be on the fiber, on the main VO, or on some variable
-    enum FnSelf { FnSelfFiber, FnSelfMain, FnSomeVariable };
-    
-    // once we know what it is on, the fn might be on a shared var on whatever it is,
-    // a local var on whatever it is, or on whatever it is itself.
-    enum FnLocations {
-        FnSomeSharedVarOnSelf, FnSomeLocalVarOnSelf, FnOnSelf
-    };
-    
-    // so how do I look the silly thing up?
-    // main and self are easy. some variable can be arbitrarily deep. how can I breadcrumb to it?
-    
-    
-    // findFunction expects fiberToRun and libObj to be initialized before call
-    // so that they can be incrementally overridden during recursion
-    int Fiber::findFunctionR(VarObjPtr* self, Engine* engine, 
-                             std::vector<std::string>& parts, int partIndex, 
-                             VarObjPtr** libObj)
-    {        
-        VarPool* selfVars = self->vo->varPool();
-        
-        std::string& part = parts[partIndex];
-        
-        if (part == "$") {
-            RaiseError(0, "Can't precompile stacktop function", "findFunction");
-            return -1;
-        }
-        
-        if (part == "main") {
-            return findFunctionR(main, engine, parts,
-                                 partIndex + 1, libObj);
-        }
-
-        // is it a shared var on the current fiber?
-        Fiber* f = dynamic_cast<Fiber*>(self->vo);
-        if (f) {
-            VarObjPtr* vop = selfVars->varObj(f->mce->exemplar, part.c_str());
-            if (vop) {
-                *libObj = vop;
-                return vop->vo->Func(parts[partIndex+1].c_str());
-            }
-        }
-        
-        // is it a local var?
-        VarObjPtr* vop = selfVars->varObj(self->vo, part.c_str());
-        if (vop) {
-            if ((partIndex + 1) < parts.size())
-                return findFunctionRV(vop, engine, parts,
-                                      partIndex + 1, libObj);
-            else {
-                int fn = vop->vo->Func(part.c_str());
-                if (fn >= 0) {
-                    *libObj = vop;
-                    return fn;
-                }
-                RaiseError(0, "Couldn't find function", part.c_str());
-                *libObj = 0;
-                return 0;
-            }
-        }
-        
-        // Is a function resolvable on this?
-        int fn = self->vo->Func(part.c_str());
-        if (fn >= 0) {
-            *libObj = self;
-            return fn;
-        }
-
-        // global variable?
-        vop = engine->Global(part.c_str());
-        if (vop) {
-            return findFunctionRV(vop, engine, parts, partIndex + 1, libObj);
-        }
-        
-        // attempt to resolve on engine directly
-        return findFunctionRV(engine->self(), engine, parts, partIndex + 1, libObj);
-    }
-    
-    // findFunction expects libObj to be initialized before call
-    // so that it can be incrementally overridden during recursion
-    int Fiber::findFunctionRV(VarObjPtr* self, Engine* engine, 
-                              std::vector<std::string>& parts, int partIndex, 
-                              VarObjPtr** libObj)
-    {
-        std::string& part = parts[partIndex];
-        
-        if (!self) {
-            RaiseError(0, "function unresolved", part.c_str());
-            return -1;
-        }
-        
-        VarPool* selfVars = self->vo->varPool();
-        
-        // is it a local var?
-        VarObjPtr* vop = selfVars->varObj(self->vo, part.c_str());
-        if (vop)
-            return findFunctionRV(vop, engine, parts, partIndex + 1, libObj);
-
-        // Is a function resolvable on self?
-        int fn = self->vo->Func(part.c_str());
-        if (fn >= 0) {
-            *libObj = self;
-            return fn;
-        }
-
-        RaiseError(0, "function unresolved", part.c_str());
-        return -1;
-    }
 
 
 
     Fiber::RunEndCondition Fiber::Run(Engine* engine,
-                                      VarObjPtr* self,
+                                      std::shared_ptr<Fiber> self,
                                       float elapsedTime,
                                       int pc,
                                       LStack* stack,
                                       Continuation* contextContinuation,
-                                      VarObjArray* exeStack,
+                                      std::vector<std::shared_ptr<Fiber>>& exeStack,
                                       VarObjArray* locals)
 	{
+        if (!locals) {
+            locals = _vars.get();
+        }
         RunEndCondition retval = kStateEnd;
 		_suspendedPC = -1;
                 
@@ -348,13 +180,13 @@ namespace Landru {
 				{
                     // get the parameters off the top of the stack
                     // the zeroeth element of the parameters is the name of the machine to launch
-                    VarObjArray* localVoa;
-                    Pop<VarObjArray> t1(stack, _vars, localVoa);
+                    std::shared_ptr<VarObjArray> voa = stack->top<VarObjArray>();
+                    stack->pop();
+                    VarObjArray* localVoa = voa.get();
                     if (!localVoa)
                         RaiseError(pc, "no params for launching machine", "iLaunchMachine");
                     
-                    VarObjStrongRef ref(localVoa->get(0));
-                    StringVarObj* svo = dynamic_cast<StringVarObj*>(ref.vo->vo);
+                    StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(0).lock().get());
                     if (!svo)
                         RaiseError(pc, "no machine named to launch", "iLaunchMachine");
                     
@@ -362,7 +194,7 @@ namespace Landru {
                     
                     if (svo) {                        
                         const char* machineName = svo->getCstr();
-                        VarObjPtr* newF = engine->machineCache()->createFiber(machineName); // comes with one strong ref already
+                        std::shared_ptr<Fiber> newF = engine->machineCache()->createFiber(engine->factory(), machineName); // comes with one strong ref already
                         if (newF) {
 /*                            LStackPushParamMark(stack);
                             int locals = localVoa->size();
@@ -371,11 +203,9 @@ namespace Landru {
                             Fiber* f2 = (Fiber*) newF->vo;
                             f2->Run(engine, newF, elapsedTime, f2->EntryPoint(), stack, 0, exeStack);
                             for (int i = 1; i < locals; ++i)
-                                LStackPop(stack, (LVarPool*) _vars); // pop the params mark and the locals
+                                stack->pop(); // pop the params mark and the locals
                             _vars->releaseStrongRef(newF); */
-                            Fiber* f2 = (Fiber*) newF->vo;
-                            f2->Run(engine, newF, elapsedTime, f2->EntryPoint(), stack, 0, exeStack, localVoa);
-                            _vars->releaseStrongRef(newF);
+                            newF->Run(engine, newF, elapsedTime, newF->EntryPoint(), stack, 0, exeStack, localVoa);
                         }
                         else {
                             printf("Couldn't launch machine %s\n", machineName);
@@ -388,21 +218,21 @@ namespace Landru {
 			case Instructions::iPushConstant:
 				{
 					int data = programStore[++pc];
-                    pushInt(stack, _vars, data);
+                    pushInt(stack, data);
 					++pc;
 				}
 				break;
 
 			case Instructions::iPushIntOne:
 				{
-                    pushInt(stack, _vars, 1);
+                    pushInt(stack, 1);
 					++pc;
 				}
 				break;
 
 			case Instructions::iPushIntZero:
 				{
-                    pushInt(stack, _vars, 0);
+                    pushInt(stack, 0);
 					++pc;
 				}
 				break;
@@ -414,7 +244,7 @@ namespace Landru {
 						float f;
 					} data;
 					data.i = programStore[++pc];
-                    pushReal(stack, _vars, data.f);
+                    pushReal(stack, data.f);
 					++pc;
 				}
 				break;
@@ -422,28 +252,26 @@ namespace Landru {
 			case Instructions::iPopStore:
 				{
                     // the current use of this instruction is after a machine is created, its pointer is on the stack
-					int varIndex = popInt(stack, _vars);		// get var index
-                    VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(stack, (LVarPool*) _vars));
-                    VarObj* var = vp.vo->vo; 
-                    LStackPop(stack, (LVarPool*) _vars);		// get data to store there
+					int varIndex = popInt(stack);		// get var index
+                    std::shared_ptr<VarObj> vp = stack->top<VarObj>();
+                    stack->pop();
 					if (varIndex >= mce->exemplar->varCount)
-						_vars->setSlot(mce, varIndex - mce->exemplar->varCount, var, true);
+                        mce->vars[varIndex - mce->exemplar->varCount] = vp;
 					else
-						_vars->setSlot(this, varIndex, var, true);			// store the varobj pointer in its slot
+                        _vars->set(vp, varIndex);
 					++pc;
 				}
 				break;
 
             case Instructions::iCreateTempString:
                 {
-                    int index = LStackTopStringIndex(stack, (LVarPool*) _vars); LStackPop(stack, (LVarPool*) _vars);
+                    int index = LStackTopStringIndex(stack);
+                    stack->pop();
                     const char* str = &mce->exemplar->stringData[mce->exemplar->stringArray[index]];
                     if (verboseTrace)
                         printf("\t\ttemp string: %s\n", str);
                     
-                    VarObjPtr* var = StringVarObj::createString(_vars, "temp", str);
-                    LStackPushVarObj(stack, (LVarPool*) _vars, (LVarObj*) var);
-                    _vars->releaseStrongRef(var); // createString added a strong ref, so did push
+                    stack->push(StringVarObj::createString("temp", str));
                     ++pc;
                 }
                 break;
@@ -457,7 +285,7 @@ namespace Landru {
                     
             case Instructions::iParamsEnd:
                 {
-                    LStackFinalizeParamMark(stack, (LVarPool*) _vars);
+                    LStackFinalizeParamMark(stack);
                     ++pc;
                 }
                 break;
@@ -485,8 +313,8 @@ namespace Landru {
 					// if can't promote to float, an error is raised;
 					/// @TODO provide comparisons for non numerics as well
 					++pc;
-					float val1 = popReal(stack, _vars);
-					float val2 = popReal(stack, _vars);
+					float val1 = popReal(stack);
+					float val2 = popReal(stack);
                     
 					// do float comparison
 					/// @TODO, subtract, abs, and test for < eps?
@@ -498,7 +326,7 @@ namespace Landru {
             case Instructions::iIfLte0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					if (val <= 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 }
@@ -507,7 +335,7 @@ namespace Landru {
             case Instructions::iIfGte0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					if (val >= 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 }
@@ -516,7 +344,7 @@ namespace Landru {
             case Instructions::iIfLt0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					if (val < 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 }
@@ -525,7 +353,7 @@ namespace Landru {
             case Instructions::iIfGt0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					if (val > 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 }
@@ -534,7 +362,7 @@ namespace Landru {
             case Instructions::iIfEq0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					/// @TODO test for abs <= eps
 					if (val == 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
@@ -544,7 +372,7 @@ namespace Landru {
             case Instructions::iIfNotEq0:
                 {
 					++pc;
-					float val = popReal(stack, _vars);
+					float val = popReal(stack);
 					if (val != 0)
 						pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 }
@@ -553,53 +381,53 @@ namespace Landru {
             case Instructions::iOpAdd:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-					float v2 = popReal(stack, _vars);
-                    pushReal(stack, _vars, v1 + v2);
+					float v1 = popReal(stack);
+					float v2 = popReal(stack);
+                    pushReal(stack, v1 + v2);
                 }
                 break;
                     
             case Instructions::iOpSubtract:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-					float v2 = popReal(stack, _vars);
-                    pushReal(stack, _vars, v2 - v1);
+					float v1 = popReal(stack);
+					float v2 = popReal(stack);
+                    pushReal(stack, v2 - v1);
                 }
                 break;
 
             case Instructions::iOpMultiply:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-					float v2 = popReal(stack, _vars);
-                    pushReal(stack, _vars, v1 * v2);
+					float v1 = popReal(stack);
+					float v2 = popReal(stack);
+                    pushReal(stack, v1 * v2);
                 }
                 break;
                     
             case Instructions::iOpDivide:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-					float v2 = popReal(stack, _vars);
-                    pushReal(stack, _vars, v2 / v1);
+					float v1 = popReal(stack);
+					float v2 = popReal(stack);
+                    pushReal(stack, v2 / v1);
                 }
                 break;
                     
             case Instructions::iOpNegate:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-                    pushReal(stack, _vars, -v1);
+					float v1 = popReal(stack);
+                    pushReal(stack, -v1);
                 }
                 break;
                     
             case Instructions::iOpModulus:
                 {
                     ++pc;
-					float v1 = popReal(stack, _vars);
-					float v2 = popReal(stack, _vars);
-                    pushReal(stack, _vars, float(int(v2) % int(v1)));
+					float v1 = popReal(stack);
+					float v2 = popReal(stack);
+                    pushReal(stack, float(int(v2) % int(v1)));
                 }
                 break;
                     
@@ -608,21 +436,21 @@ namespace Landru {
             case Instructions::iRepeatBegin:
                 {
                     ++pc;
-                    
-                    VarObjArray* localVoa;
-                    Pop<VarObjArray> t1(stack, _vars, localVoa);
+
+                    std::shared_ptr<VarObjArray> localVoa = stack->top<VarObjArray>();
+                    stack->pop();
                     float val = localVoa->getReal(-1);
                     
-                    pushInt(stack, _vars, 123456);
-                    pushInt(stack, _vars, (int) val);
+                    pushInt(stack, 123456);
+                    pushInt(stack, (int) val);
                 }
                 break;
 
             case Instructions::iRepeatTest:
                 {
                     ++pc;
-					int val = popInt(stack, _vars) - 1;
-                    pushInt(stack, _vars, val);
+					int val = popInt(stack) - 1;
+                    pushInt(stack, val);
 
                     if (val >= 0)        // if still positive, skip the goto
                         pc += 2;
@@ -632,8 +460,8 @@ namespace Landru {
             case Instructions::iRepeatEnd:
                 {
                     ++pc;
-                    popInt(stack, _vars);
-                    int data = popInt(stack, _vars);
+                    popInt(stack);
+                    int data = popInt(stack);
 
                     if (data != 123456)
                         RaiseError(pc-1, "stack depth changed during repeat", 0);
@@ -648,22 +476,18 @@ namespace Landru {
                     
                     int loopTop = ++pc;
                     
-                    VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(stack, engine->lvarPool()));
-                    LStackPop(stack, (LVarPool*) _vars);
+                    std::shared_ptr<VarObjArray> vp = stack->top<VarObjArray>();
+                    stack->pop();
                     
                     Landru::VarObjArray forLocals("locals");
                     
-                    VarObjArray* voa = dynamic_cast<VarObjArray*>(vp.vo->vo);
+                    VarObjArray* voa = vp.get();
                     for (int i = 0; i < voa->size(); ++i) {
-                        forLocals.add(voa->get(i));
-#ifdef LVERBOSE
-                        printf("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
-#endif
+                        forLocals.add(voa->get(i).lock());
+                        VERBOSE("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
                         Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, exeStack, &forLocals);
                         forLocals.pop();
-#ifdef LVERBOSE
-                        printf("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
-#endif
+                        VERBOSE("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
                     }
                     pc = nextPC;
                 }
@@ -671,7 +495,7 @@ namespace Landru {
 
             case Instructions::iGotoState:
 				{
-					int data = popInt(stack, _vars);
+					int data = popInt(stack);
 					pc = mce->exemplar->stateTable[data];
                     engine->ClearContinuations(self);
 				}
@@ -702,13 +526,13 @@ namespace Landru {
 
 			case Instructions::iRangedRandom:
 				{
-					float minF = popReal(stack, _vars);
-					float maxF = popReal(stack, _vars);
+					float minF = popReal(stack);
+					float maxF = popReal(stack);
 					float r = (float) rand() / RAND_MAX;
 					float range = maxF - minF;
 					r *= range;
 					r += minF;
-                    pushReal(stack, _vars, r);
+                    pushReal(stack, r);
 					++pc;
 				}
 				break;
@@ -730,169 +554,90 @@ namespace Landru {
 
 
 
+                case Instructions::iGetRequire: {
+                    shared_ptr<VarObj> vo = engine->Require(instruction >> 16);
+                    if (!!vo)
+                        stack->push(vo);
+                    else
+                        RaiseError(pc, "COuldn't find required library", 0);
+                    ++pc; }
+                    break;
 
 
 
-
-
-
-
-            case Instructions::iOnLibEvent:
-				{
+                case Instructions::iCallFunction: {
 					int func = instruction >> 16;
-                    if (verboseTrace) {
+
+                    // top of stack must be the thing to call the function on
+                    std::shared_ptr<VarObj> vp = stack->top<VarObj>();
+                    stack->pop();
+
+                    if (vp) {
+                        if (verboseTrace) {
+                            const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
+                            printf("\t\tcall %s\n", funcName);
+                        }
+
+                        FuncPtr fn = 0;
                         const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
-                        printf("\t\ton lib %s\n", funcName);
-                    }
-
-                    FuncPtr fn = resolvedFunctionArray[func].fn;
-                    if (!fn) {
-                        const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
-                        findFunction(&resolvedFunctionArray[func], self, engine, funcName);
-                        fn = resolvedFunctionArray[func].fn;
-                    }
-                    VarObjPtr* vop = resolvedFunctionArray[func].ref->vo;
-                    if (fn && vop && vop->vo) {
-                        FnParams p;
-                        p.parentContinuation = contextContinuation;
-                        p.continuationPC = pc + 3; // the only line different from calling a function.
-                        p.pc = pc;
-                        p.vop = vop;
-                        p.vo = vop->vo;
-                        p.f = this;
-                        p.self = self;
-                        p.stack = stack;
-                        p.engine = engine;
-                        fn(&p); // if function could be resolved, call it
-                    }
-                    ++pc;
-                }
-                break;
-
-                case Instructions::iCallFunction:
-				{
-					int func = instruction >> 16;
-       
-                    if (verboseTrace) {
-                        const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
-                        printf("\t\tcall %s\n", funcName);
-                    }
-
-                    FuncPtr fn = resolvedFunctionArray[func].fn;
-                    if (!fn) {
-                        const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
-                        findFunction(&resolvedFunctionArray[func], self, engine, funcName);
-                        fn = resolvedFunctionArray[func].fn;
-                    }
-                    VarObjPtr* vop = resolvedFunctionArray[func].ref->vo;
-                    if (fn && vop && vop->vo) {
-                        FnParams p;
-                        p.parentContinuation = contextContinuation;
-                        p.pc = pc;
-                        p.vop = vop;
-                        p.vo = vop->vo;
-                        p.f = this;
-                        p.self = self;
-                        p.stack = stack;
-                        p.engine = engine;
-                        fn(&p); // if function could be resolved, call it
-                    }
-                    ++pc;
-                }
-                break;
-                    
-                case Instructions::iDotChain:
-                {
-                    VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(stack, engine->lvarPool()));
-                    exeStack->push_back(vp.vo);
-                    LStackPop(stack, engine->lvarPool());
-                    ++pc;
-                }
-                break;
-
-                case Instructions::iDynamicCallLibFunction:
-				{
-					int func = instruction >> 16;
-				    const char* funcName = &mce->exemplar->stringData[mce->exemplar->stringArray[func]];
-                    if (verboseTrace)
-                        printf("\t\tdynamic call %s\n", funcName);
-
-                    if (exeStack->empty())
-                        RaiseError(pc, "No object on execution stack", "iDynamicCallLibFunction");
-                    
-                    VarObjStrongRef vp(exeStack->top());
-                    exeStack->pop();
-                    
-                    VarObjPtr* libObj = 0;
-                    int fnIndex = findFunctionS(vp.vo, engine, funcName, &libObj);
-                    
-                    if (self && libObj) {
-                        VarObj::FuncPtr fn = libObj->vo->Func(fnIndex);
-                        if (fn >= 0) {
+                        int funcIndex = vp->Func(funcName);
+                        if (funcIndex >= 0)
+                            fn = vp->Func(funcIndex);
+                        if (fn) {
                             FnParams p;
                             p.parentContinuation = contextContinuation;
                             p.pc = pc;
-                            p.vop = libObj;
-                            p.vo = libObj->vo;
-                            p.f = this;
-                            p.self = self;
+                            p.vo = vp;
+                            p.f = self;
                             p.stack = stack;
                             p.engine = engine;
                             fn(&p); // if function could be resolved, call it
                         }
-                        else
-                            RaiseError(pc, "Unknown function", "");
                     }
-                    else
-                        RaiseError(pc, "Unknown object", "");
+                    ++pc; }
+                    break;
                     
-                    ++pc;
-				}
-                break;
+                case Instructions::iDotChain: {
+                    exeStack.push_back(stack->top<Fiber>());
+                    stack->pop();
+                    ++pc; }
+                    break;
 
-            case Instructions::iGetSharedVar:
-                {
-                    int index = popInt(stack, _vars);
-                    
+                case Instructions::iGetSharedVar: {
+                    int index = popInt(stack);
+
                     // is it a local var on the main fiber?
-  					if (-1 != index)
-					{
-                        VarObjPtr* vo = _vars->varObj(mce, index);
-                        LStackPushVarObj(stack, (LVarPool*) _vars, (LVarObj*) vo);
-					}
+  					if (-1 != index && index < mce->vars.size())
+                        stack->push(mce->vars[index]);
                     else
-                    {
                         RaiseError(pc, "variable not found on main fiber", 0);
-                    }
-                    ++pc;
-                }
-                break;
+                    ++pc; }
+                    break;
 
-            case Instructions::iGetGlobalVar:
-                {
-                    int index = LStackTopStringIndex(stack, (LVarPool*) _vars); LStackPop(stack, (LVarPool*) _vars);
+                case Instructions::iGetGlobalVar: {
+                    int index = LStackTopStringIndex(stack);
+                    stack->pop();
                     const char* varName = &mce->exemplar->stringData[mce->exemplar->stringArray[index]];
                     std::vector<std::string> parts = Split(varName, '.', false, false);
-                    
-                    VarObjPtr* vo = engine->Global(parts[0].c_str());
+
+                    std::shared_ptr<VarObj> vo = engine->Global(parts[0].c_str()).lock();
                     if (!vo)
                         RaiseError(pc, "Can't find global variable", parts[0].c_str());
-                    
+
                     if (parts.size() > 1) {
-                        vo = vo->vo->GetVar(parts[1].c_str());
+                        vo = vo->GetVar(parts[1].c_str()).lock();
                         if (!vo)
                             RaiseError(pc, "Can't find global variable", varName);
                     }
-                    
-                    LStackPushVarObj(stack, (LVarPool*) _vars, (LVarObj*) vo);
-                    ++pc;
-                }
-                break;
-                    
-			case Instructions::iGetSelfVar:
-				{
-					int varIndex = LStackTopStringIndex(stack, (LVarPool*) _vars); LStackPop(stack, (LVarPool*) _vars);
-                    LVarObj* lvo = (LVarObj*) GetVar(varIndex);
+
+                    stack->push(vo);
+                    ++pc; }
+                    break;
+
+                case Instructions::iGetSelfVar: {
+					int varIndex = LStackTopStringIndex(stack);
+                    stack->pop();
+                    std::shared_ptr<VarObj> lvo = GetVar(varIndex).lock();
                     if (!lvo) {
                         if (varIndex > mce->exemplar->varCount)
                             RaiseError(pc, "Unknown variable", 0);
@@ -902,31 +647,37 @@ namespace Landru {
                         }
                     }
 
-					LStackPushVarObj(stack, (LVarPool*) _vars, lvo);
-					++pc;
-				}
-				break;
-                    
-            case Instructions::iGetLocalString:  // probably need to deprecate get local string
-            case Instructions::iGetLocalVarObj:
-                {
+                    stack->push(lvo);
+					++pc; }
+                    break;
+
+                case Instructions::iGetLocalString:  // probably need to deprecate get local string
+                case Instructions::iGetLocalVarObj: {
 					int paramIndex = instruction >> 16;
-                    LStackPushVarObj(stack, (LVarPool*) _vars, (LVarObj*) locals->get(paramIndex));
-                    ++pc;
-                }
-                break;
-                    
-            case Instructions::iGetLocalExeVarObj:
-                {
+                    stack->push(locals->get(paramIndex).lock());
+                    ++pc; }
+                    break;
+
+                case Instructions::iGetVarFromVar: {
+                    shared_ptr<VarObj> vo = LStackTopVarObj(stack).lock();
+                    int func = instruction >> 16;
+                    shared_ptr<VarObj> varVo = vo->GetVar(mce->exemplar->varNameIndex[func]).lock();
+                    stack->push(varVo);
+                    ++pc; }
+                    break;
+
+                case Instructions::iGetLocalExeVarObj: {
                     int paramIndex = instruction >> 16;
-                    exeStack->add(locals->get(paramIndex));
+                    std::shared_ptr<Fiber> f = std::dynamic_pointer_cast<Fiber>(locals->get(paramIndex).lock());
+                    if (!f)
+                        RaiseError(pc, "No fiber on stack", 0);
+                    exeStack.push_back(f);
+                    ++pc; }
+                    break;
+
+                default:
                     ++pc;
-                }
-                break;
-                    
-			default:
-				++pc;
-				break;
+                    break;
 			}
             
             if (verboseTrace)
@@ -939,8 +690,8 @@ namespace Landru {
 
 	LANDRU_DECL_FN(Fiber, add)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
@@ -949,9 +700,9 @@ namespace Landru {
 
     LANDRU_DECL_FN(Fiber, sub)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
         pushReal(p, val2 - val1);
@@ -959,9 +710,9 @@ namespace Landru {
 
     LANDRU_DECL_FN(Fiber, mul)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
         pushReal(p, val1 * val2);
@@ -969,9 +720,9 @@ namespace Landru {
 
     LANDRU_DECL_FN(Fiber, div)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
         pushReal(p, val2 / val1);
@@ -979,9 +730,9 @@ namespace Landru {
 
 	LANDRU_DECL_FN(Fiber, min)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
         pushReal(p, val1 < val2 ? val1 : val2);
@@ -989,9 +740,9 @@ namespace Landru {
 
 	LANDRU_DECL_FN(Fiber, max)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
 		float val2 = voa->getReal(-2);
         pushReal(p, val2 < val1 ? val1 : val2);
@@ -999,55 +750,55 @@ namespace Landru {
 
     LANDRU_DECL_FN(Fiber, int)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
         pushInt(p, val1);
     }
 
 	LANDRU_DECL_FN(Fiber, sqrt)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		float val1 = voa->getReal(-1);
         pushReal(p, sqrtf(val1));
     }
 
     LANDRU_DECL_FN(Fiber, toggle)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		int val1 = voa->getInt(-1);
         pushInt(p, 1 - val1);
     }
 
 //	LANDRU_DECL_FN(Fiber, send)
 //    {
-//		int message = LStackTopInt(stack); LStackPop(stack);
+//		int message = LStackTopInt(stack); stack->pop();
 //		const char* messageString = &f->exemplar->stringData[f->exemplar->stringArray[message]];
-//		const char* machineTypeNameString = f->TopString(stack); LStackPop(stack);
+//		const char* machineTypeNameString = f->TopString(stack);  stack->pop();
 //		f->_engine->SendMessageToAll(machineTypeNameString, messageString);
 //	}
 
 	LANDRU_DECL_FN(Fiber, new)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
-        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1)->vo);
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
+        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1).lock().get());
 
         if (!svo)
             return;
         
         const char* newType = svo->getCstr();
-		VarObjPtr* v = VarObj::Factory(p->engine->varPool(), p->engine, -1, newType, "new");
-        if (v == 0)
+        std::shared_ptr<VarObj> v = p->engine->factory()->make(newType, "new");
+        if (!v)
             RaiseError(p->pc, "Unknown variable type", newType);
 
-		LStackPushVarObj(p->stack, p->engine->lvarPool(), (LVarObj*) v);
+        p->stack->push(v);
 	}
 
 

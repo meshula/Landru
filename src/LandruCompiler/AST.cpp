@@ -254,9 +254,8 @@ namespace Landru
 				break;
 								
 			case kTokenFunction:
-			case kTokenDynamicFunction:
 			case kTokenLaunch:
-				if (token == kTokenFunction || token == kTokenDynamicFunction)
+				if (token == kTokenFunction)
 					printf("%s%s(", tabStr, str2.c_str());
 				else
 					printf("%s%s(", tabStr, tokenName(token));

@@ -42,19 +42,13 @@ namespace Landru
         owner = false;
     }
     
-    VarObjPtr* JsonVarObj::createJson(VarPool* v, const char* name)
-    {
-        JsonVarObj* jvo = new JsonVarObj(name);
-        return v->allocVarObjSlot(0, jvo, true); // adds strong ref count
-    }
-    
     LANDRU_DECL_FN(JsonVarObj, copy)
 	{
-		JsonVarObj* o = (JsonVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		JsonVarObj* o = (JsonVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
-        VarObj* var = voa->get(-1)->vo;
+        VarObj* var = voa->get(-1).lock().get();
         JsonVarObj* copyJson = dynamic_cast<JsonVarObj*>(var);
         if (copyJson) {
             o->jsonValue = new Json::Value(*(copyJson->jsonValue));
@@ -64,12 +58,12 @@ namespace Landru
 
     LANDRU_DECL_FN(JsonVarObj, set)
     {
-		JsonVarObj* o = (JsonVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		JsonVarObj* o = (JsonVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
-        StringVarObj* strValue = dynamic_cast<StringVarObj*>(voa->get(-1)->vo);
-        StringVarObj* strPath = dynamic_cast<StringVarObj*>(voa->get(-2)->vo);
+        StringVarObj* strValue = dynamic_cast<StringVarObj*>(voa->get(-1).lock().get());
+        StringVarObj* strPath = dynamic_cast<StringVarObj*>(voa->get(-2).lock().get());
         if (o->jsonValue && strValue && strPath) {
             Json::Path path(strPath->getString());
             Json::Value& v = path.make(*(o->jsonValue));

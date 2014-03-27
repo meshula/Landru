@@ -12,128 +12,83 @@
 #include "LandruStd/StringVarObj.h"
 
 namespace Landru {
-    
-    template <class VarObjType>
-    class Pop
-    {
-    public:
-        Pop(FnParams* p, VarObjType*& t)
-        : vp((VarObjPtr*) LStackTopVarObj(p->stack, p->engine->lvarPool()))
-        {
-            /// ASSERT(VarObjType::staticTypeId() == vp.vo->vo->typeId());
-            t = dynamic_cast<VarObjType*>(vp.vo->vo);
-            LStackPop(p->stack, p->engine->lvarPool());
-        }
-        
-        Pop(LStack* stack, VarPool* varpool, VarObjType*& t)
-        : vp((VarObjPtr*) LStackTopVarObj(stack, (LVarPool*) varpool))
-        {
-            /// ASSERT(VarObjType::staticTypeId() == vp.vo->vo->typeId());
-            t = dynamic_cast<VarObjType*>(vp.vo->vo);
-            LStackPop(stack, (LVarPool*) varpool);
-        }
-        
-        ~Pop() { }
-        
-        VarObjStrongRef vp;
-    };
-    
-    
-    template <class VarObjType>
-    VarObjPtr* allocVarObj(FnParams* p, VarObjType*& vo, const char* name)
-    {
-        vo = new VarObjType(name);
-        return p->engine->varPool()->allocVarObjSlot(0, vo, true);
-    }
-    
-    inline
-    void pushVarObj(FnParams* p, VarObjPtr* vop)
-    {
-        LStackPushVarObj(p->stack, p->engine->lvarPool(), (LVarObj*) vop);
-    }
 
     inline
     void pushInt(FnParams* p, int v)
     {
-        IntVarObj* i;
-        VarObjPtr* vop = allocVarObj<IntVarObj>(p, i, "int");
-        i->set(v);
-        pushVarObj(p, vop);
-        p->engine->varPool()->releaseStrongRef(vop); // release inc done by alloc
+        std::shared_ptr<VarObj> i = std::make_shared<IntVarObj>("int");
+        IntVarObj* ivo = (IntVarObj*) i.get();
+        ivo->set(v);
+        LStackPushVarObj(p->stack, i);
     }
     
     inline
-    void pushInt(LStack* s, VarPool* varpool, int v)
+    void pushInt(LStack* s, int v)
     {
-        IntVarObj* vo = new IntVarObj("int");
-        vo->set(v);
-        VarObjPtr* vop = varpool->allocVarObjSlot(0, vo, true);
-        LStackPushVarObj(s, (LVarPool*) varpool, (LVarObj*) vop);
-        varpool->releaseStrongRef(vop); // release inc done by alloc
+        std::shared_ptr<VarObj> i = std::make_shared<IntVarObj>("int");
+        IntVarObj* ivo = (IntVarObj*) i.get();
+        ivo->set(v);
+        LStackPushVarObj(s, i);
     }
 
     inline
     void pushReal(FnParams* p, float v)
     {
-        RealVarObj* i;
-        VarObjPtr* vop = allocVarObj<RealVarObj>(p, i, "real");
-        i->set(v);
-        pushVarObj(p, vop);
-        p->engine->varPool()->releaseStrongRef(vop); // release inc done by alloc
+        std::shared_ptr<VarObj> i = std::make_shared<RealVarObj>("int");
+        RealVarObj* ivo = (RealVarObj*) i.get();
+        ivo->set(v);
+        LStackPushVarObj(p->stack, i);
     }
     
     inline
-    void pushReal(LStack* s, VarPool* varpool, float v)
+    void pushReal(LStack* s, float v)
     {
-        RealVarObj* vo = new RealVarObj("real");
-        vo->set(v);
-        VarObjPtr* vop = varpool->allocVarObjSlot(0, vo, true);
-        LStackPushVarObj(s, (LVarPool*) varpool, (LVarObj*) vop);
-        varpool->releaseStrongRef(vop); // release inc done by alloc
+        std::shared_ptr<VarObj> i = std::make_shared<RealVarObj>("int");
+        RealVarObj* ivo = (RealVarObj*) i.get();
+        ivo->set(v);
+        LStackPushVarObj(s, i);
     }
     
     inline
     float popReal(FnParams* p)
     {
-        VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(p->stack, p->engine->lvarPool()));
-        RealVarObj* vo = dynamic_cast<RealVarObj*>(vp.vo->vo);
-        LStackPop(p->stack, p->engine->lvarPool());
-        return vo->value();
+        auto i = LStackTopVarObj(p->stack).lock();
+        RealVarObj* vo = dynamic_cast<RealVarObj*>(i.get());
+        p->stack->pop();
+        return vo ? vo->value() : 0;
     }
     
     inline
-    float popReal(LStack* stack, VarPool* varpool)
+    float popReal(LStack* stack)
     {
-        VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(stack, (LVarPool*) varpool));
-        RealVarObj* vo = dynamic_cast<RealVarObj*>(vp.vo->vo);
-        LStackPop(stack, (LVarPool*) varpool);
-        return vo->value();
+        auto i = LStackTopVarObj(stack).lock();
+        RealVarObj* vo = dynamic_cast<RealVarObj*>(i.get());
+        stack->pop();
+        return vo ? vo->value() : 0;
     }
 
     inline
     int popInt(FnParams* p)
     {
-        VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(p->stack, p->engine->lvarPool()));
-        IntVarObj* vo = dynamic_cast<IntVarObj*>(vp.vo->vo);
-        LStackPop(p->stack, p->engine->lvarPool());
-        return vo->value();
+        auto i = LStackTopVarObj(p->stack).lock();
+        IntVarObj* vo = dynamic_cast<IntVarObj*>(i.get());
+        p->stack->pop();
+        return vo ? vo->value() : 0;
     }
     
     inline
-    int popInt(LStack* stack, VarPool* varpool)
+    int popInt(LStack* stack)
     {
-        VarObjStrongRef vp((VarObjPtr*) LStackTopVarObj(stack, (LVarPool*) varpool));
-        IntVarObj* vo = dynamic_cast<IntVarObj*>(vp.vo->vo);
-        LStackPop(stack, (LVarPool*) varpool);
-        return vo->value();
+        auto i = LStackTopVarObj(stack).lock();
+        IntVarObj* vo = dynamic_cast<IntVarObj*>(i.get());
+        stack->pop();
+        return vo ? vo->value() : 0;
     }
     
     inline
     void pushString(FnParams* p, const char* s)
     {
-        VarObjPtr* svo = StringVarObj::createString(p->engine->varPool(), "string", s);
-        LStackPushVarObj(p->stack, p->engine->lvarPool(), (LVarObj*) svo);
-        p->engine->varPool()->releaseStrongRef(svo); // createString added a strong ref, so did push
+        LStackPushVarObj(p->stack, std::move(StringVarObj::createString("string", s)));
     }
 
 }

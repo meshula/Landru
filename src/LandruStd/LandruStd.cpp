@@ -18,19 +18,19 @@
 
 using namespace Landru;
 
-void init_LandruStd()
+void init_LandruStd(VarObjFactory* vf)
 {
-    ColorVarObj::InitVarObj();
-    Fiber::InitVarObj();
-    FileVarObj::InitVarObj();
-    IntVarObj::InitVarObj();
-    IoVarObj::InitVarObj();
-    JsonVarObj::InitVarObj();
-    MathVarObj::InitVarObj();
-    MouseVarObj::InitVarObj();
-    RealVarObj::InitVarObj();
-    StringVarObj::InitVarObj();
-    TimeVarObj::InitVarObj();
-    VarObjArray::InitVarObj();
+    ColorVarObj::InitVarObj(vf);
+    Fiber::InitVarObj(vf);
+    FileVarObj::InitVarObj(vf);
+    IntVarObj::InitVarObj(vf);
+    IoVarObj::InitVarObj(vf);
+    JsonVarObj::InitVarObj(vf);
+    MathVarObj::InitVarObj(vf);
+    MouseVarObj::InitVarObj(vf);
+    RealVarObj::InitVarObj(vf);
+    StringVarObj::InitVarObj(vf);
+    TimeVarObj::InitVarObj(vf);
+    VarObjArray::InitVarObj(vf);
 }
 

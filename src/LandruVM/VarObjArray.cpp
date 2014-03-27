@@ -11,8 +11,8 @@ namespace Landru {
 
     LANDRU_DECL_FN(VarObjArray, create)
 	{
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 	}
     
     LANDRU_DECL_TABLE_BEGIN(VarObjArray)

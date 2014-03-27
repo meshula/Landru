@@ -13,14 +13,13 @@ namespace Landru
 {
 	class StringVarObj : public Landru::VarObj
 	{
+	public:
 		StringVarObj(const char* name, const char* value);
         StringVarObj(const char* name);
 		virtual ~StringVarObj();
-        
-	public:
-        
-        static VarObjPtr* createString(VarPool*, const char* name);
-        static VarObjPtr* createString(VarPool*, const char* name, const char* value);
+
+        static std::unique_ptr<VarObj> createString(const char* name);
+        static std::unique_ptr<VarObj> createString(const char* name, const char* value);
         
         const char* getCstr() const { return v.c_str(); }
         const std::string& getString() const { return v; }

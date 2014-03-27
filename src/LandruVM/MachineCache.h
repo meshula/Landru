@@ -6,17 +6,17 @@
 
 #include <vector>
 
+#include "LandruVM/VarObj.h"
+
 namespace Landru
 {
     
     class Exemplar;
     class Fiber;
-    class VarPool;
-    class VarObjPtr;
-    
+
     struct MachineCacheEntry
     {
-        MachineCacheEntry(Exemplar* e);
+        MachineCacheEntry(std::unique_ptr<Exemplar> e);
         MachineCacheEntry(const MachineCacheEntry& mc);
         
         /// @TODO The program store should go here instead of
@@ -25,22 +25,23 @@ namespace Landru
         /// modifying the program store per fiber
 
         // Shared variables are keyed from the exemplar
-        Exemplar*	exemplar;
+        std::shared_ptr<Exemplar>	exemplar;
+
+        std::vector<std::shared_ptr<VarObj>> vars;
     };
 
     class MachineCache
     {
     public:
-        MachineCache(VarPool*);    
+        MachineCache();
         ~MachineCache();        
-        const MachineCacheEntry* findExemplar(const char* name);        
-        void add(Exemplar* e);        
+        std::shared_ptr<MachineCacheEntry> findExemplar(const char* name);
+        void add(VarObjFactory* factory, std::shared_ptr<Exemplar> e);        
         
-		VarObjPtr* createFiber(char const* name);        
+        std::shared_ptr<Fiber> createFiber(VarObjFactory* factory, char const* name);
         
     private:
-        VarPool* varpool;
-        std::vector<MachineCacheEntry> cache;
+        std::vector<std::shared_ptr<MachineCacheEntry>> cache;
     };
     
 } // Landru

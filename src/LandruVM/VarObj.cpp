@@ -3,6 +3,7 @@
 // License is MIT: http://opensource.org/licenses/MIT
 
 #include "LandruVM/VarObj.h"
+#include "LandruVM/VarObjArray.h"
 #include "LandruVM/RaiseError.h"
 
 #include "LabText/dict.h"
@@ -10,6 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <memory.h>
+#include <string>
+
+using namespace std;
 
 namespace Landru
 {
@@ -74,33 +78,19 @@ namespace Landru
         _dictStringCopyHTKeyCompare,   /* key compare */
         _dictStringDestructor,         /* key destructor */
         _dictStringDestructor,         /* val destructor */
-    };    
-    
-    // this pattern allows FactoryRegister to be called during static initialization
-    dict* factories()
-    {
-        static dict* d = dictCreate(&dictTypeStaticStrings, 0);
-        return d;
+    };
+
+    std::unique_ptr<VarObj> VarObjFactory::make(const char* type, const char* name) {
+        auto i = _factories.find(std::string(type));
+        if (i == _factories.end())
+            return std::unique_ptr<VarObj>();
+        return i->second(name);
     }
-    
-	VarObjPtr* VarObj::Factory(VarPool* v, void* key, int index, const char* type, const char* name)
-	{
-        VarObjPtr* (*fn)(VarPool*, void*, int, const char*) = 
-            (VarObjPtr* (*)(VarPool*, void*, int, const char*)) dictFetchValue(factories(), type);
-        return fn ? fn(v, key, index, name) : 0;
-	}
-    
-	VarObjPtr* VarObj::Factory(VarPool* v, void* key, int index, void* type, const char* name)
-	{
-        return Factory(v, key, index, (const char*) type, name);
-    }
-    
-	void VarObj::FactoryRegister(const char* type, VarObjPtr* (*fn)(VarPool*, void*, int, const char*))
-	{
+    void VarObjFactory::registerFactory(char const*const type, Fn fn) {
 		printf("registering %s\n", type);
-        dictAdd(factories(), (void*) type, (void*) fn);
-	}
-	
+        _factories[string(type)] = fn;
+    }
+
     dict* strings()
     {
         static dict* d = dictCreate(&dictTypeStaticStrings, 0);
@@ -110,7 +100,6 @@ namespace Landru
 	// lockCount of -1 means not shared
     VarObj::VarObj(const char* name, FnTable* f)
     : lockCount(-1)
-    , _vars(0)
     , _functions(f)
 	{
         const char* s = (const char*) dictFetchValue(strings(), name);
@@ -126,23 +115,23 @@ namespace Landru
 	VarObj::~VarObj()
 	{
 	}
-        
-    int VarObj::GetVarIndex(const char* s) const 
-    { 
-        VarObjPtr* vop = _vars->varObj(this, s);
-        if (vop)
-            return vop->i;
-        return -1;
+    
+    std::weak_ptr<VarObj> VarObj::GetVar(int i) const
+    {
+        if (i < _vars->size())
+            return _vars->get(i);
+        return std::weak_ptr<VarObj>();
     }
     
-    VarObjPtr* VarObj::GetVar(int i) const 
-    { 
-        return _vars->varObj(this, i); 
-    }
-    
-    VarObjPtr* VarObj::GetVar(const char* s) const 
-    { 
-        return _vars->varObj(this, s); 
+    std::weak_ptr<VarObj> VarObj::GetVar(const char* s) const
+    {
+        /// @TODO use a dictionary
+        int c = _vars->size();
+        for (int i = 0; i < c; ++i) {
+            if (!strcmp(_vars->get(i).lock()->name(), s))
+                return _vars->get(i);
+        }
+        return std::weak_ptr<VarObj>();
     }
     
     int VarObj::Func(const char* funcName) {
@@ -198,51 +187,8 @@ namespace Landru
         (_instanceFunctions->functions)[s] = unique;
         (_instanceFunctions->functionPtrs)[unique] = fn;
     }
-
-    VarObjPtr* VarPool::varObj(const void* key, const char* name) const
-    {
-        if (!name)
-            return 0;
-        
-        try {
-            std::lock_guard<std::mutex> lock(poolLock);
-            
-            for (int i = 0; i < poolSize; ++i) {
-                if (pool[i].prevFree != pool[i].nextFree)
-                    continue;
-                
-                if (pool[i].key != key)
-                    continue;
-                
-                if (pool[i].vo->name() && !strcmp(name, pool[i].vo->name()))
-                    return &pool[i];
-            }
-            
-        }
-        catch(std::exception&e) {
-            std::cout << e.what();
-        }
-        
-        return 0;
-    }
     
     
 
 } // Landru
-
-
-void LVarObjIncRefCount(LVarPool* v, LVarObj* lvo)
-{
-    Landru::VarPool* varpool = (Landru::VarPool*) v;
-	Landru::VarObjPtr* vo = (Landru::VarObjPtr*) lvo;
-    varpool->addStrongRef(vo);
-}
-
-void LVarObjDecRefCount(LVarPool* v, LVarObj* lvo)
-{
-    Landru::VarPool* varpool = (Landru::VarPool*) v;
-	Landru::VarObjPtr* vo = (Landru::VarObjPtr*) lvo;
-    varpool->releaseStrongRef(vo);
-}
-
 

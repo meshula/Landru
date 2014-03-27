@@ -76,7 +76,7 @@ void UpdateQueues(Engine* engine, float elapsedTime)
 		i.queue->update(engine, elapsedTime);
 }
 
-void ClearQueues(VarObjPtr* f)
+void ClearQueues(std::shared_ptr<Fiber> f)
 {
     std::vector<QueueRecord>& q = queues();
 	for (auto i : q)
@@ -89,9 +89,8 @@ void Continuation::deallocate()
     for (auto i = _children.begin(); i != _children.end(); ++i)
         (*i)->_continuationList->clearContinuation(*i);
     
-    if (_f != 0 && _varPool != 0) {
-        _varPool->releaseStrongRef(_f);
-        _f = 0;
+    if (_f) {
+        _f.reset();
     }
 }
     

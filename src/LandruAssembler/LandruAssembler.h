@@ -36,8 +36,10 @@ EXTERNC void landruAssembleProgramToRuntime(void* rootNode, void* runtime, std::
 #include <string>
 
 
+
 namespace Landru
 {
+    class CompilationContext;
 	class Exemplar;
     
 	class Assembler : public AssemblerBase
@@ -60,9 +62,6 @@ namespace Landru
 		std::map<std::string, int>			sharedVarIndex;
 		int									maxSharedVarIndex;
         
-        std::map<std::string, bson*>*       globals;
-        std::map<std::string, std::string>* requires;
-        
         struct LocalParameters
         {
             std::vector<std::string>            localParams;
@@ -70,12 +69,14 @@ namespace Landru
         };
         
         std::vector<LocalParameters>    localParameters;
-        
+
+        CompilationContext* context;
+
 	public:
         
-        std::vector<Exemplar*> exemplars;
+        std::vector<std::shared_ptr<Exemplar>> exemplars;
         
-		Assembler(std::map<std::string, bson*>* globals, std::map<std::string, std::string>* requires);
+		Assembler(CompilationContext* context);
 		virtual ~Assembler();
         
         virtual void finalize();
@@ -84,8 +85,7 @@ namespace Landru
 		int stateIndex(const char* s);
 		
 		virtual void callFunction(const char* fnName);
-		virtual void callDynamicFunction(const char* fnName);
-		virtual void onLibEvent(const char* libEventName);
+        virtual void getRequire(int i);
 		virtual void pushStringConstant(const char* str);
 		virtual void pushVarIndex(const char* varName);
 		virtual void pushGlobalVarIndex(const char* varName);
@@ -137,8 +137,10 @@ namespace Landru
 		
         virtual void disassemble(const std::string& machineName, FILE* f);		
 		virtual int programSize();		
-		virtual Exemplar* createExemplar();
+		virtual std::unique_ptr<Exemplar> createExemplar();
 
+        virtual bool isRequire(const char* name);
+        virtual int  requireIndex(const char* name);
         virtual bool isGlobalVariable(const char* name);
         virtual bool isLocalParam(const char* name);
         virtual int  localParamIndex(const char* name);

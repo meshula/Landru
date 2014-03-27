@@ -12,18 +12,244 @@
 
 #include "LandruCompiler/AST.h"
 #include "LabText/itoa.h"
-#include "LandruVM/Engine.h" // this should be somewhere else
+#include "LabText/TextScanner.hpp"
+#include "LandruVM/Engine.h"
+#include "LandruVM/VarObj.h"
 #include "LandruVM/MachineCache.h"
+
 
 //#define ASSEMBLER_TRACE(a) printf("Assembler: %s\n", #a)
 #define ASSEMBLER_TRACE(a)
 
-namespace Landru
-{
+using namespace std;
+
+namespace Landru {
+
+
+
+    class CompilationContext
+    {
+    public:
+
+        ~CompilationContext()
+        {
+            // also get rid of bson objects
+            for (std::map<std::string, bson*>::const_iterator i = globals.begin(); i != globals.end(); ++i)
+            {
+                bson_destroy(i->second);
+                free(i->second);
+            }
+        }
+
+        bson* compileBson(Landru::ASTNode* rootNode)
+        {
+            using namespace Landru;
+            bsonArrayNesting.clear();
+            bsonCurrArrayIndex = 0;
+            bson* b = (bson*) malloc(sizeof(bson));
+            bson_init(b);
+            compileBsonData(rootNode, b);
+            bson_finish(b);
+            bson_print(b);
+            return b;
+        }
+
+        void compileBsonData(Landru::ASTNode* rootNode, bson* b)
+        {
+            using namespace Landru;
+            for (ASTConstIter i = rootNode->children.begin(); i != rootNode->children.end(); ++i)
+                compileBsonDataElement(*i, b);
+        }
+
+        void compileBsonDataElement(Landru::ASTNode* rootNode, bson* b)
+        {
+            using namespace Landru;
+            switch(rootNode->token) {
+
+                case kTokenDataObject:
+                    ASSEMBLER_TRACE(kTokenDataObject);
+                {
+                    if (bsonArrayNesting.size() > 0) {
+                        char indexStr[16];
+                        itoa(bsonCurrArrayIndex, indexStr, 10);
+                        //printf("----> %s\n", indexStr);
+                        bson_append_start_object(b, indexStr);
+                        compileBsonData(rootNode, b); // recurse
+                        bson_append_finish_object(b);
+                        ++bsonCurrArrayIndex;
+                    }
+                    else
+                        compileBsonData(rootNode, b); // recurse
+                }
+                    break;
+
+                case kTokenDataArray:
+                    ASSEMBLER_TRACE(kTokenDataArray);
+                {
+                    bsonArrayNesting.push_back(bsonCurrArrayIndex);
+                    bsonCurrArrayIndex = 0;
+                    compileBsonData(rootNode, b); // recurse
+                    bsonCurrArrayIndex = bsonArrayNesting.back();
+                    bsonArrayNesting.pop_back();
+                }
+                    break;
+
+                case kTokenDataElement:
+                    ASSEMBLER_TRACE(kTokenDataElement);
+                {
+                    ASTConstIter i = rootNode->children.begin();
+                    if ((*i)->token == kTokenDataIntLiteral) {
+                        int val;
+                        atoi((*i)->str2.c_str());
+                        bson_append_int(b, rootNode->str2.c_str(), val);
+                    }
+                    else if ((*i)->token == kTokenDataFloatLiteral)
+                    {
+                        float val = atof(rootNode->str2.c_str());
+                        bson_append_double(b, rootNode->str2.c_str(), val);
+                    }
+                    else if ((*i)->token == kTokenDataNullLiteral) {
+                        bson_append_null(b, rootNode->str2.c_str());
+                    }
+                    else {
+                        bson_append_start_object(b, rootNode->str2.c_str());
+                        compileBsonData(rootNode, b); // recurse
+                        bson_append_finish_object(b);
+                    }
+                }
+                    break;
+
+                case kTokenDataFloatLiteral:
+                    ASSEMBLER_TRACE(kTokenDataFloatLiteral);
+                {
+                    float val = atof(rootNode->str2.c_str());
+                    bson_append_double(b, rootNode->str2.c_str(), val);
+                }
+                    break;
+
+                case kTokenDataIntLiteral:
+                    ASSEMBLER_TRACE(kTokenDataIntLiteral);
+                {
+                    int val = atoi(rootNode->str2.c_str());
+                    bson_append_int(b, rootNode->str2.c_str(), val);
+                }
+                    break;
+
+                case kTokenDataNullLiteral:
+                    ASSEMBLER_TRACE(kTokenDataNullLiteral);
+                {
+                    bson_append_null(b, rootNode->str2.c_str());
+                }
+                    break;
+
+                case kTokenDataStringLiteral:
+                    ASSEMBLER_TRACE(kTokenDataStringLiteral);
+                {
+                    bson_append_string(b, rootNode->str2.c_str(), rootNode->str1.c_str());
+                }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        void addGlobalRequire(const char* name, const char* module)
+        {
+            requires[name] = module;
+            requiresList.push_back(name);
+        }
+        int requiresIndex(const char* name) {
+            string n(name);
+            int i = 0;
+            for (auto s : requiresList) {
+                if (s == n) return i;
+                ++i;
+            }
+            i = 0;
+            for (auto s : requiresList) {
+                auto j = requires.find(s);
+                if (j == requires.end())
+                    continue;
+                if (j->second == n)
+                    return i;
+                ++i;
+            }
+            return -1;
+        }
+
+
+        void addGlobalBson(const char* name, bson* b)
+        {
+            globals[name] = b;
+        }
+
+        void compileGlobalVariable(Landru::ASTNode* rootNode)
+        {
+            using namespace Landru;
+            ASTConstIter kind = rootNode->children.begin();
+            if ((*kind)->token == kTokenRequire) {
+                addGlobalRequire(rootNode->str2.c_str(), (*kind)->str2.c_str());
+            }
+            else {
+                addGlobalBson(rootNode->str2.c_str(), compileBson(*kind));
+            }
+        }
+
+        void compileMachine(Landru::ASTNode* rootNode)
+        {
+            Landru::Assembler a(this);
+            a.assemble(rootNode);
+            exemplars.push_back(a.exemplars.front());
+        }
+
+        void compile(Landru::ASTNode* programNode)
+        {
+            for (ASTConstIter i = programNode->children.begin(); i != programNode->children.end(); ++i) {
+                if ((*i)->token == kTokenGlobalVariable)
+                    compileGlobalVariable(*i);
+                else if ((*i)->token == kTokenMachine)
+                    compileMachine(*i);
+            }
+        }
+
+        void copyToRuntime(Landru::Engine* e, std::vector<std::pair<std::string, Json::Value*> >* jsonVars)
+        {
+            int requireIndex = 0;
+            for (std::map<std::string, std::string>::const_iterator i = requires.begin(); i != requires.end(); ++i) {
+                e->AddRequire(i->first.c_str(), requireIndex++);
+            }
+
+            for (auto i = jsonVars->begin(); i != jsonVars->end(); ++i) {
+                Landru::JsonVarObj* jvo = new Landru::JsonVarObj(i->first.c_str());
+                shared_ptr<Landru::VarObj>vp(jvo);
+                jvo->setJson(i->second);
+                e->AddGlobal(i->first.c_str(), vp);
+            }
+            
+            Landru::MachineCache* m = e->machineCache();
+            for (auto i = exemplars.begin(); i != exemplars.end(); ++i) {
+                m->add(e->factory(), *i);
+            }
+        }
+
+        map<string, string> requires;
+        vector<string> requiresList;
+        
+        map<string, bson*> globals;
+        vector<shared_ptr<Landru::Exemplar>> exemplars;
+        
+        // temp for bson parsing
+        std::vector<int> bsonArrayNesting;
+        int bsonCurrArrayIndex;
+        
+    }; // CompilationContext
+    
+
+
 	
-    Assembler::Assembler(std::map<std::string, bson*>* globals, std::map<std::string, std::string>* requires)
-    : globals(globals)
-    , requires(requires)
+    Assembler::Assembler(CompilationContext* cc)
+    : context(cc)
     {
         program.reserve(1000);
         reset();
@@ -35,16 +261,26 @@ namespace Landru
 
     bool Assembler::isGlobalVariable(const char* name)
     {
-        std::string s(name);
-        if (globals->find(s) != globals->end())
+        string s(name);
+        if (context->globals.find(s) != context->globals.end())
             return true;
         
-        if (strlen(name) > 5 && !strncmp(name, "main.", 5))
-            return true;
-        
-        return (requires->find(s) != requires->end());
+        return (strlen(name) > 5 && !strncmp(name, "main.", 5));
     }
-    
+
+    bool Assembler::isRequire(const char* name) {
+        return (context->requires.find(string(name)) != context->requires.end());
+    }
+
+    int Assembler::requireIndex(const char* name) {
+        string s(name);
+        for (int i = 0; i < context->requiresList.size(); ++i) {
+            if (s == context->requiresList[i])
+                return i;
+        }
+        return -1;
+    }
+
     bool Assembler::isSharedVariable(const char* name)
     {
         std::string s(name);
@@ -103,11 +339,12 @@ namespace Landru
         
     void Assembler::finalize()
     {
-        Exemplar* e = createExemplar();
+        std::unique_ptr<Exemplar> e = createExemplar();
         if (e) {
+            exemplars.push_back(std::move(e));
+            
             //FILE* f2 = fopen("/Users/dp/newasm2.txt", "wt");
             //e->disassemble(f2);
-            exemplars.push_back(e);
             //fflush(f2);
             //fclose(f2);
             //f2 = 0;
@@ -145,35 +382,71 @@ namespace Landru
 
     void Assembler::callFunction(const char* fnName)
     {
-        // if there's a dotted name, check if the first substring is a local parameter
         char* dot = strchr(fnName, '.');
-        if (dot && dot != fnName)
-        {
-            //            if (dot[-1] != ')') {
-                std::string param(fnName, dot - fnName);
-                int i = localParamIndex(param.c_str());
+        if (dot) {
+            vector<string> parts = TextScanner::Split(string(fnName), string("."));
+            int index = 0;
+
+            // a dotted function will either be on a local parameter, a require, or an a local variable, or on a class shared variable
+
+            int i = localParamIndex(parts[index].c_str());
+            if (i >= 0) {
+                // local parameter, push the local parameter index
+                int e = i << 16;
+                program.push_back(e | Instructions::iGetSelfVar);
+            }
+            else {
+                i = context->requiresIndex(parts[index].c_str());
                 if (i >= 0) {
+                    // it's a require, push the require index
                     int e = i << 16;
-                    program.push_back(Instructions::iGetLocalExeVarObj | e);
-                    callDynamicFunction(dot + 1);
-                    return;
+                    program.push_back(e | Instructions::iGetRequire);
                 }
-            //}
+                else {
+                    // is it a local or shared variable?
+                    std::map<std::string, int>::const_iterator i = varIndex.find(parts[index].c_str());
+                    if (i == varIndex.end())
+                        RaiseError(0, "Unknown Variable", parts[index].c_str());
+                    else {
+                        if (isSharedVariable(parts[index].c_str())) {
+                            // the convention is shared variable indices start at maxVarIndices
+                            int index = (i->second + maxVarIndex) << 16;
+                            program.push_back(index | Instructions::iGetSharedVar);
+                        }
+                        else {
+                            program.push_back((i->second << 16) | Instructions::iGetLocalVarObj);
+                        }
+                    }
+                }
+            }
+
+            // second part will either be local or class shared on the var on stack top
+            ++index;
+            i = stringIndex(parts[index].c_str()) << 16;
+            if (parts.size() == 2) {
+                // push the local string index because at compile time, the function index on the target object is not known
+                program.push_back(i | Instructions::iCallFunction);
+            }
+            else {
+                program.push_back(i | Instructions::iGetVarFromVar);
+                ++index;
+                i = stringIndex(parts[index].c_str()) << 16;
+                if (parts.size() == 3) {
+                    // push the local string index because at compile time, the function index on the target object is not known
+                    program.push_back(i | Instructions::iCallFunction);
+                }
+                else {
+                    RaiseError(0, "TODO Finish rewriting this as a recurrence", 0);
+                    int i = stringIndex(parts[index].c_str()) << 16;
+                    program.push_back(i | Instructions::iGetVarFromVar);
+                    ++index;
+                }
+            }
         }
-        
-        if (fnName[0] == '$') {
-            callDynamicFunction(fnName);
-            return;
+        else {
+            int index = stringIndex(fnName) << 16;
+            program.push_back(index | Instructions::iCallFunction);
         }
-        int index = stringIndex(fnName) << 16;
-        program.push_back(index | Instructions::iCallFunction);
-    }
-    
-    void Assembler::callDynamicFunction(const char* name)
-    {
-        // object to make call on is assumed to be at top of exe stack
-        int index = stringIndex(name) << 16;
-        program.push_back(index | Instructions::iDynamicCallLibFunction);
     }
     
     void Assembler::dotChain()
@@ -181,10 +454,9 @@ namespace Landru
         program.push_back(Instructions::iDotChain);
     }
 
-    void Assembler::onLibEvent(const char* libEventName)
-    {
-        int index = stringIndex(libEventName) << 16;
-        program.push_back(index | Instructions::iOnLibEvent);
+    void Assembler::getRequire(int i) {
+        int index = i << 16;
+        program.push_back(index | Instructions::iGetRequire);
     }
 
     void Assembler::pushStringConstant(const char* str)
@@ -544,7 +816,7 @@ namespace Landru
         return (int) program.size();
     }
 
-    Exemplar* Assembler::createExemplar()
+    std::unique_ptr<Exemplar> Assembler::createExemplar()
     {
         Exemplar* e = new Exemplar();
         int stateCount = maxStateOrd;
@@ -560,12 +832,12 @@ namespace Landru
             }
             if (it == stateOrdinalMap.end()) {
                 lcRaiseError("Bad state index", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             std::map<std::string, int>::const_iterator it2 = stateAddrMap.find(it->first);
             if (it2 == stateAddrMap.end()) {
                 lcRaiseError("Bad state name", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             states[i] = it2->second;
             e->stateNameIndex[i] = stringIndex(it->first.c_str());
@@ -593,13 +865,13 @@ namespace Landru
                 }
                 
                 lcRaiseError("Bad var index", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             e->varNameIndex[i] = stringIndex(it->first.c_str());
             std::map<std::string, std::string>::const_iterator it2 = varType.find(it->first);
             if (it2 == varType.end()) {
                 lcRaiseError("Var type not found", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             e->varTypeIndex[i] = stringIndex(it2->second.c_str());
         }
@@ -614,13 +886,13 @@ namespace Landru
             }
             if (it == sharedVarIndex.end()) {
                 lcRaiseError("Bad shared var index", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             e->sharedVarNameIndex[i] = stringIndex(it->first.c_str());
             std::map<std::string, std::string>::const_iterator it2 = sharedVarType.find(it->first);
             if (it2 == sharedVarType.end()) {
                 lcRaiseError("Shared Var type not found", 0, 0);
-                return e;
+                return std::unique_ptr<Exemplar>(e);
             }
             e->sharedVarTypeIndex[i] = stringIndex(it2->second.c_str());
         }
@@ -659,215 +931,13 @@ namespace Landru
             curr = const_cast<char*>(&e->stringData[currOff]);
         }
         
-        return e;
+        return std::unique_ptr<Exemplar>(e);
     }
+
+
 
 } // Landru
 
-
-class CompilationContext
-{
-public:
-
-    ~CompilationContext()
-    {
-        // get rid of exemplars
-        for (std::vector<Landru::Exemplar*>::iterator i = exemplars.begin(); i != exemplars.end(); ++i)
-        {
-            delete *i;
-        }
-        
-        // also get rid of bson objects
-        for (std::map<std::string, bson*>::const_iterator i = globals.begin(); i != globals.end(); ++i)
-        {
-            bson_destroy(i->second);
-            free(i->second);
-        }
-    }
-
-    bson* compileBson(Landru::ASTNode* rootNode)
-    {
-        using namespace Landru;
-        bsonArrayNesting.clear();
-        bsonCurrArrayIndex = 0;
-        bson* b = (bson*) malloc(sizeof(bson));
-        bson_init(b);
-        compileBsonData(rootNode, b);
-        bson_finish(b);
-        bson_print(b);
-        return b;
-    }
-    
-    void compileBsonData(Landru::ASTNode* rootNode, bson* b)
-    {
-        using namespace Landru;
-        for (ASTConstIter i = rootNode->children.begin(); i != rootNode->children.end(); ++i)
-            compileBsonDataElement(*i, b);
-    }
-        
-    void compileBsonDataElement(Landru::ASTNode* rootNode, bson* b)
-    {
-        using namespace Landru;
-        switch(rootNode->token) {
-        
-            case kTokenDataObject:
-                ASSEMBLER_TRACE(kTokenDataObject);
-                {
-                    if (bsonArrayNesting.size() > 0) {
-                        char indexStr[16];
-                        itoa(bsonCurrArrayIndex, indexStr, 10);
-                        //printf("----> %s\n", indexStr);
-                        bson_append_start_object(b, indexStr);
-                        compileBsonData(rootNode, b); // recurse
-                        bson_append_finish_object(b);
-                        ++bsonCurrArrayIndex;
-                    }
-                    else
-                        compileBsonData(rootNode, b); // recurse
-                }
-                break;
-        
-            case kTokenDataArray:
-                ASSEMBLER_TRACE(kTokenDataArray);
-                {
-                    bsonArrayNesting.push_back(bsonCurrArrayIndex);
-                    bsonCurrArrayIndex = 0;
-                    compileBsonData(rootNode, b); // recurse
-                    bsonCurrArrayIndex = bsonArrayNesting.back();
-                    bsonArrayNesting.pop_back();
-                }
-                break;
-        
-            case kTokenDataElement:
-                ASSEMBLER_TRACE(kTokenDataElement);
-                {
-                    ASTConstIter i = rootNode->children.begin();   
-                    if ((*i)->token == kTokenDataIntLiteral) {
-                        int val;
-                        atoi((*i)->str2.c_str());
-                        bson_append_int(b, rootNode->str2.c_str(), val);
-                    }
-                    else if ((*i)->token == kTokenDataFloatLiteral)
-                    {
-                        float val = atof(rootNode->str2.c_str());
-                        bson_append_double(b, rootNode->str2.c_str(), val);
-                    }
-                    else if ((*i)->token == kTokenDataNullLiteral) {
-                        bson_append_null(b, rootNode->str2.c_str());
-                    }
-                    else {
-                        bson_append_start_object(b, rootNode->str2.c_str());
-                        compileBsonData(rootNode, b); // recurse
-                        bson_append_finish_object(b);
-                    }
-                }
-                break;
-        
-            case kTokenDataFloatLiteral:
-                ASSEMBLER_TRACE(kTokenDataFloatLiteral);
-                {
-                    float val = atof(rootNode->str2.c_str());
-                    bson_append_double(b, rootNode->str2.c_str(), val);
-                }
-                break;
-                
-            case kTokenDataIntLiteral:
-                ASSEMBLER_TRACE(kTokenDataIntLiteral);
-                {
-                    int val = atoi(rootNode->str2.c_str());
-                    bson_append_int(b, rootNode->str2.c_str(), val);
-                }
-                break;
-                
-            case kTokenDataNullLiteral:
-                ASSEMBLER_TRACE(kTokenDataNullLiteral);
-                {
-                    bson_append_null(b, rootNode->str2.c_str());
-                }
-                break;
-        
-            case kTokenDataStringLiteral:
-                ASSEMBLER_TRACE(kTokenDataStringLiteral);
-                {
-                    bson_append_string(b, rootNode->str2.c_str(), rootNode->str1.c_str());
-                }
-                break;
-                
-            default:
-                break;
-        }
-    }
-    
-    void addGlobalRequire(const char* name, const char* module)
-    {
-        requires[name] = module;
-    }
-    
-    void addGlobalBson(const char* name, bson* b)
-    {
-        globals[name] = b;
-    }
-    
-    void compileGlobalVariable(Landru::ASTNode* rootNode)
-    {
-        using namespace Landru;
-        ASTConstIter kind = rootNode->children.begin();
-        if ((*kind)->token == kTokenRequire) {
-            addGlobalRequire(rootNode->str2.c_str(), (*kind)->str2.c_str());
-        }
-        else {
-            addGlobalBson(rootNode->str2.c_str(), compileBson(*kind));
-        }
-    }
-
-    void compileMachine(Landru::ASTNode* rootNode)
-    {
-        Landru::Assembler a(&globals, &requires);
-        a.assemble(rootNode);
-        exemplars.push_back(a.exemplars.front());
-    }
-    
-    void compile(Landru::ASTNode* programNode)
-    {
-        using namespace Landru;
-        for (ASTConstIter i = programNode->children.begin(); i != programNode->children.end(); ++i) {
-            if ((*i)->token == kTokenGlobalVariable)
-                compileGlobalVariable(*i);
-            else if ((*i)->token == kTokenMachine)
-                compileMachine(*i);
-        }
-    }
-
-    void copyToRuntime(Landru::Engine* e, std::vector<std::pair<std::string, Json::Value*> >* jsonVars)
-    {
-        for (std::map<std::string, std::string>::const_iterator i = requires.begin(); i != requires.end(); ++i) {
-            e->AddGlobal(i->first.c_str(), i->second.c_str());
-        }
-        
-        for (std::vector<std::pair<std::string, Json::Value*> >::iterator i = jsonVars->begin(); i != jsonVars->end(); ++i) {
-            Landru::VarObjPtr* vp = Landru::JsonVarObj::createJson(e->varPool(), i->first.c_str()); // add strong ref count
-            Landru::JsonVarObj* jvo = (Landru::JsonVarObj*) vp->vo;
-            jvo->setJson(i->second);
-            e->AddGlobal(i->first.c_str(), vp);
-            e->varPool()->releaseStrongRef(vp); // release strong ref from creation
-        }
-        
-        Landru::MachineCache* m = e->machineCache();
-        for (std::vector<Landru::Exemplar*>::iterator i = exemplars.begin(); i != exemplars.end(); ++i) {
-            m->add(*i);
-        }
-    }
-    
-private:
-    std::map<std::string, std::string> requires;
-    std::map<std::string, bson*> globals;
-    std::vector<Landru::Exemplar*> exemplars;
-    
-    // temp for bson parsing
-    std::vector<int> bsonArrayNesting;
-    int bsonCurrArrayIndex;
-
-}; // CompilationContext
 
 EXTERNC void landruAssembleProgram(void* rootNode)
 {    

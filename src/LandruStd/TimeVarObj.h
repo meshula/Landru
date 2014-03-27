@@ -29,7 +29,7 @@ namespace Landru {
         struct TimeFunctor;
         
     public:
-        TimeEngine(VarPool*);
+        TimeEngine();
         
         // this update is called from updateQueues in Continuation.cpp
 		virtual void update(Engine* engine, float elapsedTime);

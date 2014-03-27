@@ -15,14 +15,12 @@ namespace Landru {
     
     struct TimeEngine::TimeFunctor
     {
-        VarPool* v;
-        std::vector<VarObjPtr*> runners;
+        std::vector<std::shared_ptr<Fiber>> runners;
         std::vector<int> pc;
         std::vector<Continuation*> continuations;
         
-        TimeFunctor(VarPool* v) 
-        : v(v)
-        , elapsedTime(0) { }
+        TimeFunctor()
+        : elapsedTime(0) { }
         
         // all items that have expired are pushed onto the runners pile
         bool apply(Continuation* curr)
@@ -30,9 +28,8 @@ namespace Landru {
             if (elapsedTime < curr->expiry())
                 return true; // keep processing the list
 
-            VarObjPtr* vop = curr->fiber();
-            if (vop && vop->vo) {
-                v->addStrongRef(vop);
+            std::shared_ptr<Fiber> vop = curr->fiber();
+            if (vop) {
                 runners.push_back(vop);
                 pc.push_back(curr->pc());
                 continuations.push_back(curr);
@@ -53,14 +50,14 @@ namespace Landru {
         float t;
     };
     
-    TimeEngine::TimeEngine(VarPool* v)
-    : ContinuationList("time", v, 1024, true) // true because ordered
+    TimeEngine::TimeEngine()
+    : ContinuationList("time", 1024, true) // true because ordered
     {
     }
         
     void TimeEngine::update(Engine* engine, float elapsedTime)
     {
-        TimeFunctor checkForRunners(_varPool);
+        TimeFunctor checkForRunners;
         checkForRunners.elapsedTime = elapsedTime;
         foreach(checkForRunners);
 
@@ -68,22 +65,20 @@ namespace Landru {
         fc.t = elapsedTime;
         expireConditional(fc);
         
+        std::shared_ptr<LStack> stack = std::make_shared<LStack>();
         for (size_t i = 0; i < checkForRunners.runners.size(); ++i) {
             // refs were incremented above
-            LStack* stack = LStackGetFromPool(1024);
-            Fiber* f = (Fiber*) checkForRunners.runners[i]->vo;
-            VarObjArray exeStack("timeEngineExeStack");
+            std::shared_ptr<Fiber> f = checkForRunners.runners[i];
+            std::vector<std::shared_ptr<Fiber>> exeStack;
             f->Run(engine,
                    checkForRunners.runners[i],
                    elapsedTime,
                    checkForRunners.pc[i],
-                   stack,
+                   stack.get(),
                    checkForRunners.continuations[i],
-                   &exeStack, 0);
-            LStackReleaseToPool(stack, (LVarPool*) _varPool);
+                   exeStack, 0);
+            stack->clear();
         }
-        for (size_t i = 0; i < checkForRunners.runners.size(); ++i)
-            _varPool->releaseStrongRef(checkForRunners.runners[i]);
 
         checkForRunners.runners.clear();
         checkForRunners.pc.clear();
@@ -101,15 +96,14 @@ namespace Landru {
      
     LANDRU_DECL_FN(TimeVarObj, after)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
         float dt = voa->getReal(-1);
         if (dt != FLT_MAX)
         {
             int recurrances = 0;
             p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
-                                                                 p->self, p->stack,
+                                                                 p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC,
                                                                  recurrances, dt);
@@ -118,16 +112,15 @@ namespace Landru {
 
     LANDRU_DECL_FN(TimeVarObj, every)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
         float dt = voa->getReal(-1);
 
         if (dt != FLT_MAX)
         {
             int recurrances = -1;
             p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
-                                                                 p->self, p->stack,
+                                                                 p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);
         }
@@ -135,16 +128,15 @@ namespace Landru {
     
     LANDRU_DECL_FN(TimeVarObj, recur)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
         float dt = voa->getReal(-2);
         int recurrances = voa->getInt(-1);
 
         if (dt != FLT_MAX)
         {
             p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
-                                                                 p->self, p->stack,
+                                                                 p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);
         }
