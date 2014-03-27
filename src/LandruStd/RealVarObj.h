@@ -18,7 +18,6 @@ namespace Landru
         virtual void Update(float /*elapsedTime*/) { }
         VAROBJ_FACTORY(real, RealVarObj)
 
-        static VarObjPtr* createReal(VarPool* v, int value);
         float value() const { return v; }
         void set(float val) { v = val; }
 
