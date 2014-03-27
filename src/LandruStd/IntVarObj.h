@@ -18,7 +18,7 @@ namespace Landru
         virtual void Update(float /*elapsedTime*/) { }
         VAROBJ_FACTORY(int, IntVarObj)
 
-        static VarObjPtr* createInt(VarPool* v, int value);
+        static std::unique_ptr<VarObj> createInt(int value);
         int value() const { return v; }
         void set(int val) { v = val; }
         

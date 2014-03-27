@@ -27,11 +27,11 @@ namespace Landru {
 	
     LANDRU_DECL_FN(ColorVarObj, mode)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
-        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1)->vo);
+        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1).lock().get());
         if (!svo)
             return;
         
@@ -47,18 +47,16 @@ namespace Landru {
 	
     LANDRU_DECL_FN(ColorVarObj, getInt)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        p->stack->pop();
 
         pushInt(p, (int) o->c);
     }
 	
     LANDRU_DECL_FN(ColorVarObj, getV1f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        p->stack->pop();
 
 		float Y = 0.3f * o->r + 0.59f * o->g + 0.11f * o->b;
         pushReal(p, Y);
@@ -66,9 +64,8 @@ namespace Landru {
 	
     LANDRU_DECL_FN(ColorVarObj, getV2f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        p->stack->pop();
 
         pushReal(p, o->a);
 		float Y = 0.3f * o->r + 0.59f * o->g + 0.11f * o->b;
@@ -77,9 +74,8 @@ namespace Landru {
 	
     LANDRU_DECL_FN(ColorVarObj, getV3f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        p->stack->pop();
 
         pushReal(p, o->b);
         pushReal(p, o->g);
@@ -88,9 +84,8 @@ namespace Landru {
 	
     LANDRU_DECL_FN(ColorVarObj, getV4f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        p->stack->pop();
 
         pushReal(p, o->a);
         pushReal(p, o->b);
@@ -100,10 +95,10 @@ namespace Landru {
 	
 	LANDRU_DECL_FN(ColorVarObj, setInt)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		unsigned int c = (unsigned int) voa->getInt(-1);
 		o->c = c;
 		o->a = (1.0f / 255.0f) * (float(c & 0xff));
@@ -117,9 +112,9 @@ namespace Landru {
 	
 	LANDRU_DECL_FN(ColorVarObj, setV1f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
 		float c = voa->getReal(-1);
         
@@ -131,10 +126,10 @@ namespace Landru {
 	
 	LANDRU_DECL_FN(ColorVarObj, setV2f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
 		o->a = voa->getReal(-1);
 		float c = voa->getReal(-2);
         
@@ -145,9 +140,9 @@ namespace Landru {
 	
 	LANDRU_DECL_FN(ColorVarObj, setV3f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
 		o->a = 1.0f;
         o->b = voa->getReal(-1);
@@ -162,9 +157,9 @@ namespace Landru {
 	
 	LANDRU_DECL_FN(ColorVarObj, setV4f)
     {
-		ColorVarObj* o = (ColorVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+		ColorVarObj* o = (ColorVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
 		o->a = voa->getReal(-1);
         o->b = voa->getReal(-2);

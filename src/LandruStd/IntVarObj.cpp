@@ -23,19 +23,19 @@ namespace Landru {
     
     LANDRU_DECL_FN(IntVarObj, add)
     {
-        IntVarObj* o = (IntVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
+        IntVarObj* o = (IntVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
 
         o->v += voa->getInt(-1);
     }
     
     LANDRU_DECL_FN(IntVarObj, set)
     {
-        IntVarObj* o = (IntVarObj*) p->vo;
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        IntVarObj* o = (IntVarObj*) p->vo.get();
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
         o->v = voa->getInt(-1);
     }
 

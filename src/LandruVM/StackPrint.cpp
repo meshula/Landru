@@ -8,21 +8,23 @@
 #include <string.h>
 #include <stdio.h>
 
+using namespace Landru;
+
 void stackPrint(LStack* s)
 {
     printf("+------------------------------------+\n");
     printf("| Depth: %03d                       |\n", s->voa->size());
     printf("+------------------------------------+\n");
     for (int i = s->voa->size() - 1; i >=0; --i) {
-        Landru::VarObjPtr* vop = (Landru::VarObjPtr*) LStackVarObjAt(s, i);
+        std::shared_ptr<VarObj> vop = LStackVarObjAt(s, i).lock();
         if (!vop)
             printf(">--- Param mark ----->\n");
-        else if (vop->vo->TypeId() == Landru::StringVarObj::StaticTypeId()) {
-            Landru::StringVarObj* svo = (Landru::StringVarObj*) vop->vo;
+        else if (vop->TypeId() == Landru::StringVarObj::StaticTypeId()) {
+            Landru::StringVarObj* svo = (Landru::StringVarObj*) vop.get();
             printf("\"%s\"\n", svo->getCstr());
         }
         else
-            printf("%s: %s\n", vop->vo->TypeName(), vop->vo->name());
+            printf("%s: %s\n", vop->TypeName(), vop->name());
     }
     printf("+-------------------------------------\n");
 }

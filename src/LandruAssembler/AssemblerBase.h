@@ -27,7 +27,6 @@ namespace Landru
 		virtual ~AssemblerBase() { }
 		
 		virtual void callFunction(const char* fnName) = 0;
-		virtual void callDynamicFunction(const char* fnName) = 0;
 		virtual void pushStringConstant(const char* str) = 0;
 		virtual void pushVarIndex(const char* varName) = 0;
 		virtual void pushGlobalVarIndex(const char* varName) = 0;
@@ -54,7 +53,7 @@ namespace Landru
         virtual void forEach() = 0;
 		virtual void onMessage() = 0;
 		virtual void onTick() = 0;
-		virtual void onLibEvent(const char* libEventName) = 0;
+        virtual void getRequire(int i) = 0;
 		virtual int  gotoAddr() = 0;	// returns address to patch
 		virtual void gotoAddr(int) = 0; // use when destination address is already known
 		virtual void gotoState(const char* stateName) = 0;
@@ -78,6 +77,10 @@ namespace Landru
 		virtual void _addVariable(const char* name, const char* type, bool shared) = 0;
         virtual bool isGlobalVariable(const char* name) = 0;
         virtual bool isSharedVariable(const char* name) = 0;
+
+        // requires
+        virtual bool isRequire(const char* name) = 0;
+        virtual int  requireIndex(const char* name) = 0;
 
 		// states
 		virtual void _addState(const char* name) = 0;

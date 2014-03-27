@@ -16,8 +16,6 @@
 #include <vector>
 #include <set>
 
-typedef struct LStack LStack;
-
 namespace Landru
 {
     struct FnEntry
@@ -28,11 +26,10 @@ namespace Landru
 
     struct FnRuntime
     {
-        VarObjWeakRef* ref;
+        std::weak_ptr<VarObj> ref;
         VarObj::FuncPtr fn;
     };
 	
-	class VarPool;
     class Engine;
     class Continuation;
 
@@ -43,9 +40,8 @@ namespace Landru
 
     class Fiber : public VarObj
 	{
-        // Fibers can only be created from the varpool, by the factory.
-        // ctor/dtor private to prevent subclassing.
-        
+	public:
+
         Fiber(const char* name)
         : VarObj(name, &functions)
         , mce(0), _suspendedPC(0)
@@ -54,7 +50,6 @@ namespace Landru
 		
 		virtual ~Fiber();
 
-	public:
         VAROBJ_FACTORY(fiber, Fiber)
 
         enum RunEndCondition
@@ -64,60 +59,57 @@ namespace Landru
             kStateSuspend,
         };
 		
-		RunEndCondition Run(Engine*, VarObjPtr* self, float elapsedTime,
-                            int pc, LStack*, Continuation* continuationContext, VarObjArray* exeStack, VarObjArray* locals);
+		RunEndCondition Run(Engine*, std::shared_ptr<Fiber>self, float elapsedTime,
+                            int pc, LStack*, Continuation* continuationContext,
+                            std::vector<std::shared_ptr<Fiber>>& exeStack, VarObjArray* locals);
 
-        void Create(VarPool* varpool, int maxStackDepth, int maxVars, VarObjPtr* self, const MachineCacheEntry* mce_);
+        void Create(VarObjFactory*, int maxStackDepth, int maxVars, std::shared_ptr<MachineCacheEntry> mce_);
 
-        const char*     ExemplarName() const { return mce->exemplar->nameStr; }
-        int             EntryPoint() const { return mce->exemplar->stateTable[mce->exemplar->stateIndex("main")]; }
+        const char*     ExemplarName() const { return mce ? mce->exemplar->nameStr : 0; }
+        int             EntryPoint() const { return mce ? mce->exemplar->stateTable[mce->exemplar->stateIndex("main")] : -1; }
 
-		virtual VarObjPtr* GetVar(int index)
+		virtual std::weak_ptr<VarObj> GetVar(int index)
 		{
-			if (index >= mce->exemplar->varCount)
-                return _vars->varObj(mce, index - mce->exemplar->varCount);
-			else
-				return _vars->varObj(this, index);
+			if (mce && index >= mce->exemplar->varCount)
+                return mce->vars[index - index - mce->exemplar->varCount];
+			else if (_vars)
+                return _vars->get(index);
+            return std::weak_ptr<VarObj>();
 		}
-        
-        virtual VarObjPtr* GetSharedVar(int index)
+
+        virtual std::weak_ptr<VarObj> GetSharedVar(int index)
         {
-            return _vars->varObj(mce, index);
+            return mce->vars[index];
         }
 
-        static VarObjPtr* MainFiber() { return main; }
-        static void SetMainFiber(VarObjPtr* f) { main = f; }
-        static std::set<Fiber*>& ActiveFibers();
-		
 	private:
+        /*
         static int findFunction(FnRuntime* result,
-                                VarObjPtr* self, 
+                                std::shared_ptr<Fiber> self,
                                 Engine* engine, const char* funcName);
 
-        static int findFunctionS(VarObjPtr* self, 
+        static int findFunctionS(VarObj* self,
                                 Engine* engine, const char* funcName, 
-                                VarObjPtr** libObj);
+                                VarObj** libObj);
 
         // recursive helper function where the first argument is the fiber to run
-        static int findFunctionR(VarObjPtr* self, 
+        static int findFunctionR(VarObj* self,
                                  Engine* engine,
                                  std::vector<std::string>& parts,
                                  int partIndex,
-                                 VarObjPtr** libObj);
+                                 VarObj** libObj);
 
         // recursive helper function where the fiber can't change, just recursing down vars
-        static int findFunctionRV(VarObjPtr* self, 
+        static int findFunctionRV(VarObj* self,
                                   Engine* engine,
                                   std::vector<std::string>& parts, int partIndex,
-                                  VarObjPtr** libObj);
+                                  VarObj** libObj);
+*/        
+        std::shared_ptr<MachineCacheEntry> mce;   ///< Has exemplar and sharedVars
         
-        const MachineCacheEntry* mce;   ///< Has exemplar and sharedVars
-        
-        FnRuntime* resolvedFunctionArray;
-
 		int _suspendedPC;
 
-        static VarObjPtr*   main;           ///< There is only one main fiber
+        //        static VarObjPtr*   main;           ///< There is only one main fiber
         
         LANDRU_DECL_BINDING_BEGIN
             LANDRU_DECL_BINDING(add)

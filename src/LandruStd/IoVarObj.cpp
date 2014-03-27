@@ -31,14 +31,13 @@ namespace Landru {
 
     LANDRU_DECL_FN(IoVarObj, print)
 	{
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+
         int s = voa->size();
         for (int i = 0; i < s; ++i) {
-            VarObjPtr* vop = voa->get(i);
-            VarObj* vo = vop->vo;
-            
+            VarObj* vo = voa->get(i).lock().get();
+
             if (vo->TypeId() == StringVarObj::StaticTypeId()) {
                 StringVarObj* svo = (StringVarObj*) vo;
                 
@@ -68,32 +67,29 @@ namespace Landru {
 
     struct MouseEngine::MouseFunctor
     {
-        VarPool* v;
-        std::vector<VarObjPtr*> runners;
+        std::vector<std::shared_ptr<Fiber>> runners;
         std::vector<int> pc;
         std::vector<Continuation*> continuations;
         std::vector<std::pair<int, int> > coords;
         MouseEvent* event;
         MouseEngine* engine;
         
-        MouseFunctor(VarPool* v, MouseEngine* en, MouseEvent* e)
-        : v(v)
-        , event(e)
+        MouseFunctor(MouseEngine* en, MouseEvent* e)
+        : event(e)
         , engine(en)
         { }
         
         // all items that have expired are pushed onto the runners pile
         bool apply(Continuation* curr)
         {
-            VarObjPtr* cd = curr->data();
-            if ((event->kind == MouseEvent::kUp   && cd == engine->up())     ||
-                (event->kind == MouseEvent::kDown && cd == engine->down()) ||
-                (event->kind == MouseEvent::kDrag && cd == engine->drag()) ||
-                (event->kind == MouseEvent::kMove && cd == engine->move()))
+            std::shared_ptr<VarObj> cd = curr->data().lock();
+            if ((event->kind == MouseEvent::kUp   && cd == engine->up().lock())     ||
+                (event->kind == MouseEvent::kDown && cd == engine->down().lock()) ||
+                (event->kind == MouseEvent::kDrag && cd == engine->drag().lock()) ||
+                (event->kind == MouseEvent::kMove && cd == engine->move().lock()))
             {
-                VarObjPtr* vop = curr->fiber();
-                if (vop && vop->vo) {
-                    v->addStrongRef(vop);
+                std::shared_ptr<Fiber> vop = curr->fiber();
+                if (vop) {
                     runners.push_back(vop);
                     pc.push_back(curr->pc());
                     continuations.push_back(curr);
@@ -105,18 +101,13 @@ namespace Landru {
         
     };
     
-    MouseEngine::MouseEngine(VarPool* v)
-    : ContinuationList("mouse", v, 1024, false) // true because ordered
-    , vup(0), vdown(0), vdrag(0), vmove(0)
+    MouseEngine::MouseEngine()
+    : ContinuationList("mouse", 1024, false) // true because ordered
     {
     }
     
     MouseEngine::~MouseEngine()
     {
-        _varPool->releaseStrongRef(vup);
-        _varPool->releaseStrongRef(vdown);
-        _varPool->releaseStrongRef(vdrag);
-        _varPool->releaseStrongRef(vmove);
     }
     
     void MouseEngine::enqueue(int x, int y, MouseEvent::Kind k)
@@ -128,71 +119,61 @@ namespace Landru {
     {
         MouseEvent* event;
         while (events.try_pop(event)) {
-            MouseFunctor functor(_varPool, this, event);
+            MouseFunctor functor(this, event);
             foreach(functor);
         
             for (size_t i = 0; i < functor.runners.size(); ++i) {
                 // refs were incremented above
                 LStack* stack = LStackGetFromPool(1024);
-                Fiber* f = (Fiber*) functor.runners[i]->vo;
+                std::shared_ptr<Fiber> f = functor.runners[i];
                 std::pair<int, int>& xy = functor.coords[i];
 
-                Landru::VarObjArray exeStack("mouseEngineExeStack");
+                std::vector<std::shared_ptr<Fiber>> exeStack;
                 exeStack.push_back(functor.runners[i]);
                 
                 Landru::VarObjArray locals("locals");
                 
                 RealVarObj* vo = new RealVarObj("real");
                 vo->set(xy.first);
-                VarObjPtr* vop = engine->varPool()->allocVarObjSlot(0, vo, true);
-                locals.add(vop);
+                locals.add(std::shared_ptr<VarObj>(vo));
                 vo = new RealVarObj("real");
                 vo->set(xy.second);
-                vop = engine->varPool()->allocVarObjSlot(0, vo, true);
-                locals.add(vop);
+                locals.add(std::shared_ptr<VarObj>(vo));
                 
-                f->Run(engine, functor.runners[i], elapsedTime, functor.pc[i], stack, functor.continuations[i], &exeStack, &locals);
-                LStackReleaseToPool(stack, (LVarPool*) _varPool);
+                f->Run(engine, functor.runners[i], elapsedTime, functor.pc[i], stack, functor.continuations[i], exeStack, &locals);
             }
-            for (size_t i = 0; i < functor.runners.size(); ++i)
-                _varPool->releaseStrongRef(functor.runners[i]);
-            
             delete event;
         }
     }
     
-    VarObjPtr* MouseEngine::up()
+    std::weak_ptr<IntVarObj> MouseEngine::up()
     {
         if (!vup) {
-            vup = IntVarObj::Factory(_varPool, &vup, "__mouseUpVal");
-            _varPool->addStrongRef(vup);
+            vup = std::make_shared<IntVarObj>("__mouseUpVal");
         }
         return vup;
     }
     
-    VarObjPtr* MouseEngine::down()
+    std::weak_ptr<IntVarObj> MouseEngine::down()
     {
         if (!vdown) {
-            vdown = IntVarObj::Factory(_varPool, &vdown, "__mouseDownVal");
-            _varPool->addStrongRef(vdown);
+            vdown = std::make_shared<IntVarObj>("__mouseDownVal");
         }
         return vdown;
     }
 
-    VarObjPtr* MouseEngine::drag()
+    std::weak_ptr<IntVarObj> MouseEngine::drag()
     {
         if (!vdrag) {
-            vdrag = IntVarObj::Factory(_varPool, &vdrag, "__mouseDragVal");
-            _varPool->addStrongRef(vdrag);
+            vdrag = std::make_shared<IntVarObj>("__mouseDragVal");
         }
         return vdrag;
     }
 
-    VarObjPtr* MouseEngine::move()
+    std::weak_ptr<IntVarObj> MouseEngine::move()
     {
         if (!vmove) {
-            vmove = IntVarObj::Factory(_varPool, &vmove, "__mouseMoveVal");
-            _varPool->addStrongRef(vmove);
+            vmove = std::make_shared<IntVarObj>("__mouseMoveVal");
         }
         return vmove;
     }
@@ -206,19 +187,15 @@ namespace Landru {
     {
     }
 
-    VarObjPtr* upVop = 0;
-    VarObjPtr* downVop = 0;
-    VarObjPtr* dragVop = 0;
-    VarObjPtr* moveVop = 0;
-
     // on lib mouse.up --- there is nothing on the stack
     LANDRU_DECL_FN(MouseVarObj, up)
     {
+        p->stack->pop();
         MouseEngine* me = p->engine->mouseEngine();
         me->registerContinuation(p->parentContinuation,
-                                 p->self,   // the Fiber to run on
+                                 p->f,   // the Fiber to run on
                                  p->stack,
-                                 me->up(),
+                                 me->up().lock(),
                                  p->continuationPC);    // adds strong ref to self
     }
     
@@ -226,10 +203,11 @@ namespace Landru {
     LANDRU_DECL_FN(MouseVarObj, down)
     {
         MouseEngine* me = p->engine->mouseEngine();
+        p->stack->pop();
         me->registerContinuation(p->parentContinuation,
-                                 p->self,   // the Fiber to run on
+                                 p->f,   // the Fiber to run on
                                  p->stack,
-                                 me->down(),
+                                 me->down().lock(),
                                  p->continuationPC);    // adds strong ref to self
     }
     
@@ -237,10 +215,11 @@ namespace Landru {
     LANDRU_DECL_FN(MouseVarObj, drag)
     {
         MouseEngine* me = p->engine->mouseEngine();
+        p->stack->pop();
         me->registerContinuation(p->parentContinuation,
-                                 p->self,   // the Fiber to run on
+                                 p->f,   // the Fiber to run on
                                  p->stack,
-                                 me->drag(),
+                                 me->drag().lock(),
                                  p->continuationPC);    // adds strong ref to self
     }
 
@@ -248,10 +227,11 @@ namespace Landru {
     LANDRU_DECL_FN(MouseVarObj, move)
     {
         MouseEngine* me = p->engine->mouseEngine();
+        p->stack->pop();
         me->registerContinuation(p->parentContinuation,
-                                 p->self,   // the Fiber to run on
+                                 p->f,   // the Fiber to run on
                                  p->stack,
-                                 me->move(),
+                                 me->move().lock(),
                                  p->continuationPC);    // adds strong ref to self
     }
 

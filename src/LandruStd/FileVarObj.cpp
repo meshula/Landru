@@ -43,15 +43,15 @@ namespace Landru {
 
     LANDRU_DECL_FN(FileVarObj, read)
     {
-		FileVarObj* o = (FileVarObj*) p->vo;
+		FileVarObj* o = (FileVarObj*) p->vo.get();
         if (o->detail->buffer) {
             o->detail->bufferSize = 0;
             free(o->detail->buffer);
             o->detail->buffer = 0;
         }
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1)->vo);
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+        StringVarObj* svo = dynamic_cast<StringVarObj*>(voa->get(-1).lock().get());
         char const*const filename = svo->getCstr();
         FILE* f = fopen(filename, "rb");
         if (f) {
@@ -69,7 +69,8 @@ namespace Landru {
 
     LANDRU_DECL_FN(FileVarObj, size)
     {
-		FileVarObj* o = (FileVarObj*) p->vo;
+		FileVarObj* o = (FileVarObj*) p->vo.get();
+        p->stack->pop();
         pushInt(p, o->detail->bufferSize);
     }
 

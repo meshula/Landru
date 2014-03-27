@@ -6,19 +6,20 @@
 #define LANDRU_EXEMPLAR_H
 
 #include <stdio.h>
-#include <stdint.h>
-
-#include <map>
-#include <string>
+#include <vector>
 
 namespace Landru
 {
+    class VarObj;
 
 	class Exemplar
 	{
 	public:
 		Exemplar();
 		~Exemplar();
+
+        // once an exemplar has been instantiated the vars will be here.
+        std::vector<std::shared_ptr<VarObj>> vars;
 		
 		void            copy(Exemplar*);
 		void            disassemble(FILE* output);

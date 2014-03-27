@@ -4,4 +4,6 @@
 
 #pragma once
 
-void init_LandruStd();
+namespace Landru { class VarObjFactory; }
+
+void init_LandruStd(Landru::VarObjFactory*);

@@ -22,6 +22,8 @@
 
 namespace Landru
 {
+
+    using namespace std;
 	
 	class Engine::Detail
 	{
@@ -43,12 +45,13 @@ namespace Landru
 		~Detail()
 		{
 		}
-				
-        VarPool* vars;
+
 		float currentElapsedTime;
 
-        std::map<std::string, VarObjPtr*> globals;
-        std::vector<VarObjPtr*> globalIndices;
+        map<string, shared_ptr<VarObj>> globals;
+        vector<shared_ptr<VarObj>> requires;
+
+        VarObjFactory factory;
 		
 //		TickQueue*		tickQueue;
 //		MessageQueue*	messageQueue;
@@ -59,20 +62,15 @@ namespace Landru
 	Engine::Engine(const char* name)
     : VarObj(name, &functions)
     , detail(new Detail(this))
-    , _self(0)
 	{
-        _vars = new VarPool(8192);
-        _vars->allocVarObjSlot(this, this, true);
-        detail->vars = _vars;
-        
         // these should maybe specified externally
-        _timeEngine = new TimeEngine(_vars);
+        _timeEngine = new TimeEngine();
         addContinuationList(_timeEngine);
-        _mouseEngine = new MouseEngine(_vars);
+        _mouseEngine = new MouseEngine();
         addContinuationList(_mouseEngine);
         _collisionEngine = 0;
 
-        _machineCache = new MachineCache(_vars);
+        _machineCache = new MachineCache();
         AddFunction("debugBreak", debugBreak);
 	}
 
@@ -128,7 +126,8 @@ namespace Landru
 
     void Engine::RegisterOnMessage(Fiber* f, LStack* stack, int pc)
     {
-        const char* messageString = f->TopString(stack); LStackPop(stack);
+        const char* messageString = f->TopString(stack);
+        stack->pop();
 		detail->messageQueue->registerContinuation(f, stack, messageString, pc);
     }
 #endif
@@ -137,7 +136,7 @@ namespace Landru
     // Fibers
 
 		
-    void Engine::ClearContinuations(Landru::VarObjPtr* vop)
+    void Engine::ClearContinuations(std::shared_ptr<Fiber> vop)
     {
         ClearQueues(vop);
         _timeEngine->clearContinuation(vop);
@@ -146,81 +145,73 @@ namespace Landru
     //---------------------------------------------
     // Globals
 
+    VarObjFactory* Engine::factory() const {
+        return &detail->factory;
+    }
+
     void Engine::AddGlobal(const char* name, const char* lib)
     { 
         if (!name || !lib)
             return;
         
-        std::map<std::string, VarObjPtr*>::iterator i = detail->globals.find(name);
-        if (i != detail->globals.end())
+        if (detail->globals.find(name) != detail->globals.end())
             return;
 
         // manufacture a global using the factory
-        VarObjPtr* v = VarObj::Factory(_vars, this, detail->globalIndices.size(), lib, name);
-        AddGlobal(name, v);
+        std::unique_ptr<VarObj> v = detail->factory.make(lib, name);
+        if (v)
+            AddGlobal(name, std::move(v));
     }
-    
-    void Engine::AddGlobal(const char* name, VarObjPtr* v)
+
+    void Engine::AddRequire(const char* lib, int index) {
+        if (detail->requires.size() <= index)
+            detail->requires.resize(index*2+1);
+        detail->requires[index] = detail->factory.make(lib, lib);
+    }
+
+    std::shared_ptr<VarObj> Engine::Require(int index) {
+        if (index >= detail->requires.size())
+            return std::shared_ptr<VarObj>();
+        return detail->requires[index];
+    }
+
+
+    void Engine::AddGlobal(const char* name, std::shared_ptr<VarObj> v)
     { 
         if (!name || !v)
             return;
         
-        std::map<std::string, VarObjPtr*>::iterator i = detail->globals.find(name);
+        std::map<std::string, std::shared_ptr<VarObj>>::iterator i = detail->globals.find(name);
         if (i != detail->globals.end())
             return;
         
-        _vars->addStrongRef(v);
         detail->globals[name] = v;
-        detail->globalIndices.push_back(v);
     }
     
-    VarObjPtr* Engine::Global(const char* name)
+    std::weak_ptr<VarObj> Engine::Global(const char* name)
     {
-        std::map<std::string, VarObjPtr*>::iterator i = detail->globals.find(name);
+        std::map<std::string, std::shared_ptr<VarObj>>::iterator i = detail->globals.find(name);
         if (i == detail->globals.end()) {
-            return 0;
+            return std::weak_ptr<VarObj>();
         }
         return i->second;
     }
-    
-    int Engine::GlobalIndex(const char* name)
-    {
-        std::map<std::string, VarObjPtr*>::iterator i = detail->globals.find(name);
-        if (i == detail->globals.end())
-            return -1;
-        int k = 0;
-        for (std::vector<VarObjPtr*>::const_iterator j = detail->globalIndices.begin(); j != detail->globalIndices.end(); ++j, ++k)
-            if ((*j) == i->second)
-                return k;
-        
-        return -1;
-    }
-    
-    VarObjPtr* Engine::Global(int i)
-    {
-        if (i >= detail->globalIndices.size())
-            return 0;
-        return detail->globalIndices[i];
-    }
-    
+
     //---------------------------------------------
     // Run
 
     
     void Engine::RunScript(const char* machineName)
     {
-        const MachineCacheEntry* mce = _machineCache->findExemplar(machineName);
-        if (mce)
-        {
-            static int uniqueId = 0;
-            VarObjStrongRef vop(Fiber::Factory(_vars, this, ++uniqueId, machineName));
-            Fiber* f = (Fiber*) vop.vo->vo;
-            AddGlobal(machineName, vop.vo);
-            f->Create(_vars, MAX_STACK_DEPTH, MAX_VARS, vop.vo, mce);
-            LStack* stack = LStackGetFromPool(1024);
-            VarObjArray exeStack("exeStack");
-            f->Run(this, vop.vo, detail->currentElapsedTime, f->EntryPoint(), stack, 0, &exeStack, 0);
-            LStackReleaseToPool(stack, (LVarPool*) _vars);
+        std::shared_ptr<MachineCacheEntry> mce = _machineCache->findExemplar(machineName);
+        if (mce) {
+            std::shared_ptr<Fiber> vop = std::make_shared<Fiber>(machineName);
+            Fiber* f = (Fiber*) vop.get();
+            AddGlobal(machineName, vop);
+            f->Create(factory(), MAX_STACK_DEPTH, MAX_VARS, mce);
+            std::shared_ptr<LStack> stack = std::make_shared<LStack>();
+            std::vector<std::shared_ptr<Fiber>> exeStack;
+            f->Run(this, vop, detail->currentElapsedTime, f->EntryPoint(), stack.get(), 0, exeStack, 0);
         }
     }
     
@@ -261,8 +252,7 @@ EXTERNC void* landruCreateEngine(char const*const workingDir)
 
 EXTERNC void landruDestroyEngine(void* e)
 {
-    Landru::VarObjPtr* vop = (Landru::VarObjPtr*) e;
-    Landru::Engine* engine = dynamic_cast<Landru::Engine*>(vop->vo);
+    Landru::Engine* engine = reinterpret_cast<Landru::Engine*>(e);
     delete engine;
 }
 

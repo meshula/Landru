@@ -66,33 +66,29 @@ void AssemblerBase::assembleNode(ASTNode* root)
             }
             break;
             
-        case kTokenEq:		ASSEMBLER_TRACE(kTokenEq);     assembleStatements(root); ifEq();		break;
-        case kTokenLte0:	ASSEMBLER_TRACE(kTokenLte0);   assembleStatements(root); ifLte0();	break;
-        case kTokenGte0:	ASSEMBLER_TRACE(kTokenGte0);   assembleStatements(root); ifGte0();	break;
+        case kTokenEq:		ASSEMBLER_TRACE(kTokenEq);     assembleStatements(root); ifEq();      break;
+        case kTokenLte0:	ASSEMBLER_TRACE(kTokenLte0);   assembleStatements(root); ifLte0();    break;
+        case kTokenGte0:	ASSEMBLER_TRACE(kTokenGte0);   assembleStatements(root); ifGte0();    break;
         case kTokenLt0:		ASSEMBLER_TRACE(kTokenLt0);    assembleStatements(root); ifLt0();     break;
         case kTokenGt0:		ASSEMBLER_TRACE(kTokenGt0);    assembleStatements(root); ifGt0();     break;
         case kTokenEq0:		ASSEMBLER_TRACE(kTokenEq0);    assembleStatements(root); ifEq0();     break;
-        case kTokenNotEq0:	ASSEMBLER_TRACE(kTokenNotEq0); assembleStatements(root); ifNotEq0();	break;
+        case kTokenNotEq0:	ASSEMBLER_TRACE(kTokenNotEq0); assembleStatements(root); ifNotEq0();  break;
             
         case kTokenParameters:
             ASSEMBLER_TRACE(kTokenParameters);
             paramsStart();
-            assembleStatements(root);	// run through all children
+            assembleStatements(root);           // recursively assemble the code for everything that was between parens
             paramsEnd();
             break;
-            
+
+        case kTokenLibEvent:
+            ASSEMBLER_TRACE(kTokenLibEvent);
         case kTokenFunction:
             ASSEMBLER_TRACE(kTokenFunction);
-            assembleStatements(root);	// parameters
+            assembleStatements(root);           // recursively assemble the code for all the function arguments
             callFunction(root->str2.c_str());
             break;
-            
-        case kTokenDynamicFunction:
-            ASSEMBLER_TRACE(kTokenDynamicFunction);
-            assembleStatements(root);	// parameters
-            callDynamicFunction(root->str2.c_str());
-            break;
-            
+                        
         case kTokenDotChain:
             ASSEMBLER_TRACE(kTokenDotChain);
             dotChain();
@@ -149,6 +145,9 @@ void AssemblerBase::assembleNode(ASTNode* root)
                 const char* name = root->str2.c_str(); // name
                 if (isLocalParam(root->str2.c_str())) {
                     getLocalParam(localParamIndex(name)); // push local parameter op (with embedded index)
+                }
+                else if (isRequire(name)) {
+                    getRequire(requireIndex(name));
                 }
                 else if (isGlobalVariable(name)) {
                     pushGlobalVarIndex(name);	// actually pushes string index
@@ -217,16 +216,7 @@ void AssemblerBase::assembleNode(ASTNode* root)
             }
             break;
             
-        case kTokenLibEvent:
-            ASSEMBLER_TRACE(kTokenLibEvent);
-            {
-                ASTConstIter j = root->children.begin();
-                if (j != root->children.end())
-                    assembleNode(*j); // qualifier/parameters
-                onLibEvent(root->str2.c_str());
-            }
-            break;
-            
+
         case kTokenFor:
             ASSEMBLER_TRACE(kTokenFor);
             {

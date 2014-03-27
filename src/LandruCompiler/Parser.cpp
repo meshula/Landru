@@ -1010,7 +1010,7 @@ void parseFunction(CurrPtr& curr, EndPtr end, TokenId token)
     if (peekChar(curr, end) == '.') {
         ++curr;
         currNode->addChild(new ASTNode(kTokenDotChain, buff));
-        parseFunction(curr, end, kTokenDynamicFunction);
+        parseFunction(curr, end, kTokenFunction);
     }    
 }
 

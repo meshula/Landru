@@ -12,12 +12,10 @@ namespace Landru {
     
 	class JsonVarObj : public Landru::VarObj
     {
+    public:
         JsonVarObj(const char* name);
         virtual ~JsonVarObj();
-    public:
-        
-        static VarObjPtr* createJson(VarPool*, const char* name);
-        
+
         //virtual void Update(float elapsedTime)
 		//{
 		//}

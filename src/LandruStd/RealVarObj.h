@@ -18,6 +18,7 @@ namespace Landru
         virtual void Update(float /*elapsedTime*/) { }
         VAROBJ_FACTORY(real, RealVarObj)
 
+        static std::unique_ptr<VarObj> createReal(int value);
         float value() const { return v; }
         void set(float val) { v = val; }
 

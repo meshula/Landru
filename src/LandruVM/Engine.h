@@ -19,8 +19,6 @@ EXTERNC void  landruUpdate(void* engine, float dt);
 
 #ifdef __cplusplus
 
-typedef struct LStack LStack;
-
 #include "LandruVM/VarObj.h"
 #include <vector>
 
@@ -30,9 +28,9 @@ namespace Landru
 	class Exemplar;
 	class Fiber;
     class MachineCache;
+    class VarObjFactory;
     class MouseEngine;
     class TimeEngine;
-    class VarPool;
 
 	class Engine : public VarObj
 	{		
@@ -47,9 +45,7 @@ namespace Landru
 		void Update(float dt);
 		
         void RunScript(const char* machineName);
-        
-        VarObjPtr* self() const { return _self; }
-		
+
 		//----------------------------------------------------------------------
 //		void	RegisterOnMessage(Fiber* f, LStack*, int pc); // message string must be on top of stack
 //		void	SendMessageToAll(const char* machineType, const char* message);
@@ -58,17 +54,19 @@ namespace Landru
 		//----------------------------------------------------------------------
 //        void    RegisterTick(Fiber*, int pc);
 
-        void    ClearContinuations(VarObjPtr* fiber);
+        void    ClearContinuations(std::shared_ptr<Fiber> fiber);
 
         void       AddGlobal(const char* name, const char* lib);
-        void       AddGlobal(const char* name, VarObjPtr*);
-        VarObjPtr* Global(const char* name);
-        VarObjPtr* Global(int i);
-        int        GlobalIndex(const char* name);
-                
+        void       AddGlobal(const char* name, std::shared_ptr<VarObj>);
+        std::weak_ptr<VarObj> Global(const char* name);
+
+        void AddRequire(const char* lib, int index);
+        std::shared_ptr<VarObj> Require(int index);
+
 		///int		CountRefs(Fiber* f);
         
         MachineCache* machineCache() const { return _machineCache; }
+        VarObjFactory* factory() const;
         
         void addContinuationList(ContinuationList*);
         ContinuationList* continuationList(const char* name) const;
@@ -79,8 +77,6 @@ namespace Landru
         MouseEngine* mouseEngine() const { return _mouseEngine; }
         
         float elapsedTime() const;
-        
-        LVarPool* lvarPool() const { return (LVarPool*) _vars; }
         
         FnTable functions;
         
@@ -102,8 +98,6 @@ namespace Landru
         TimeEngine* _timeEngine;
         ContinuationList* _collisionEngine;
         MouseEngine* _mouseEngine;
-        
-        VarObjPtr* _self;
         
 		Detail* detail;
 	};

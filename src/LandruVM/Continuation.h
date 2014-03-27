@@ -22,9 +22,8 @@ namespace Landru
     class Continuation
     {
     public:
-        Continuation(VarPool* v, Continuation* parent, ContinuationList* l)
+        Continuation(Continuation* parent, ContinuationList* l)
         : _f(0)
-        , _varPool(v)
         , _parent(parent)
         , _progCounter(0)
         , _recurrances(0)
@@ -41,18 +40,15 @@ namespace Landru
 
     public:
 
-        VarObjPtr* fiber() const { return _f; }
-        void data(VarObjPtr* d) { _data = d; }
-        VarObjPtr* data() const { return _data; }
+        std::shared_ptr<Fiber> fiber() const { return _f; }
+        void data(std::shared_ptr<VarObj> d) { _data = d; }
+        std::weak_ptr<VarObj> data() const { return _data; }
         int pc() const { return _progCounter; }
-        VarPool* varPool() const { return _varPool; }
         float expiry() const { return _expiry; }
 
-        void allocate(VarObjPtr* f, LStack* s, int pc)
+        void allocate(std::shared_ptr<Fiber> f, LStack* s, int pc)
         {
             deallocate();
-            _varPool->addStrongRef(f);
-            
             _f = f;
             _progCounter = pc;
         }
@@ -60,9 +56,8 @@ namespace Landru
         void deallocate();
         
     protected:
-        VarObjPtr*          _f;
-        VarObjPtr*          _data;
-        VarPool*            _varPool;
+        std::shared_ptr<Fiber> _f;
+        std::shared_ptr<VarObj> _data;
         Continuation*       _parent;
         int                 _progCounter;
         int                 _recurrances;
@@ -80,9 +75,8 @@ namespace Landru
     class ContinuationList
     {
     public:
-        ContinuationList(const char* cname, VarPool* v, int maxItems, bool ordered)
+        ContinuationList(const char* cname, int maxItems, bool ordered)
         : _name(cname)
-        , _varPool(v)
         , _maxItems(maxItems)
         , _ordered(ordered)
         {
@@ -115,8 +109,9 @@ namespace Landru
             while (i != _continuations.end()) {
                 Continuation* a = *i;
                 if (f.expire(a)) {
-                    VarObjPtr* f = a->_f;
-                    if (!f->vo) {
+                    std::shared_ptr<Fiber> f = a->_f;
+                    if (!f) {
+                        /// @TODO should continuations be weak pointers?
                         // don't re-enqueue if there are only weak references remaining
                         a->deallocate();
                         i = _continuations.erase(i);
@@ -169,26 +164,26 @@ namespace Landru
 */
         
         Continuation* registerContinuation(Continuation* parent,
-                                           VarObjPtr* f, LStack* s,
-                                           VarObjPtr* data,
+                                           std::shared_ptr<Fiber> f,
+                                           LStack* s,
+                                           std::shared_ptr<VarObj> data,
                                            int pc)
         {
-            Continuation* retval = new Continuation(_varPool, parent, this);
+            Continuation* retval = new Continuation(parent, this);
             retval->allocate(f, s, pc);
             retval->data(data);
             if (parent)
                 parent->_children.push_back(retval);
             _continuations.push_back(retval);
-            _varPool->addStrongRef(f);
             return retval;
         }
         
         Continuation* registerOrderedContinuation(Continuation* parent,
-                                                  VarObjPtr* f, LStack* s,
+                                                  std::shared_ptr<Fiber> f, LStack* s,
                                                   float expiry, int pc, int recurrances,
                                                   float dt)
         {
-            Continuation* retval = new Continuation(_varPool, parent, this);
+            Continuation* retval = new Continuation(parent, this);
             retval->allocate(f, s, pc);
             retval->_expiry = expiry;
             retval->_recurrances = recurrances;
@@ -196,12 +191,11 @@ namespace Landru
             if (parent)
                 parent->_children.push_back(retval);
             _continuations.push_back(retval);       // TODO, sort and optimize expiry
-            _varPool->addStrongRef(f);
             return retval;
         }
         
         // clear all continuations referencing vop
-	    void clearContinuation(VarObjPtr* vop)
+	    void clearContinuation(std::shared_ptr<Fiber> vop)
 	    {
             auto i = _continuations.begin();
             while (i != _continuations.end()) {
@@ -239,7 +233,6 @@ namespace Landru
     protected:
         std::string _name;
         int _maxItems;
-        VarPool* _varPool;
         bool _ordered;
         
         std::vector<Continuation*> _continuations;
@@ -250,7 +243,7 @@ namespace Landru
     void              QueueDeregister(ContinuationList*);
 	void		      QueueRegister(ContinuationList*, const char* type, const char* eventName);
 	void		      UpdateQueues(Engine*, float elapsedTime);
-	void		      ClearQueues(VarObjPtr* fiber);    
+	void		      ClearQueues(std::shared_ptr<Fiber> fiber);
     
 } // Landru
 

@@ -11,15 +11,14 @@
 
 namespace Landru {
 
-    VarObjPtr* StringVarObj::createString(VarPool* v, const char* name)
+    std::unique_ptr<VarObj> StringVarObj::createString(const char* name)
     {
-        return createString(v, name, "");
+        return createString(name, "");
     }
     
-    VarObjPtr* StringVarObj::createString(VarPool* v, const char* name, const char* value)
+    std::unique_ptr<VarObj> StringVarObj::createString(const char* name, const char* value)
     {
-        StringVarObj* svo = new StringVarObj(name, value);
-        return v->allocVarObjSlot(0, svo, true);    // add a strong ref
+        return std::unique_ptr<VarObj>(new StringVarObj(name, value));
     }
     
 	StringVarObj::StringVarObj(const char* name)
@@ -39,11 +38,10 @@ namespace Landru {
 
     LANDRU_DECL_FN(StringVarObj, copy)
     {
-        VarObjArray* voa;
-        Pop<VarObjArray> t1(p, voa);
-
-		StringVarObj* o = reinterpret_cast<StringVarObj*>(voa->get(-1)->vo);
-        StringVarObj* cp = reinterpret_cast<StringVarObj*>(voa->get(-2)->vo);
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+		StringVarObj* o = reinterpret_cast<StringVarObj*>(voa->get(-1).lock().get());
+        StringVarObj* cp = reinterpret_cast<StringVarObj*>(voa->get(-2).lock().get());
         if (cp) {
             o->v = cp->v;
         }

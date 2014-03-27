@@ -4,6 +4,8 @@
 
 #include "LandruVM/Stack.h"
 
+#if 0
+
 #include "LandruVM/RaiseError.h"
 #include "LandruVM/Fiber.h"
 #include "LandruVM/VarObj.h"
@@ -125,7 +127,7 @@ void LStackPushParamMark(LStack* ls)
 void LStackFinalizeParamMark(LStack* stack, LVarPool* vars)
 {
     Landru::VarPool* varPool = (Landru::VarPool*) vars;
-    Landru::VarObjPtr* arrayVop = Landru::VarObjArray::Factory(varPool, 0, "params");
+    Landru::VarObjPtr* arrayVop = Landru::VarObjArray::Factory(0, "params");
     Landru::VarObjArray* voa = (Landru::VarObjArray*) arrayVop->vo;
 
     int markIndex = stack->voa->size() - 1;
@@ -196,4 +198,7 @@ LVarObj* LStackTopVarObj(LStack* ls, LVarPool*)
 	LStackReleaseLock(ls);
 	return retval;
 }
+
+#endif
+
 

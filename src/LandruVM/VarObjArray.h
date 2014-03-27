@@ -19,41 +19,27 @@ namespace Landru {
 		VarObjArray(const char* name) : VarObj(name, &Landru::VarObjArray::functions) { }
 		virtual ~VarObjArray() { clear(); }
 
-        void add(VarObjPtr* vop)
-        {
-            if (vop && vop->vo)
-                vop->vo->varPool()->addStrongRef(vop);
-            
+        void add(std::shared_ptr<VarObj> vop) {
             _array.push_back(vop);
         }
 
         // return the top of the stack
-        VarObjPtr* top() const
-        {
+        std::weak_ptr<VarObj> top() const {
             return _array.back();
         }
         
-        void pop()
-        {
-            VarObjPtr* vop = top();
-            if (vop && vop->vo)
-                vop->vo->varPool()->releaseStrongRef(vop);
-            
+        void pop() {
             _array.pop_back();
         }
         
-        void pop_front()
-        {
+        void pop_front() {
             if (!_array.empty()) {
                 auto i = _array.begin();
-                if ((*i) && (*i)->vo)
-                    (*i)->vo->varPool()->releaseStrongRef(*i);
                 _array.erase(i);
             }
         }
         
-        void push_back(VarObjPtr* vop)
-        {
+        void push_back(std::shared_ptr<VarObj> vop) {
             add(vop);
         }
         
@@ -64,10 +50,6 @@ namespace Landru {
         
         void clear()
         {
-            for (std::vector<VarObjPtr*>::iterator i = _array.begin(); i != _array.end(); ++i)
-                if (*i)
-                    (*i)->vo->varPool()->releaseStrongRef(*i);
-            
             _array.clear();
         }
         
@@ -76,14 +58,21 @@ namespace Landru {
             return int(_array.size());
         }
         
-        VarObjPtr* get(int i)
+        std::weak_ptr<VarObj> get(int i)
         {
             if (i < 0)
                 i = size() + i;
             if (i < size())
                 return _array[i];
             
-            return 0;
+            return std::weak_ptr<VarObj>();
+        }
+
+        void set(std::shared_ptr<VarObj> v, int i) {
+            if (i < 0)
+                i = size() + i;
+            if (i < size())
+                _array[i] = v;
         }
         
         int getInt(int i)
@@ -92,8 +81,8 @@ namespace Landru {
                 i = size() + i;
             // if i < 0 || i > size() raise error
             // if _array[i] ! int, raise error
-            IntVarObj* ivo = dynamic_cast<IntVarObj*> (_array[i]->vo);
-            return ivo->value();
+            IntVarObj* ivo = dynamic_cast<IntVarObj*>(_array[i].get());
+            return ivo ? ivo->value() : 0;
         }
         
         float getReal(int i)
@@ -102,8 +91,8 @@ namespace Landru {
                 i = size() + i;
             // if i < 0 || i > size() raise error
             // if _array[i] ! int, raise error
-            RealVarObj* ivo = dynamic_cast<RealVarObj*> (_array[i]->vo);
-            return ivo->value();
+            RealVarObj* ivo = dynamic_cast<RealVarObj*> (_array[i].get());
+            return ivo ? ivo->value() : 0;
         }
 
         LANDRU_DECL_BINDING_BEGIN
@@ -111,7 +100,7 @@ namespace Landru {
         LANDRU_DECL_BINDING_END
     
     private:
-        std::vector<VarObjPtr*> _array;
+        std::vector<std::shared_ptr<VarObj>> _array;
     };
     
     

@@ -25,7 +25,7 @@ namespace Landru {
         struct MouseFunctor;
         
     public:
-        MouseEngine(VarPool*);
+        MouseEngine();
         virtual ~MouseEngine();
         
         // this update is called from updateQueues in Continuation.cpp
@@ -33,17 +33,17 @@ namespace Landru {
         
         void enqueue(int x, int y, MouseEvent::Kind);
         
-        VarObjPtr* up();
-        VarObjPtr* down();
-        VarObjPtr* drag();
-        VarObjPtr* move();
+        std::weak_ptr<IntVarObj> up();
+        std::weak_ptr<IntVarObj> down();
+        std::weak_ptr<IntVarObj> drag();
+        std::weak_ptr<IntVarObj> move();
         
     private:
         concurrent_queue<MouseEvent*> events;
-        VarObjPtr* vup;
-        VarObjPtr* vdown;
-        VarObjPtr* vdrag;
-        VarObjPtr* vmove;
+        std::shared_ptr<IntVarObj> vup;
+        std::shared_ptr<IntVarObj> vdown;
+        std::shared_ptr<IntVarObj> vdrag;
+        std::shared_ptr<IntVarObj> vmove;
     };
     
     class MouseVarObj : public Landru::VarObj
