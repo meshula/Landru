@@ -591,6 +591,7 @@ namespace Landru {
                             p.f = self;
                             p.stack = stack;
                             p.engine = engine;
+                            p.continuationPC = p.pc + 3;    // skip the goto in the case of conditionals
                             fn(&p); // if function could be resolved, call it
                         }
                     }
