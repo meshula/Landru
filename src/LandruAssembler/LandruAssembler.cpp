@@ -215,9 +215,8 @@ namespace Landru {
 
         void copyToRuntime(Landru::Engine* e, std::vector<std::pair<std::string, Json::Value*> >* jsonVars)
         {
-            int requireIndex = 0;
-            for (std::map<std::string, std::string>::const_iterator i = requires.begin(); i != requires.end(); ++i) {
-                e->AddRequire(i->first.c_str(), requireIndex++);
+            for (int i = 0; i < requiresList.size(); ++i) {
+                e->AddRequire(requiresList[i].c_str(), i);
             }
 
             for (auto i = jsonVars->begin(); i != jsonVars->end(); ++i) {

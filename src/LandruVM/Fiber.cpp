@@ -30,7 +30,7 @@
 #ifdef LVERBOSE
 const bool verboseTrace = true;
 # define TRACE(f, pc, op) printf("%d:%s\n", pc, Instructions::opName(op));
-# define VERBOSE(fmt, args...) printf(fmt, ## args...)
+# define VERBOSE(fmt, ...) printf(fmt, __VA_ARGS__)
 #else
 const bool verboseTrace = false;
 # define VERBOSE(fmt, args...)
@@ -171,7 +171,7 @@ namespace Landru {
             unsigned int instruction = programStore[pc];
 			Instructions::Op op = (Instructions::Op) (instruction &0xffff);
             
-            //printf("%s: %d [%d]\n", this->exemplar->name, pc, LStackDepth(stack));
+            //printf("%d [%d]\n", pc, LStackDepth(stack));
             
             TRACE(this, pc, op);
             

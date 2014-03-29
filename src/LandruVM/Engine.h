@@ -82,7 +82,7 @@ namespace Landru
         
         std::string workingDir;
 
-        std::mutex renderMutex;
+        std::recursive_mutex renderMutex;
 
 	private:
         
