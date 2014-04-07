@@ -8,6 +8,7 @@
 #include "LandruVM/Continuation.h"
 #include "LandruVM/Engine.h"
 #include "LandruVM/Exemplar.h"
+#include "LandruVM/GeneratorVarObj.h"
 #include "LandruVM/Instructions.h"
 #include "LandruVM/MachineCache.h"
 #include "LandruVM/Stack.h"
@@ -430,64 +431,40 @@ namespace Landru {
                     pushReal(stack, float(int(v2) % int(v1)));
                 }
                 break;
-                    
-                    
-                    
-            case Instructions::iRepeatBegin:
-                {
-                    ++pc;
-
-                    std::shared_ptr<VarObjArray> localVoa = stack->top<VarObjArray>();
-                    stack->pop();
-                    float val = localVoa->getReal(-1);
-                    
-                    pushInt(stack, 123456);
-                    pushInt(stack, (int) val);
-                }
-                break;
-
-            case Instructions::iRepeatTest:
-                {
-                    ++pc;
-					int val = popInt(stack) - 1;
-                    pushInt(stack, val);
-
-                    if (val >= 0)        // if still positive, skip the goto
-                        pc += 2;
-                }
-                break;
-
-            case Instructions::iRepeatEnd:
-                {
-                    ++pc;
-                    popInt(stack);
-                    int data = popInt(stack);
-
-                    if (data != 123456)
-                        RaiseError(pc-1, "stack depth changed during repeat", 0);
-                }
-                break;
-                    
+            
             case Instructions::iForEach:
                 {
                     ++pc; // skip forEach instruction
                     ++pc; // skip goto
                     int nextPC = programStore[pc];
-                    
                     int loopTop = ++pc;
-                    
+
                     std::shared_ptr<VarObjArray> vp = stack->top<VarObjArray>();
                     stack->pop();
-                    
-                    Landru::VarObjArray forLocals("locals");
-                    
+
                     VarObjArray* voa = vp.get();
-                    for (int i = 0; i < voa->size(); ++i) {
-                        forLocals.add(voa->get(i).lock());
-                        VERBOSE("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
-                        Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, exeStack, &forLocals);
-                        forLocals.pop();
-                        VERBOSE("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
+                    if (voa->size() > 0) {
+                        Landru::GeneratorVarObj* gen = dynamic_cast<Landru::GeneratorVarObj*>(voa->get(0).lock().get());
+                        if (gen) {
+                            for (gen->begin(voa); !gen->done(); gen->next()) {
+                                Landru::VarObjArray forLocals("locals");
+                                gen->generate(forLocals);
+                                VERBOSE("\n\n\nForEach in generator -->>>>>> Start Run\n");
+                                Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, exeStack, &forLocals);
+                                forLocals.pop();
+                                VERBOSE("<<<<<<-- ForEach in generator End Run\n\n\n");
+                            }
+                        }
+                        else {
+                            Landru::VarObjArray forLocals("locals");
+                            for (int i = 0; i < voa->size(); ++i) {
+                                forLocals.add(voa->get(i).lock());
+                                VERBOSE("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
+                                Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, exeStack, &forLocals);
+                                forLocals.pop();
+                                VERBOSE("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
+                            }
+                        }
                     }
                     pc = nextPC;
                 }

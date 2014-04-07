@@ -637,21 +637,6 @@ namespace Landru {
         localParameters.pop_back();
     }
         
-    void Assembler::repeatBegin()
-    {
-        program.push_back(Instructions::iRepeatBegin);
-    }
-
-    void Assembler::repeatTest()
-    {
-        program.push_back(Instructions::iRepeatTest);
-    }
-
-    void Assembler::repeatEnd()
-    {
-        program.push_back(Instructions::iRepeatEnd);
-    }
-        
     void Assembler::forEach()
     {
         program.push_back(Instructions::iForEach);

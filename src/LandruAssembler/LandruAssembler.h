@@ -106,9 +106,6 @@ namespace Landru
 		virtual void getSharedVar();
 		virtual void getSelfVar();
         virtual void getLocalParam(int);
-		virtual void repeatBegin();		
-		virtual void repeatTest();		
-		virtual void repeatEnd();
         virtual void forEach();
 		virtual void onMessage();		
 		virtual void onTick();		

@@ -47,9 +47,6 @@ namespace Landru
 		virtual void getSharedVar() = 0;
 		virtual void getSelfVar() = 0;
         virtual void getLocalParam(int) = 0; // int is an index into the surrounding stack frame
-		virtual void repeatBegin() = 0;
-		virtual void repeatTest() = 0;
-		virtual void repeatEnd() = 0;
         virtual void forEach() = 0;
 		virtual void onMessage() = 0;
 		virtual void onTick() = 0;

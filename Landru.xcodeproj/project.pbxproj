@@ -34,6 +34,7 @@
 		71D214E0013F59347D510A03 /* Stack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF4C0311AC3781177541BB /* Stack.cpp */; };
 		740F1DF703CA007339B54068 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 797F35AF0FD31E91654C1B3F /* Engine.cpp */; };
 		74B9417169915EC90F490F22 /* StackPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C0A396660B66B7D64CE3B0B /* StackPrint.cpp */; };
+		E24B9D7B18F2EE5500C3D466 /* GeneratorVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */; };
 		E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2F51121187518A100D181A2 /* FileVarObj.cpp */; };
 /* End PBXBuildFile section */
 
@@ -100,6 +101,8 @@
 		797F35AF0FD31E91654C1B3F /* Engine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Engine.cpp; sourceTree = "<group>"; };
 		7C8730795B1A085D23DE564D /* Fiber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Fiber.h; sourceTree = "<group>"; };
 		7D4A2E1A4144040F1EEF0367 /* Exemplar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Exemplar.h; sourceTree = "<group>"; };
+		E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratorVarObj.cpp; sourceTree = "<group>"; };
+		E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GeneratorVarObj.h; sourceTree = "<group>"; };
 		E2F51121187518A100D181A2 /* FileVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileVarObj.cpp; sourceTree = "<group>"; };
 		E2F51122187518A100D181A2 /* FileVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileVarObj.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -171,6 +174,8 @@
 				1DED6FC37144494D68C85D34 /* VarObjArray.cpp */,
 				3590035972B60F3A592B334F /* VarObjArray.h */,
 				24B4384C33A278876D281E95 /* VarObjStackUtil.h */,
+				E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */,
+				E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */,
 			);
 			path = LandruVM;
 			sourceTree = "<group>";
@@ -315,6 +320,7 @@
 				47102924078A12CC15884DEE /* Exemplar.cpp in Sources */,
 				5D5B0A0170565A6322E83E5D /* Fiber.cpp in Sources */,
 				03873FDB6E0A7812210B7EF8 /* Instructions.cpp in Sources */,
+				E24B9D7B18F2EE5500C3D466 /* GeneratorVarObj.cpp in Sources */,
 				6ED642D7411F145D751621A8 /* MachineCache.cpp in Sources */,
 				39CA01FD175637196B6A2867 /* RaiseError.cpp in Sources */,
 				71D214E0013F59347D510A03 /* Stack.cpp in Sources */,

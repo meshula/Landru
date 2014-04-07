@@ -215,16 +215,6 @@ namespace Landru
 					(*i)->print(tabs);
 				break;
 				
-			case kTokenRepeat:
-				printf("%s%s(", tabStr, tokenName(token));
-				(*i)->printParameters();
-				printf("):\n");
-				++i;
-				(*i)->printStatements(tabs+1);
-				++i;
-				printf("%s;\n", tabStr);
-				break;
-				
 			case kTokenIf:
 			case kTokenOn:
 				printf("%s%s ", tabStr, tokenName(token));

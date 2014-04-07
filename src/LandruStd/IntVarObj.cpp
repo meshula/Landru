@@ -7,9 +7,30 @@
 #include "LandruVM/VarObjStackUtil.h"
 #include "LandruVM/Engine.h"
 #include "LandruVM/Fiber.h"
+#include "LandruVM/GeneratorVarObj.h"
 #include "LandruVM/Stack.h"
 
 namespace Landru {
+
+    class IntRangeGenerator : public GeneratorVarObj::Generator {
+    public:
+        IntRangeGenerator(int first, int last)
+        : first(first), last(last), curr(first) {}
+        virtual ~IntRangeGenerator() {}
+
+        virtual void begin(VarObjArray* params) {}
+        virtual bool done() { return curr > last; }
+        virtual void next() { ++curr; }
+
+        virtual void generate(VarObjArray& locals) {
+            std::shared_ptr<VarObj> i = std::make_shared<IntVarObj>("int");
+            IntVarObj* ivo = (IntVarObj*) i.get();
+            ivo->set(curr <= last ? curr : last);
+            locals.push_back(i);
+        }
+
+        int first, last, curr;
+    };
 
 	IntVarObj::IntVarObj(const char* name)
     : VarObj(name, &functions)
@@ -39,9 +60,21 @@ namespace Landru {
         o->v = voa->getInt(-1);
     }
 
+    LANDRU_DECL_FN(IntVarObj, range)
+    {
+        std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
+        p->stack->pop();
+        int first = voa->getInt(-2);
+        int last = voa->getInt(-1);
+        std::shared_ptr<GeneratorVarObj> i = std::make_shared<GeneratorVarObj>("intGen");
+        i->generator = new IntRangeGenerator(first, last);
+        p->stack->push(i);
+    }
+
     LANDRU_DECL_TABLE_BEGIN(IntVarObj)
         LANDRU_DECL_ENTRY(IntVarObj, add)
         LANDRU_DECL_ENTRY(IntVarObj, set)
+        LANDRU_DECL_ENTRY(IntVarObj, range)
     LANDRU_DECL_TABLE_END(IntVarObj)
 
 }

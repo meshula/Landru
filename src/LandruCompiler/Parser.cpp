@@ -25,7 +25,6 @@ void parseElse(CurrPtr& curr, EndPtr end);
 void parseFor(CurrPtr& curr, EndPtr end);
 void parseGlobalVarDecls(CurrPtr& curr, EndPtr end);
 void parseGoto(CurrPtr& curr, EndPtr end);
-void parseProcedural(CurrPtr& curr, EndPtr end);
 void parseStatement(CurrPtr& curr, EndPtr end);
 void parseParamList(CurrPtr& curr, EndPtr end);
 void parseParam(CurrPtr& curr, EndPtr end);
@@ -642,10 +641,6 @@ void parseStatement(CurrPtr& curr, EndPtr end)
 			parseOn(curr, end);
 			break;
 			
-		case kTokenRepeat:
-			parseProcedural(curr, end);
-			break;
-            
         case kTokenFor:
             parseFor(curr, end);
             break;
@@ -678,85 +673,6 @@ void parseGoto(CurrPtr& curr, EndPtr end)
 	getDeclarator(curr, end, buff);
 	currNode->addChild(new ASTNode(kTokenGoto, buff));
 }
-
-/*
- lProcedural 
-	:	 
-	lProceduralKeyWord lParamList COLON landruStatements* SEMICOLON 
-	-> ^(TokenProcedural ^(lProceduralKeyWord lParamList) landruStatements*)
-	;
- 
- lProceduralKeyWord 
-	:	REPEAT ;
- 
- */
-
-void parseProcedural(CurrPtr& curr, EndPtr end)
-{
-	TokenId token = getToken(curr, end);
-	if (peekChar(curr, end) != '(')
-	{
-		lcRaiseError("Expected param list", curr, 32);
-		return;
-	}
-	
-	if (token == kTokenRepeat)
-	{
-		ASTNode* pop = currNode;
-		ASTNode* astRepeat = new ASTNode(kTokenRepeat);
-		currNode->addChild(astRepeat);
-		ASTNode* astParams = new ASTNode(kTokenParameters);
-		astRepeat->addChild(astParams);
-		currNode = astParams;
-		
-		if (peekChar(curr, end) == '(')
-		{
-			getChar(curr, end); // consume '('
-			parseParam(curr, end);
-			if (curr[0] != ')')
-			{
-				lcRaiseError("Bad argument, missing close parenthesis", curr, 32);
-				return;
-			}
-			getChar(curr, end); // consume ')'
-		}
-		else
-		{
-			lcRaiseError("Missing open parenthesis", curr, 32);
-			return;
-		}
-		
-		if (!getColon(curr, end))
-			return;
-
-		currNode = astRepeat;
-
-		parseStatements(curr, end);
-		getSemiColon(curr, end);
-		
-		currNode = pop;
-	}
-	else
-	{
-		ASTNode* pop = currNode;
-		ASTNode* astProc = new ASTNode(token);
-		currNode->addChild(astProc);
-		ASTNode* astParams = new ASTNode(kTokenParameters);
-		astProc->addChild(astParams);
-		currNode = astParams;
-		
-		parseParamList(curr, end);
-		if (!getColon(curr, end))
-			return;
-		
-		currNode = astProc;
-		
-		parseStatements(curr, end);
-		getSemiColon(curr, end);
-		currNode = pop;
-	}
-}
-
 
 
 /*

@@ -177,24 +177,7 @@ void AssemblerBase::assembleNode(ASTNode* root)
             ASSEMBLER_TRACE(kTokenGoto);
             gotoState(root->str2.c_str());
             break;
-            
-        case kTokenRepeat:
-            ASSEMBLER_TRACE(kTokenRepeat);
-            {
-                ASTConstIter j = root->children.begin();
-                assembleNode(*j); // qualifier/parameters
-                repeatBegin();
-                int loopTop = programSize();
-                repeatTest();
-                int patch = gotoAddr();
-                ++j;
-                assembleStatements(*j); // statements
-                gotoAddr(loopTop);
-                _patchGoto(patch);
-                repeatEnd();
-            }
-            break;
-            
+
         case kTokenTick:
             ASSEMBLER_TRACE(kTokenTick);
             {
@@ -215,7 +198,6 @@ void AssemblerBase::assembleNode(ASTNode* root)
                 onMessage();
             }
             break;
-            
 
         case kTokenFor:
             ASSEMBLER_TRACE(kTokenFor);
