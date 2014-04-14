@@ -86,9 +86,23 @@ namespace Landru {
     class VarObj;
     class VarObjArray;
 
+    struct RunContext {
+        RunContext() { }
+        ~RunContext() { }
+        
+        float elapsedTime;
+        VarObjArray* locals;
+        Continuation* continuationContext;
+
+        int pc;
+        std::shared_ptr<Fiber> self;
+        LStack* stack;
+        Engine* engine;
+    };
+
     struct FnParams {
         FnParams(const FnParams& rhs)
-        : parentContinuation(rhs.parentContinuation)
+        : contextContinuation(rhs.contextContinuation)
         , pc(rhs.pc)
         , continuationPC(rhs.continuationPC)
         , vo(rhs.vo)
@@ -98,7 +112,7 @@ namespace Landru {
         {}
 
         FnParams()
-        : parentContinuation(0)
+        : contextContinuation(0)
         , pc(0)
         , continuationPC(0)
         , f(0)
@@ -106,7 +120,7 @@ namespace Landru {
         , engine(0)
         {}
         
-        Landru::Continuation* parentContinuation;
+        Landru::Continuation* contextContinuation;
         int pc;
         int continuationPC;
         std::shared_ptr<VarObj> vo;
