@@ -59,9 +59,7 @@ namespace Landru
             kStateSuspend,
         };
 		
-		RunEndCondition Run(Engine*, std::shared_ptr<Fiber>self, float elapsedTime,
-                            int pc, LStack*, Continuation* continuationContext,
-                            std::vector<std::shared_ptr<Fiber>>& exeStack, VarObjArray* locals);
+		RunEndCondition Run(RunContext*);
 
         void Create(VarObjFactory*, int maxStackDepth, int maxVars, std::shared_ptr<MachineCacheEntry> mce_);
 

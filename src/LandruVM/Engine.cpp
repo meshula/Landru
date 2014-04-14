@@ -210,8 +210,16 @@ namespace Landru
             AddGlobal(machineName, vop);
             f->Create(factory(), MAX_STACK_DEPTH, MAX_VARS, mce);
             std::shared_ptr<LStack> stack = std::make_shared<LStack>();
-            std::vector<std::shared_ptr<Fiber>> exeStack;
-            f->Run(this, vop, detail->currentElapsedTime, f->EntryPoint(), stack.get(), 0, exeStack, 0);
+
+            Landru::RunContext rc;
+            rc.engine = this;
+            rc.self = vop;
+            rc.elapsedTime = detail->currentElapsedTime;
+            rc.pc = f->EntryPoint();
+            rc.stack = stack.get();
+            rc.continuationContext = 0;
+            rc.locals = 0;
+            f->Run(&rc);
         }
     }
     
