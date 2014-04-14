@@ -157,6 +157,8 @@
 				7D4A2E1A4144040F1EEF0367 /* Exemplar.h */,
 				7485752E2635693A785A055A /* Fiber.cpp */,
 				7C8730795B1A085D23DE564D /* Fiber.h */,
+				E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */,
+				E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */,
 				04591FCF670642F37F4E6590 /* Instructions.cpp */,
 				02B81D24338B1967440E75F7 /* Instructions.h */,
 				33DE579B3ECF466325883264 /* InstructionsDef.h */,
@@ -174,8 +176,6 @@
 				1DED6FC37144494D68C85D34 /* VarObjArray.cpp */,
 				3590035972B60F3A592B334F /* VarObjArray.h */,
 				24B4384C33A278876D281E95 /* VarObjStackUtil.h */,
-				E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */,
-				E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */,
 			);
 			path = LandruVM;
 			sourceTree = "<group>";

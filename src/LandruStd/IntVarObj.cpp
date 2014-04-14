@@ -14,13 +14,13 @@ namespace Landru {
 
     class IntRangeGenerator : public GeneratorVarObj::Generator {
     public:
-        IntRangeGenerator(int first, int last)
-        : first(first), last(last), curr(first) {}
+        IntRangeGenerator(int first, int last, int incr)
+        : first(first), last(last), incr(incr), curr(first) {}
         virtual ~IntRangeGenerator() {}
 
         virtual void begin(VarObjArray* params) {}
         virtual bool done() { return curr > last; }
-        virtual void next() { ++curr; }
+        virtual void next() { curr += incr; }
 
         virtual void generate(VarObjArray& locals) {
             std::shared_ptr<VarObj> i = std::make_shared<IntVarObj>("int");
@@ -29,7 +29,7 @@ namespace Landru {
             locals.push_back(i);
         }
 
-        int first, last, curr;
+        int first, last, incr, curr;
     };
 
 	IntVarObj::IntVarObj(const char* name)
@@ -64,10 +64,19 @@ namespace Landru {
     {
         std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
         p->stack->pop();
-        int first = voa->getInt(-2);
-        int last = voa->getInt(-1);
+        int first, last, incr;
+        if (voa->size() == 3) {
+            first = voa->getInt(-3);
+            last = voa->getInt(-2);
+            incr = voa->getInt(-1);
+        }
+        else {
+            first = voa->getInt(-2);
+            last = voa->getInt(-1);
+            incr = last>first ? 1 : -1;
+        }
         std::shared_ptr<GeneratorVarObj> i = std::make_shared<GeneratorVarObj>("intGen");
-        i->generator = new IntRangeGenerator(first, last);
+        i->generator = new IntRangeGenerator(first, last, incr);
         p->stack->push(i);
     }
 

@@ -28,6 +28,7 @@ namespace Landru
         LANDRU_DECL_BINDING_BEGIN
             LANDRU_DECL_BINDING(add)
             LANDRU_DECL_BINDING(set)
+            LANDRU_DECL_BINDING(range)
         LANDRU_DECL_BINDING_END
 	};
 

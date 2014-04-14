@@ -69,14 +69,16 @@ namespace Landru {
         for (size_t i = 0; i < checkForRunners.runners.size(); ++i) {
             // refs were incremented above
             std::shared_ptr<Fiber> f = checkForRunners.runners[i];
-            std::vector<std::shared_ptr<Fiber>> exeStack;
-            f->Run(engine,
-                   checkForRunners.runners[i],
-                   elapsedTime,
-                   checkForRunners.pc[i],
-                   stack.get(),
-                   checkForRunners.continuations[i],
-                   exeStack, 0);
+
+            Landru::RunContext rc;
+            rc.engine = engine;
+            rc.self = checkForRunners.runners[i];
+            rc.elapsedTime = elapsedTime;
+            rc.pc = checkForRunners.pc[i];
+            rc.stack = stack.get();
+            rc.continuationContext = checkForRunners.continuations[i];
+            rc.locals = 0;
+            f->Run(&rc);
             stack->clear();
         }
 
@@ -102,7 +104,7 @@ namespace Landru {
         if (dt != FLT_MAX)
         {
             int recurrances = 0;
-            p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
+            p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
                                                                  p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC,
@@ -119,7 +121,7 @@ namespace Landru {
         if (dt != FLT_MAX)
         {
             int recurrances = -1;
-            p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
+            p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
                                                                  p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);
@@ -135,7 +137,7 @@ namespace Landru {
 
         if (dt != FLT_MAX)
         {
-            p->engine->timeEngine()->registerOrderedContinuation(p->parentContinuation,
+            p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
                                                                  p->f, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);

@@ -128,9 +128,6 @@ namespace Landru {
                 std::shared_ptr<Fiber> f = functor.runners[i];
                 std::pair<int, int>& xy = functor.coords[i];
 
-                std::vector<std::shared_ptr<Fiber>> exeStack;
-                exeStack.push_back(functor.runners[i]);
-                
                 Landru::VarObjArray locals("locals");
                 
                 RealVarObj* vo = new RealVarObj("real");
@@ -139,13 +136,21 @@ namespace Landru {
                 vo = new RealVarObj("real");
                 vo->set(xy.second);
                 locals.add(std::shared_ptr<VarObj>(vo));
-                
-                f->Run(engine, functor.runners[i], elapsedTime, functor.pc[i], stack, functor.continuations[i], exeStack, &locals);
+
+                Landru::RunContext rc;
+                rc.engine = engine;
+                rc.self = functor.runners[i];
+                rc.elapsedTime = elapsedTime;
+                rc.pc = functor.pc[i];
+                rc.stack = stack;
+                rc.continuationContext = functor.continuations[i];
+                rc.locals = &locals;
+                f->Run(&rc);
             }
             delete event;
         }
     }
-    
+
     std::weak_ptr<IntVarObj> MouseEngine::up()
     {
         if (!vup) {
@@ -192,7 +197,7 @@ namespace Landru {
     {
         p->stack->pop();
         MouseEngine* me = p->engine->mouseEngine();
-        me->registerContinuation(p->parentContinuation,
+        me->registerContinuation(p->contextContinuation,
                                  p->f,   // the Fiber to run on
                                  p->stack,
                                  me->up().lock(),
@@ -204,7 +209,7 @@ namespace Landru {
     {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
-        me->registerContinuation(p->parentContinuation,
+        me->registerContinuation(p->contextContinuation,
                                  p->f,   // the Fiber to run on
                                  p->stack,
                                  me->down().lock(),
@@ -216,7 +221,7 @@ namespace Landru {
     {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
-        me->registerContinuation(p->parentContinuation,
+        me->registerContinuation(p->contextContinuation,
                                  p->f,   // the Fiber to run on
                                  p->stack,
                                  me->drag().lock(),
@@ -228,7 +233,7 @@ namespace Landru {
     {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
-        me->registerContinuation(p->parentContinuation,
+        me->registerContinuation(p->contextContinuation,
                                  p->f,   // the Fiber to run on
                                  p->stack,
                                  me->move().lock(),
