@@ -1,0 +1,63 @@
+
+// http://www.xanthir.com/etc/railroad-diagrams/generator.html
+
+
+// program
+
+Diagram(
+    ZeroOrMore(
+      Choice(0, 
+        NonTerminal('machine'), 
+        NonTerminal('globals'))) )
+
+// machine
+
+Diagram(
+    NonTerminal('machine'), NonTerminal('DECLARATOR'), NonTerminal(':'),
+    ZeroOrMore(
+      Choice(0, 
+        Sequence(NonTerminal('declare'), NonTerminal(':'), 
+                 ZeroOrMore( Sequence( Optional('shared'), NonTerminal('TYPE'), NonTerminal('DECLARATOR')) ), 
+                 NonTerminal(';')), 
+        Sequence(NonTerminal('param'), NonTerminal(':'), 
+                 ZeroOrMore( Sequence( NonTerminal('TYPE'), NonTerminal('DECLARATOR')) ), 
+                 NonTerminal(';')), 
+        Sequence(NonTerminal('state'), NonTerminal('DECLARATOR'), NonTerminal(':'),
+                 NonTerminal('STATEMENT'),
+                 NonTerminal(';')))),
+    NonTerminal(';') )
+
+
+// statement
+Diagram(
+    Choice(0, 
+        NonTerminal('true'),
+        NonTerminal('false'),
+
+        Sequence(NonTerminal('goto'), NonTerminal('DECLARATOR')),
+
+        Sequence(NonTerminal('on'), NonTerminal('DECLARATOR'),
+            Optional(Sequence(NonTerminal('('), NonTerminal('PARAMS'), NonTerminal(')'))  ), 
+            NonTerminal(':'), ZeroOrMore('STATEMENT'), NonTerminal(';')),
+
+        Sequence(NonTerminal('for'), NonTerminal('DECLARATOR'), NonTerminal('in'),
+            NonTerminal('DECLARATOR'),
+            NonTerminal('('), NonTerminal('PARAMS'), NonTerminal(')'  ), 
+            NonTerminal(':'), ZeroOrMore('STATEMENT'), NonTerminal(';')),
+
+        Sequence(NonTerminal('if'), 
+            Optional('DECLARATOR'),
+            NonTerminal('('), NonTerminal('PARAMS'), NonTerminal(')'  ), 
+            NonTerminal(':'), ZeroOrMore('STATEMENT'), NonTerminal(';'),
+            Optional(Sequence(NonTerminal('else'), NonTerminal(':'), ZeroOrMore('STATEMENT'), NonTerminal(';'))) ),
+
+        Sequence(NonTerminal('param'), NonTerminal(':'), 
+            ZeroOrMore( Sequence( NonTerminal('TYPE'), NonTerminal('DECLARATOR')) ), 
+            NonTerminal(';')), 
+
+        Sequence(NonTerminal('launch'), NonTerminal('('), NonTerminal('PARAMS'), NonTerminal(')')), 
+        Sequence(NonTerminal('DECLARATOR'), NonTerminal('('), NonTerminal('PARAMS'), NonTerminal(')') ) ))
+
+// params
+Diagram(
+    ZeroOrMore(Optional(Sequence(NonTerminal('EXPRESSION'), Optional(NonTerminal(','))))) )
