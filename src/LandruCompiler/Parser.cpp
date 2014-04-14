@@ -30,16 +30,15 @@ void parseParamList(CurrPtr& curr, EndPtr end);
 void parseParam(CurrPtr& curr, EndPtr end);
 void parseStatements(CurrPtr&, EndPtr);
 void parseConditional(CurrPtr& curr, EndPtr end);
-void parseState(CurrPtr& curr, EndPtr end, bool stateIsGenerator);
+void parseState(CurrPtr& curr, EndPtr end);
 void parseDeclare(CurrPtr& curr, EndPtr end);
 void parseParamBlock(CurrPtr& curr, EndPtr end);
+void parseLocals(CurrPtr& curr, EndPtr end);
 void parseMachine(CurrPtr& curr, EndPtr end);
 void parseOn(CurrPtr& curr, EndPtr end);
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId);
 bool peekIsLiteral(CurrPtr& curr, EndPtr end);
 void parseLiteral(CurrPtr& curr, EndPtr end);
-void parseArray(CurrPtr& curr, EndPtr end);
-
 
 
 namespace Landru
@@ -310,66 +309,6 @@ bool getSemiColon(CurrPtr& curr, EndPtr end)
 }
 
 
-
-
-
-//-----------------------------------------------------------------------
-//
-// ARRAY BLOCK
-//
-// array : ARRAY COLON name string+ SEMICOLON ;
-//
-//-----------------------------------------------------------------------
-
-void parseArray(CurrPtr& curr, EndPtr end)
-{
-	if (getToken(curr, end) != kTokenArray)
-	{
-		lcRaiseError("Expected 'array'", curr, 32);
-		return;
-	}
-
-	if (getChar(curr, end) != kDefineChar)
-	{
-		lcRaiseError("Missing colon", curr, 32);
-		return;
-	}
-
-	char const* nameStr;
-	uint32_t length;
-	curr = tsGetTokenAlphaNumeric(curr, end, &nameStr, &length);
-	char name[256];
-	strncpy(name, nameStr, length);
-	name[length] = '\0';
-	
-	std::vector<std::string> strings;
-	while (more(curr, end))
-	{
-		// commas are optional
-		if (*curr == ',')
-			getChar(curr, end);
-		
-		if (*curr == kTerminalChar)
-		{
-			++curr;
-			break;
-		}
-		
-		char const* value;
-		uint32_t length;
-		if (*curr == '"')
-			curr = tsGetString(curr, end, true, &value, &length);
-		else
-			curr = tsGetTokenAlphaNumeric(curr, end, &value, &length);
-		
-		char buff[256];
-		strncpy(buff, value, length);
-		buff[length] = '\0';
-		strings.push_back(buff);
-	}
-	/// @TODO do something with the array
-}
-
 //-----------------------------------------------------------------------
 //
 // DECLARATION BLOCK
@@ -413,6 +352,35 @@ void parseParamBlock(CurrPtr& curr, EndPtr end)
 		parseLandruVar(curr, end);
 	}
 	
+	currNode = pop;
+}
+
+void parseLocals(CurrPtr& curr, EndPtr end) {
+	if (getToken(curr, end) != kTokenLocal)
+	{
+		lcRaiseError("Expected 'local'", curr, 32);
+		return;
+	}
+
+	if (!getColon(curr, end))
+		return;
+
+	ASTNode* ast = new ASTNode(kTokenLocal, "");
+	currNode->addChild(ast);
+	ASTNode* pop = currNode;
+	currNode = ast;
+
+	while (more (curr, end))
+	{
+		if (*curr == kTerminalChar)
+		{
+			++curr;
+			break;
+		}
+
+		parseLandruVar(curr, end);
+	}
+
 	currNode = pop;
 }
 
@@ -510,7 +478,7 @@ void parseLandruVar(CurrPtr& curr, EndPtr end)
 	;
  */
 
-void parseState(CurrPtr& curr, EndPtr end, bool stateIsGenerator)
+void parseState(CurrPtr& curr, EndPtr end)
 {
 	if (getToken(curr, end) != kTokenState)
 	{
@@ -578,65 +546,39 @@ void parseStatement(CurrPtr& curr, EndPtr end)
             parseParamBlock(curr, end);
             break;
 
-		case kTokenUnknown:
-		{
+        case kTokenLocal:
+            parseLocals(curr, end);
+            break;
+
+		case kTokenUnknown: {
 			CurrPtr orig = curr;
 			char buff[256];
 			getNameSpacedDeclarator(curr, end, buff);
-			
-			if (peekChar(curr, end) == '=')
-			{
+
+			if (peekChar(curr, end) == '=') {
 				curr = orig;
 				parseAssignment(curr, end);
 			}
-			else
-			{
+			else {
 				curr = orig;
 				parseFunction(curr, end, kTokenFunction);
-			}
-		}
-		break;
+			} }
+            break;
 
-		case kTokenTrue:
-		{
+		case kTokenTrue: {
 			currNode->addChild(new ASTNode(kTokenTrue));
-			getToken(curr, end);
-		}
-		break;
+			getToken(curr, end); }
+            break;
 
-		case kTokenFalse:
-		{
+		case kTokenFalse: {
 			currNode->addChild(new ASTNode(kTokenFalse));
-			getToken(curr, end);
-		}
-		break;
+			getToken(curr, end); }
+            break;
 
 		case kTokenGoto:
 			parseGoto(curr, end);
 			break;
-			
-		case kTokenExec:
-		{
-			getToken(curr, end);
-			if (getChar(curr, end) != ':')
-			{
-				lcRaiseError("Syntax Error", curr, 32);
-				break;
-			}
 
-			char const* tokenStr;
-			uint32_t length;
-			
-			//curr = GetTokenAlphaNumeric(curr, end, tokenStr, length);
-			curr = tsGetTokenAlphaNumeric(curr, end, &tokenStr, &length);
-			char buff[256];
-			
-			strncpy(buff, tokenStr, length);
-			buff[length] = '\0';
-			currNode->addChild(new ASTNode(kTokenExec, buff));
-		}
-		break;
-			
 		case kTokenOn:
 			parseOn(curr, end);
 			break;
@@ -666,8 +608,7 @@ lGoto	:
 	;
 */
 
-void parseGoto(CurrPtr& curr, EndPtr end)
-{
+void parseGoto(CurrPtr& curr, EndPtr end) {
 	getToken(curr, end);	// goto
 	char buff[256];
 	getDeclarator(curr, end, buff);
@@ -691,8 +632,7 @@ void parseGoto(CurrPtr& curr, EndPtr end)
  */
 // but I haven't got lValue ground through Antlr yet
 
-void parseAssignment(CurrPtr& curr, EndPtr end)
-{
+void parseAssignment(CurrPtr& curr, EndPtr end) {
 	char buff[256];
 	getNameSpacedDeclarator(curr, end, buff);
 	
@@ -702,8 +642,7 @@ void parseAssignment(CurrPtr& curr, EndPtr end)
 	currNode = ast;
 
 	char assign = getChar(curr, end);
-	if (assign != '=')
-	{
+	if (assign != '=') {
 		lcRaiseError("Expected '='", curr, 32);
 		return;
 	}
@@ -725,16 +664,18 @@ lConditional
 	;
 */
 
-void parseConditional(CurrPtr& curr, EndPtr end)
-{
+void parseConditional(CurrPtr& curr, EndPtr end) {
 	TokenId tokenId = getToken(curr, end);
-	if (tokenId != kTokenIf)
-	{
+	if (tokenId != kTokenIf) {
 		lcRaiseError("Expected 'if'", curr, 32);
 		return;
 	}
 
-	tokenId = getToken(curr, end);
+    // if optional(declarator) (params)
+    if (peekChar(curr, end) == '(')
+        tokenId = kTokenNotEq0;
+    else
+        tokenId = getToken(curr, end);
 	
 	ASTNode* pop = currNode;
 	ASTNode* astIf = new ASTNode(kTokenIf);
@@ -771,8 +712,7 @@ lElse
 	;
  */
 
-void parseElse(CurrPtr& curr, EndPtr end)
-{
+void parseElse(CurrPtr& curr, EndPtr end) {
 	getToken(curr, end);	// consume else
 
 	if (!getColon(curr, end))
@@ -798,8 +738,7 @@ void parseElse(CurrPtr& curr, EndPtr end)
  ;
  */
 
-void parseFor(CurrPtr& curr, EndPtr end)
-{
+void parseFor(CurrPtr& curr, EndPtr end) {
 	TokenId tokenId = getToken(curr, end); // consume for
     if (tokenId != kTokenFor) {
         lcRaiseError("Expected 'for'", "parseFor", 0);
@@ -1049,27 +988,6 @@ void parseParam(CurrPtr& curr, EndPtr end)
 		currNode = new ASTNode(kTokenFunction, buff);
 		pop->addChild(currNode);
 		parseParamList(curr, end);
-		currNode = pop;
-	}
-	else if (peekChar(curr, end) == '[')
-	{
-		lcRaiseError("Arrays not yet supported", curr, 32);
-		
-		ASTNode* ast = new ASTNode(kTokenArray);
-		currNode->addChild(ast);
-		ASTNode* pop = currNode;
-		currNode = ast;
-
-		// array argument
-		getChar(curr, end); // consume '['
-		parseParam(curr, end);
-		
-		if (peekChar(curr, end) != ']')
-			lcRaiseError("Syntax Error", curr, 32);
-		else
-		{
-			getChar(curr, end); // consume ']'
-		}
 		currNode = pop;
 	}
 	else
@@ -1379,7 +1297,7 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
 
 /*
  landruBlock
- : lDeclareBlock | lParamBlock | lArrayBlock | lStateBlock | lGeneratorBlock ;
+ : lDeclareBlock | lParamBlock | lArrayBlock | lStateBlock ;
  */
 
 void parseLandruBlock(CurrPtr& curr, EndPtr end)
@@ -1389,9 +1307,8 @@ void parseLandruBlock(CurrPtr& curr, EndPtr end)
 	{
 		case kTokenDeclare:		parseDeclare(curr, end);                    break;
 		case kTokenParam:		parseParamBlock(curr, end);                 break;
-		case kTokenArray:		parseArray(curr, end);                      break;
-		case kTokenState:		parseState(curr, end, false);               break;
-		case kTokenGenerator:	parseState(curr, end, true);                break;
+        case kTokenLocal:       parseLocals(curr, end);                     break;
+		case kTokenState:		parseState(curr, end);                      break;
 		default:				lcRaiseError("Unknown token", curr, 32);    break;
 	}
 }
@@ -1443,11 +1360,8 @@ void parseMachine(CurrPtr& curr, EndPtr end)
 //
 //-----------------------------------------------------------------------
 
-/* 
- machinesAndVars : machine | globalVarDecls ;
- 
- program
- : machinesAndVars+ ;
+/*
+    zero or more(machine, globals)
  */	
 
 

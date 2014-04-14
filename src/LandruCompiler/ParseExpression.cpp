@@ -166,7 +166,7 @@ bool shunting_yard(CurrPtr& strpos, EndPtr strend, std::vector<std::string>& out
                        outposVec.push_back(stackVec.back());
                        stackVec.pop_back();
                 }
-                else   {
+                else {
                     break;
                 }
             }
