@@ -318,7 +318,10 @@ namespace Landru {
     }
 
 
-        
+    void Assembler::callFactory() {
+        program.push_back(Instructions::iFactory);
+    }
+
         
     void Assembler::reset()
     {
@@ -404,8 +407,9 @@ namespace Landru {
                 else {
                     // is it a local or shared variable?
                     std::map<std::string, int>::const_iterator i = varIndex.find(parts[index].c_str());
-                    if (i == varIndex.end())
+                    if (i == varIndex.end()) {
                         RaiseError(0, "Unknown Variable", parts[index].c_str());
+                    }
                     else {
                         if (isSharedVariable(parts[index].c_str())) {
                             // the convention is shared variable indices start at maxVarIndices

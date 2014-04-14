@@ -142,6 +142,7 @@ namespace Landru
         virtual bool isLocalParam(const char* name);
         virtual int  localParamIndex(const char* name);
         virtual void addLocalParam(const char* name, const char* type);
+        virtual void callFactory();
         virtual void pushLocalParameters();
         virtual void popLocalParameters();
         

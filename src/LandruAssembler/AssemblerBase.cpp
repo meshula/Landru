@@ -19,6 +19,11 @@ namespace Landru {
 void AssemblerBase::assembleNode(ASTNode* root)
 {
     switch (root->token) {
+        case kTokenParam:
+        case kTokenLocal:
+            // these were handled in assembleStatements
+            break;
+
         case kTokenProgram:
             ASSEMBLER_TRACE(kTokenProgram);
             assembleStatements(root); // parameters
@@ -126,19 +131,7 @@ void AssemblerBase::assembleNode(ASTNode* root)
             ASSEMBLER_TRACE(kTokenFalse);
             pushIntZero();
             break;
-            
-        case kTokenParam:
-            ASSEMBLER_TRACE(kTokenParam);
-            {
-                for (ASTConstIter j = root->children.begin(); j != root->children.end(); ++j) {
-                    const char* type = (*j)->str1.c_str(); // type
-                    const char* name = (*j)->str2.c_str(); // name
-                    addLocalParam(name, type);
-                }
-            }
-            break;
 
-            
         case kTokenType:
             ASSEMBLER_TRACE(kTokenType);
             {
@@ -276,6 +269,34 @@ void AssemblerBase::assembleNode(ASTNode* root)
 
 void AssemblerBase::assembleStatements(ASTNode* root)
 {
+    // first come designated parameters, because those will be coming from outside
+    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
+        if ((*i)->token == kTokenParam) {
+            for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
+                const char* type = (*j)->str1.c_str(); // type
+                const char* name = (*j)->str2.c_str(); // name
+                addLocalParam(name, type);
+            }
+        }
+    }
+    // next come declared local variables which are all constructed right after designated parameters
+    // because no instuction invoked in the statements block will have had a chance to modify the stack yet.
+    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
+        if ((*i)->token == kTokenLocal) {
+            for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
+                if (!(*j)->str1.length())
+                    continue;
+
+                const char* type = (*j)->str1.c_str(); // type
+                const char* name = (*j)->str2.c_str(); // name
+                addLocalParam(name, type);
+                pushStringConstant(name);
+                pushStringConstant(type);
+                callFactory();
+            }
+        }
+    }
+
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
         assembleNode(*i);
 }
