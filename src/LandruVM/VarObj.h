@@ -86,16 +86,22 @@ namespace Landru {
     class VarObj;
     class VarObjArray;
 
+    struct MemoryModel {
+        VarObjArray* scratch;
+        VarObjArray* continuationParams;
+    };
+
     struct RunContext {
-        RunContext() { }
+        RunContext()
+        : elapsedTime(0), locals(0), continuationContext(0), pc(0), stack(0), engine(0) { }
         ~RunContext() { }
         
         float elapsedTime;
         VarObjArray* locals;
-        Continuation* continuationContext;
 
+        Continuation* continuationContext;
         int pc;
-        std::shared_ptr<Fiber> self;
+        std::shared_ptr<Fiber> fiber;
         LStack* stack;
         Engine* engine;
     };
@@ -106,7 +112,7 @@ namespace Landru {
         , pc(rhs.pc)
         , continuationPC(rhs.continuationPC)
         , vo(rhs.vo)
-        , f(rhs.f)
+        , fiber(rhs.fiber)
         , stack(rhs.stack)
         , engine(rhs.engine)
         {}
@@ -115,7 +121,6 @@ namespace Landru {
         : contextContinuation(0)
         , pc(0)
         , continuationPC(0)
-        , f(0)
         , stack(0)
         , engine(0)
         {}
@@ -124,7 +129,7 @@ namespace Landru {
         int pc;
         int continuationPC;
         std::shared_ptr<VarObj> vo;
-        std::shared_ptr<Landru::Fiber> f;
+        std::shared_ptr<Landru::Fiber> fiber;
         LStack* stack;
         Engine* engine;
     };
@@ -176,7 +181,9 @@ namespace Landru {
         
 		virtual std::weak_ptr<VarObj> GetVar(int index) const;
         virtual std::weak_ptr<VarObj> GetVar(const char* name) const;
-        
+		virtual std::weak_ptr<VarObj> GetSharedVar(int index) const;
+        virtual std::weak_ptr<VarObj> GetSharedVar(const char* name) const;
+
         bool Shared() const { return lockCount >= 0; }
 		void Shared(bool v) { lockCount = v ? 0 : -1; }
         
@@ -194,6 +201,7 @@ namespace Landru {
         FnTable* _functions;
         std::unique_ptr<FnTable> _instanceFunctions;
         std::unique_ptr<VarObjArray> _vars;
+        std::shared_ptr<VarObjArray> _sharedVars;
     };
 
     class VarObjFactory {

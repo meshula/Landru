@@ -63,21 +63,21 @@ namespace Landru
 
         void Create(VarObjFactory*, int maxStackDepth, int maxVars, std::shared_ptr<MachineCacheEntry> mce_);
 
-        const char*     ExemplarName() const { return mce ? mce->exemplar->nameStr : 0; }
-        int             EntryPoint() const { return mce ? mce->exemplar->stateTable[mce->exemplar->stateIndex("main")] : -1; }
+        const char* ExemplarName() const { return mce ? mce->exemplar->nameStr : 0; }
+        int EntryPoint() const { return mce ? mce->exemplar->stateTable[mce->exemplar->stateIndex("main")] : -1; }
 
 		virtual std::weak_ptr<VarObj> GetVar(int index)
 		{
-			if (mce && index >= mce->exemplar->varCount)
-                return mce->vars[index - index - mce->exemplar->varCount];
-			else if (_vars)
+			if (_vars)
                 return _vars->get(index);
             return std::weak_ptr<VarObj>();
 		}
 
         virtual std::weak_ptr<VarObj> GetSharedVar(int index)
         {
-            return mce->vars[index];
+            if (_sharedVars)
+                return _sharedVars->get(index);
+            return std::weak_ptr<VarObj>();
         }
 
 	private:

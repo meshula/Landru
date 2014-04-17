@@ -139,6 +139,7 @@ namespace Landru {
 				RaiseError(0, "Unknown variable type", varType);
             _vars->add(v);
 		}
+        _sharedVars = mce->sharedVars;
     }
 
     Fiber::~Fiber()
@@ -191,7 +192,7 @@ namespace Landru {
                         if (newF) {
                             RunContext newRc;
                             newRc.engine = rc->engine;
-                            newRc.self = newF;
+                            newRc.fiber = newF;
                             newRc.elapsedTime = rc->elapsedTime;
                             newRc.pc = newF->EntryPoint();
                             newRc.stack = rc->stack;
@@ -237,10 +238,7 @@ namespace Landru {
 					int varIndex = popInt(rc->stack);		// get var index
                     std::shared_ptr<VarObj> vp = rc->stack->top<VarObj>();
                     rc->stack->pop();
-					if (varIndex >= mce->exemplar->varCount)
-                        mce->vars[varIndex - mce->exemplar->varCount] = vp;
-					else
-                        _vars->set(vp, varIndex);
+                    _vars->set(vp, varIndex);
 					++rc->pc; }
                     break;
 
@@ -298,54 +296,48 @@ namespace Landru {
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
                 } break;
 
-            case Instructions::iIfGte0: {
+                case Instructions::iIfGte0: {
 					++rc->pc;
 					float val = popReal(rc->stack);
 					if (val >= 0)
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
-                }
-                break;
+                } break;
 
-            case Instructions::iIfLt0: {
+                case Instructions::iIfLt0: {
 					++rc->pc;
 					float val = popReal(rc->stack);
 					if (val < 0)
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
-                }
-                break;
+                } break;
 
-            case Instructions::iIfGt0: {
+                case Instructions::iIfGt0: {
 					++rc->pc;
 					float val = popReal(rc->stack);
 					if (val > 0)
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
-                }
-                break;
+                } break;
 
-            case Instructions::iIfEq0: {
+                case Instructions::iIfEq0: {
 					++rc->pc;
 					float val = popReal(rc->stack);
 					/// @TODO test for abs <= eps
 					if (val == 0)
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
-                }
-                break;
+                } break;
 
-            case Instructions::iIfNotEq0: {
+                case Instructions::iIfNotEq0: {
 					++rc->pc;
 					float val = popReal(rc->stack);
 					if (val != 0)
 						rc->pc += 2;    // skip to body of if (otherwise, next instruction is goto end of substate)
-                }
-                break;
+                } break;
                     
-            case Instructions::iOpAdd: {
+                case Instructions::iOpAdd: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v1 + v2);
-                }
-                break;
+                } break;
                     
             case Instructions::iOpSubtract: {
                     ++rc->pc;
@@ -363,30 +355,27 @@ namespace Landru {
                 }
                 break;
                     
-            case Instructions::iOpDivide: {
+                case Instructions::iOpDivide: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v2 / v1);
-                }
-                break;
-                    
-            case Instructions::iOpNegate: {
+                } break;
+
+                case Instructions::iOpNegate: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
                     pushReal(rc->stack, -v1);
-                }
-                break;
+                } break;
                     
-            case Instructions::iOpModulus: {
+                case Instructions::iOpModulus: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, float(int(v2) % int(v1)));
-                }
-                break;
+                } break;
             
-            case Instructions::iForEach: {
+                case Instructions::iForEach: {
                     ++rc->pc; // skip forEach instruction
                     ++rc->pc; // skip goto
                     int nextPC = programStore[rc->pc];
@@ -406,7 +395,7 @@ namespace Landru {
 
                                 RunContext newRc;
                                 newRc.engine = rc->engine;
-                                newRc.self = rc->self;
+                                newRc.fiber = rc->fiber;
                                 newRc.elapsedTime = rc->elapsedTime;
                                 newRc.pc = loopTop;
                                 newRc.stack = rc->stack;
@@ -426,7 +415,7 @@ namespace Landru {
 
                                 RunContext newRc;
                                 newRc.engine = rc->engine;
-                                newRc.self = rc->self;
+                                newRc.fiber = rc->fiber;
                                 newRc.elapsedTime = rc->elapsedTime;
                                 newRc.pc = loopTop;
                                 newRc.stack = rc->stack;
@@ -440,13 +429,12 @@ namespace Landru {
                         }
                     }
                     rc->pc = nextPC;
-                }
-                break;
+                } break;
 
             case Instructions::iGotoState: {
 					int data = popInt(rc->stack);
 					rc->pc = mce->exemplar->stateTable[data];
-                    rc->engine->ClearContinuations(rc->self);
+                    rc->engine->ClearContinuations(rc->fiber);
 				}
 				break;
 
@@ -519,7 +507,7 @@ namespace Landru {
                             p.contextContinuation = rc->continuationContext;
                             p.pc = rc->pc;
                             p.vo = vp;
-                            p.f = rc->self;
+                            p.fiber = rc->fiber;
                             p.stack = rc->stack;
                             p.engine = rc->engine;
                             p.continuationPC = p.pc + 3;    // skip the goto in the case of conditionals
@@ -531,19 +519,14 @@ namespace Landru {
                     
                 case Instructions::iDotChain: {
                     rc->stack->pop();
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iGetSharedVar: {
                     int index = popInt(rc->stack);
-
-                    // is it a local var on the main fiber?
-  					if (-1 != index && index < mce->vars.size())
-                        rc->stack->push(mce->vars[index]);
-                    else
-                        RaiseError(rc->pc, "variable not found on main fiber", 0);
-                    ++rc->pc; }
-                    break;
+                    rc->stack->push(mce->sharedVars->get(index).lock());
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iGetGlobalVar: {
                     int index = LStackTopStringIndex(rc->stack);
@@ -562,8 +545,8 @@ namespace Landru {
                     }
 
                     rc->stack->push(vo);
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iGetSelfVar: {
 					int varIndex = LStackTopStringIndex(rc->stack);
@@ -582,7 +565,6 @@ namespace Landru {
 					++rc->pc; }
                     break;
 
-                case Instructions::iGetLocalString:  // probably need to deprecate get local string
                 case Instructions::iGetLocalVarObj: {
 					int paramIndex = instruction >> 16;
                     rc->stack->push(locals->get(paramIndex).lock());

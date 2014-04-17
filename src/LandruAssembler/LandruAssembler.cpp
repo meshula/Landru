@@ -412,6 +412,7 @@ namespace Landru {
                     }
                     else {
                         if (isSharedVariable(parts[index].c_str())) {
+                            /// @TODO make shared variables a separate chunk
                             // the convention is shared variable indices start at maxVarIndices
                             int index = (i->second + maxVarIndex) << 16;
                             program.push_back(index | Instructions::iGetSharedVar);
@@ -534,20 +535,9 @@ namespace Landru {
         program.push_back(Instructions::iPopStore);
     }
 
-    void Assembler::pushIntOne()
-    {
-        program.push_back(Instructions::iPushIntOne);
-    }
-
-    void Assembler::pushIntZero()
-    {
-        program.push_back(Instructions::iPushIntZero);
-    }
-
-    void Assembler::stateEnd()
-    {
-        program.push_back(Instructions::iStateEnd);
-    }
+    void Assembler::pushIntOne()  { program.push_back(Instructions::iPushIntOne); }
+    void Assembler::pushIntZero() { program.push_back(Instructions::iPushIntZero); }
+    void Assembler::stateEnd()    { program.push_back(Instructions::iStateEnd); }
 
     void Assembler::subStateEnd()
     {
@@ -619,16 +609,8 @@ namespace Landru {
         if (localParameters.empty())
             lcRaiseError("no local parameters", 0, 0);
         
-        LocalParameters& l = localParameters.back();
         int e = i << 16;
-        if (!strcmp(l.localParamTypes[i].c_str(), "int"))
-            program.push_back(Instructions::iGetLocalVarObj | e);
-        else if (!strcmp(l.localParamTypes[i].c_str(), "real"))
-            program.push_back(Instructions::iGetLocalVarObj | e);
-        else if (!strcmp(l.localParamTypes[i].c_str(), "string"))
-            program.push_back(Instructions::iGetLocalString | e);
-        else
-            program.push_back(Instructions::iGetLocalVarObj | e);
+        program.push_back(Instructions::iGetLocalVarObj | e);
     }
         
     void Assembler::pushLocalParameters()

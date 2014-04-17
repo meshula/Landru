@@ -206,14 +206,14 @@ namespace Landru
         std::shared_ptr<MachineCacheEntry> mce = _machineCache->findExemplar(machineName);
         if (mce) {
             std::shared_ptr<Fiber> vop = std::make_shared<Fiber>(machineName);
-            Fiber* f = (Fiber*) vop.get();
+            Fiber* f = vop.get();
             AddGlobal(machineName, vop);
             f->Create(factory(), MAX_STACK_DEPTH, MAX_VARS, mce);
             std::shared_ptr<LStack> stack = std::make_shared<LStack>();
 
             Landru::RunContext rc;
             rc.engine = this;
-            rc.self = vop;
+            rc.fiber = vop;
             rc.elapsedTime = detail->currentElapsedTime;
             rc.pc = f->EntryPoint();
             rc.stack = stack.get();

@@ -26,8 +26,7 @@ namespace Landru
 
         // Shared variables are keyed from the exemplar
         std::shared_ptr<Exemplar>	exemplar;
-
-        std::vector<std::shared_ptr<VarObj>> vars;
+        std::shared_ptr<VarObjArray> sharedVars;
     };
 
     class MachineCache

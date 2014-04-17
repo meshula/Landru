@@ -41,16 +41,21 @@ namespace Landru
         //
         std::unique_ptr<Exemplar> e(new Exemplar());
         e->copy(e1.get());
-        
-        for (int i = 0; i < e->sharedVarCount; ++i) {
-            const char* varType = &e->stringData[e->stringArray[e->sharedVarTypeIndex[i]]];
-            const char* varName = &e->stringData[e->stringArray[e->sharedVarNameIndex[i]]];
-            std::unique_ptr<VarObj> v = factory->make(varType, varName);
-            if (!v)
-                RaiseError(0, "Unknown variable type", varType);
-            e->vars.push_back(std::shared_ptr<VarObj>(std::move(v)));
+
+        std::shared_ptr<MachineCacheEntry> mce = std::make_shared<MachineCacheEntry>(std::move(e));
+
+        if (mce->exemplar->sharedVarCount > 0) {
+            for (int i = 0; i < e->sharedVarCount; ++i) {
+                const char* varType = &mce->exemplar->stringData[e->stringArray[mce->exemplar->sharedVarTypeIndex[i]]];
+                const char* varName = &mce->exemplar->stringData[e->stringArray[mce->exemplar->sharedVarNameIndex[i]]];
+                std::unique_ptr<VarObj> v = factory->make(varType, varName);
+                if (!v)
+                    RaiseError(0, "Unknown variable type", varType);
+                mce->sharedVars->add(std::shared_ptr<VarObj>(std::move(v)));
+            }
         }
-        cache.push_back(std::make_shared<MachineCacheEntry>(std::move(e)));
+        
+        cache.push_back(std::move(mce));
     }   
     
     std::shared_ptr<Fiber> MachineCache::createFiber(VarObjFactory* factory, char const* name)

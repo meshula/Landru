@@ -55,8 +55,7 @@ namespace Landru {
     {
     }
         
-    void TimeEngine::update(Engine* engine, float elapsedTime)
-    {
+    void TimeEngine::update(Engine* engine, float elapsedTime) {
         TimeFunctor checkForRunners;
         checkForRunners.elapsedTime = elapsedTime;
         foreach(checkForRunners);
@@ -72,13 +71,13 @@ namespace Landru {
 
             Landru::RunContext rc;
             rc.engine = engine;
-            rc.self = checkForRunners.runners[i];
+            rc.fiber = checkForRunners.runners[i];
             rc.elapsedTime = elapsedTime;
             rc.pc = checkForRunners.pc[i];
             rc.stack = stack.get();
             rc.continuationContext = checkForRunners.continuations[i];
             rc.locals = 0;
-            f->Run(&rc);
+            checkForRunners.runners[i]->Run(&rc);
             stack->clear();
         }
 
@@ -88,57 +87,47 @@ namespace Landru {
     
 
     TimeVarObj::TimeVarObj(const char* name)
-    : VarObj(name, &functions)
-    {
-    }
+    : VarObj(name, &functions) {}
     
-    TimeVarObj::~TimeVarObj()
-    {
-    }
+    TimeVarObj::~TimeVarObj() {}
      
-    LANDRU_DECL_FN(TimeVarObj, after)
-    {
+    LANDRU_DECL_FN(TimeVarObj, after) {
         std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
         p->stack->pop();
         float dt = voa->getReal(-1);
-        if (dt != FLT_MAX)
-        {
+        if (dt != FLT_MAX) {
             int recurrances = 0;
             p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
-                                                                 p->f, p->stack,
+                                                                 p->fiber, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC,
                                                                  recurrances, dt);
         }
 	}
 
-    LANDRU_DECL_FN(TimeVarObj, every)
-    {
+    LANDRU_DECL_FN(TimeVarObj, every) {
         std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
         p->stack->pop();
         float dt = voa->getReal(-1);
 
-        if (dt != FLT_MAX)
-        {
+        if (dt != FLT_MAX) {
             int recurrances = -1;
             p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
-                                                                 p->f, p->stack,
+                                                                 p->fiber, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);
         }
 	}
     
-    LANDRU_DECL_FN(TimeVarObj, recur)
-    {
+    LANDRU_DECL_FN(TimeVarObj, recur) {
         std::shared_ptr<VarObjArray> voa = p->stack->top<VarObjArray>();
         p->stack->pop();
         float dt = voa->getReal(-2);
         int recurrances = voa->getInt(-1);
 
-        if (dt != FLT_MAX)
-        {
+        if (dt != FLT_MAX) {
             p->engine->timeEngine()->registerOrderedContinuation(p->contextContinuation,
-                                                                 p->f, p->stack,
+                                                                 p->fiber, p->stack,
                                                                  p->engine->elapsedTime() + dt,
                                                                  p->continuationPC, recurrances, dt);
         }

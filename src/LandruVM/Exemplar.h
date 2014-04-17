@@ -5,6 +5,7 @@
 #ifndef LANDRU_EXEMPLAR_H
 #define LANDRU_EXEMPLAR_H
 
+#include <LandruVM/VarObjArray.h>
 #include <stdio.h>
 #include <vector>
 
@@ -18,9 +19,6 @@ namespace Landru
 		Exemplar();
 		~Exemplar();
 
-        // once an exemplar has been instantiated the vars will be here.
-        std::vector<std::shared_ptr<VarObj>> vars;
-		
 		void            copy(Exemplar*);
 		void            disassemble(FILE* output);
 

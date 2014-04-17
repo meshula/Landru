@@ -122,7 +122,13 @@ namespace Landru
             return _vars->get(i);
         return std::weak_ptr<VarObj>();
     }
-    
+    std::weak_ptr<VarObj> VarObj::GetSharedVar(int i) const
+    {
+        if (i < _sharedVars->size())
+            return _sharedVars->get(i);
+        return std::weak_ptr<VarObj>();
+    }
+
     std::weak_ptr<VarObj> VarObj::GetVar(const char* s) const
     {
         /// @TODO use a dictionary
@@ -133,7 +139,17 @@ namespace Landru
         }
         return std::weak_ptr<VarObj>();
     }
-    
+    std::weak_ptr<VarObj> VarObj::GetSharedVar(const char* s) const
+    {
+        /// @TODO use a dictionary
+        int c = _sharedVars->size();
+        for (int i = 0; i < c; ++i) {
+            if (!strcmp(_sharedVars->get(i).lock()->name(), s))
+                return _sharedVars->get(i);
+        }
+        return std::weak_ptr<VarObj>();
+    }
+
     int VarObj::Func(const char* funcName) {
         if (!_functions)
             return -1;

@@ -75,7 +75,6 @@ namespace Landru
                     sprintf(buff, "%04d:%s\n", pc, info.name);
                     break;
 
-                case Instructions::iGetLocalString:
                 case Instructions::iGetLocalVarObj:
                     sprintf(buff, "%04d:%s %d", pc, info.name, op >> 16);
                     break;
@@ -130,7 +129,6 @@ namespace Landru
 					sprintf(buff, "%04d:%s\n", pc, info.name);
 					break;
 					
-                case Instructions::iGetLocalString:
                 case Instructions::iGetLocalVarObj:
                     sprintf(buff, "%04d:%s %d", pc, info.name, op >> 16);
                     break;

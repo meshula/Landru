@@ -125,7 +125,6 @@ namespace Landru {
             for (size_t i = 0; i < functor.runners.size(); ++i) {
                 // refs were incremented above
                 LStack* stack = LStackGetFromPool(1024);
-                std::shared_ptr<Fiber> f = functor.runners[i];
                 std::pair<int, int>& xy = functor.coords[i];
 
                 Landru::VarObjArray locals("locals");
@@ -139,13 +138,13 @@ namespace Landru {
 
                 Landru::RunContext rc;
                 rc.engine = engine;
-                rc.self = functor.runners[i];
+                rc.fiber = functor.runners[i];
                 rc.elapsedTime = elapsedTime;
                 rc.pc = functor.pc[i];
                 rc.stack = stack;
                 rc.continuationContext = functor.continuations[i];
                 rc.locals = &locals;
-                f->Run(&rc);
+                functor.runners[i]->Run(&rc);
             }
             delete event;
         }
@@ -198,7 +197,7 @@ namespace Landru {
         p->stack->pop();
         MouseEngine* me = p->engine->mouseEngine();
         me->registerContinuation(p->contextContinuation,
-                                 p->f,   // the Fiber to run on
+                                 p->fiber,   // the Fiber to run on
                                  p->stack,
                                  me->up().lock(),
                                  p->continuationPC);    // adds strong ref to self
@@ -210,7 +209,7 @@ namespace Landru {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
         me->registerContinuation(p->contextContinuation,
-                                 p->f,   // the Fiber to run on
+                                 p->fiber,   // the Fiber to run on
                                  p->stack,
                                  me->down().lock(),
                                  p->continuationPC);    // adds strong ref to self
@@ -222,7 +221,7 @@ namespace Landru {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
         me->registerContinuation(p->contextContinuation,
-                                 p->f,   // the Fiber to run on
+                                 p->fiber,   // the Fiber to run on
                                  p->stack,
                                  me->drag().lock(),
                                  p->continuationPC);    // adds strong ref to self
@@ -234,7 +233,7 @@ namespace Landru {
         MouseEngine* me = p->engine->mouseEngine();
         p->stack->pop();
         me->registerContinuation(p->contextContinuation,
-                                 p->f,   // the Fiber to run on
+                                 p->fiber,   // the Fiber to run on
                                  p->stack,
                                  me->move().lock(),
                                  p->continuationPC);    // adds strong ref to self

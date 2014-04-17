@@ -159,7 +159,9 @@ void AssemblerBase::assembleNode(ASTNode* root)
             
         case kTokenAssignment:
             ASSEMBLER_TRACE(kTokenAssignment);
-            // &&& is this where to detect shared?
+
+            // @TODO if shared, do popStoreShared
+
             // assignment(var)/function(new)/parameters/stringLiteral(physics2d.body)
             assembleStatements(root); //function(new)
             pushVarIndex(root->str2.c_str());
