@@ -4,6 +4,7 @@
 
 // name, operand count, description
 INSTR_DECL(Nop,							0, ". -> .")
+INSTR_DECL(Pop,                         0, ". ->")
 INSTR_DECL(PopStore,					0, "var varIndex -> .")
 INSTR_DECL(LaunchMachine,				0, "instanceHandle -> .")
 INSTR_DECL(PushConstant,				1, ". -> constant")
@@ -20,7 +21,6 @@ INSTR_DECL(GetSelfVar,                  0, "varIdx -> VarObj")
 INSTR_DECL(GetLocalVarObj,              0, ". -> VarObj Top 16b is param index")
 INSTR_DECL(StateEnd,					0, ". -> .")
 INSTR_DECL(SubStateEnd,					0, ". -> .")
-INSTR_DECL(StateSuspend,				0, ". -> .")
 INSTR_DECL(ParamsStart,                 0, ". -> paramMark")
 INSTR_DECL(ParamsEnd,                   0, "paramMark ... -> VarArrayObj")
 INSTR_DECL(GotoState,					0, "stateIndex -> .")

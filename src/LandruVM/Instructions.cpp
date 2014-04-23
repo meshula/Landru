@@ -71,7 +71,6 @@ namespace Landru
 
                 case Instructions::iStateEnd:
                 case Instructions::iSubStateEnd:
-                case Instructions::iStateSuspend:
                     sprintf(buff, "%04d:%s\n", pc, info.name);
                     break;
 
@@ -125,7 +124,6 @@ namespace Landru
 
 				case Instructions::iStateEnd:
 				case Instructions::iSubStateEnd:
-				case Instructions::iStateSuspend:
 					sprintf(buff, "%04d:%s\n", pc, info.name);
 					break;
 					

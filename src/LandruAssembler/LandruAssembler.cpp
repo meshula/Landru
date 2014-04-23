@@ -299,10 +299,12 @@ namespace Landru {
         // parameters were parsed in order into the vector;
         // they are indexed backwards from the local stack frame, so if the parameters were a, b, c
         // the runtime indices are a:2 b:1 c:0
-        LocalParameters& l = localParameters.back();
-        int m = l.localParams.size();
-        for (int i = 0; i < m; ++i)
-            if (!strcmp(name, l.localParams[i].c_str()))
+        // search from most recently pushed because of scoping, eg in this case
+        // for x in range(): for y in range(): local real x ...... ; ;
+        // the innermost x should be found within the y loop, and the outermost in the x loop
+        int m = localParameters.size() - 1;
+        for (int i = m; i >= 0; --i)
+            if (!strcmp(name, localParameters[i].name.c_str()))
                 return m - i - 1;
         return -1;
     }
@@ -312,9 +314,7 @@ namespace Landru {
         if (localParameters.empty())
             lcRaiseError("no local parameters", 0, 0);
         
-        LocalParameters& l = localParameters.back();
-        l.localParams.push_back(name);
-        l.localParamTypes.push_back(type);
+        localParameters.push_back(LocalParameter(name, type));
     }
 
 
@@ -395,7 +395,7 @@ namespace Landru {
             if (i >= 0) {
                 // local parameter, push the local parameter index
                 int e = i << 16;
-                program.push_back(e | Instructions::iGetSelfVar);
+                program.push_back(e | Instructions::iGetLocalVarObj);
             }
             else {
                 i = context->requiresIndex(parts[index].c_str());
@@ -405,7 +405,7 @@ namespace Landru {
                     program.push_back(e | Instructions::iGetRequire);
                 }
                 else {
-                    // is it a local or shared variable?
+                    // is it an instance or shared variable?
                     std::map<std::string, int>::const_iterator i = varIndex.find(parts[index].c_str());
                     if (i == varIndex.end()) {
                         RaiseError(0, "Unknown Variable", parts[index].c_str());
@@ -418,7 +418,7 @@ namespace Landru {
                             program.push_back(index | Instructions::iGetSharedVar);
                         }
                         else {
-                            program.push_back((i->second << 16) | Instructions::iGetLocalVarObj);
+                            program.push_back((i->second << 16) | Instructions::iGetSelfVar);
                         }
                     }
                 }
@@ -473,6 +473,13 @@ namespace Landru {
         program.push_back(Instructions::iCreateTempString);
     }
 
+    int Assembler::instanceVarIndex(const char* varName) {
+        std::map<std::string, int>::const_iterator i = varIndex.find(varName);
+        if (i != varIndex.end())
+            return i->second;
+        return -1;
+    }
+
     void Assembler::pushVarIndex(const char* varName)
     {
         std::map<std::string, int>::const_iterator i = varIndex.find(varName);
@@ -523,13 +530,15 @@ namespace Landru {
         program.push_back(i);
     }
         
-    void Assembler::rangedRandom()
-    {
+    void Assembler::rangedRandom() {
         program.push_back(Instructions::iRangedRandom);
     }
 
-    void Assembler::popStore()
-    {
+    void Assembler::pop() {
+        program.push_back(Instructions::iPop);
+    }
+
+    void Assembler::popStore() {
         // compile instruction that pops the top of the eval stack & stores it in a variable.
         // the variable will be an index, which is used to get the offset in the memory block of variables for this machine
         program.push_back(Instructions::iPopStore);
@@ -569,9 +578,9 @@ namespace Landru {
         program.push_back(Instructions::iGetSharedVar);
     }
 
-    void Assembler::getSelfVar()
+    void Assembler::getSelfVar(int index)
     {
-        program.push_back(Instructions::iGetSelfVar);
+        program.push_back(Instructions::iGetSelfVar | (index << 16));
     }
         
     void Assembler::opAdd()
@@ -611,16 +620,6 @@ namespace Landru {
         
         int e = i << 16;
         program.push_back(Instructions::iGetLocalVarObj | e);
-    }
-        
-    void Assembler::pushLocalParameters()
-    {
-        localParameters.push_back(LocalParameters());
-    }
-
-    void Assembler::popLocalParameters()
-    {
-        localParameters.pop_back();
     }
         
     void Assembler::forEach()

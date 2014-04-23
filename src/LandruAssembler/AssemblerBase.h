@@ -35,6 +35,7 @@ namespace Landru
 		virtual void pushFloatConstant(float) = 0;
 		virtual void rangedRandom() = 0;
         virtual void createTempString() = 0;
+        virtual void pop() = 0;
 		virtual void popStore() = 0;
 		virtual void pushIntOne() = 0;
 		virtual void pushIntZero() = 0;
@@ -45,7 +46,7 @@ namespace Landru
 		virtual void nop() = 0;
 		virtual void getGlobalVar() = 0;
 		virtual void getSharedVar() = 0;
-		virtual void getSelfVar() = 0;
+		virtual void getSelfVar(int) = 0;
         virtual void getLocalParam(int) = 0; // int is an index into the surrounding stack frame
         virtual void forEach() = 0;
 		virtual void onMessage() = 0;
@@ -74,6 +75,7 @@ namespace Landru
 		virtual void _addVariable(const char* name, const char* type, bool shared) = 0;
         virtual bool isGlobalVariable(const char* name) = 0;
         virtual bool isSharedVariable(const char* name) = 0;
+        virtual int instanceVarIndex(const char* varName) = 0;
 
         // requires
         virtual bool isRequire(const char* name) = 0;
@@ -91,8 +93,6 @@ namespace Landru
 		virtual int  programSize() = 0;
 
         // local parameters
-        virtual void pushLocalParameters() = 0;
-        virtual void popLocalParameters() = 0;
         virtual bool isLocalParam(const char* name) = 0;
         virtual int  localParamIndex(const char* name) = 0;
         virtual void addLocalParam(const char* name, const char* type) = 0;

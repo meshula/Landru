@@ -5,6 +5,7 @@
 #include "AssemblerBase.h"
 #include "LandruCompiler/AST.h"
 #include "LandruCompiler/lcRaiseError.h"
+#include <map>
 
 /*
  The Assembler knows the actual details of machine code, and string and variable indexing
@@ -147,12 +148,17 @@ void AssemblerBase::assembleNode(ASTNode* root)
                     getGlobalVar();
                 }
                 else if (isSharedVariable(name)) {
-                    pushSharedVarIndex(name);	// actually pushes string index
+                    pushSharedVarIndex(name);
                     getSharedVar();
                 }
                 else {
-                    pushVarIndex(name);		// pushes true variable index
-                    getSelfVar();
+                    int i = instanceVarIndex(name);
+                    if (i >= 0) {
+                        getSelfVar(i);
+                    }
+                    else {
+                        //RaiseError();
+                    }
                 }
             }
             break;
@@ -205,18 +211,13 @@ void AssemblerBase::assembleNode(ASTNode* root)
                 int patch = gotoAddr();
                 
                 // for each will call Run as if executing substates
-                pushLocalParameters();
-                
                 // in the case of for body in bodies, type will be varobj and name will be body
+                // the local parameters will be created, pushed, and cleaned up by the forEach instruction itself
                 const char* type = root->str1.c_str(); // type
                 const char* name = root->str2.c_str(); // name
                 addLocalParam(name, type);
-                
                 assembleStatements(*j); // statements
-                
-                popLocalParameters();
                 subStateEnd();
-                
                 _patchGoto(patch);
             }
             break;
@@ -229,10 +230,8 @@ void AssemblerBase::assembleNode(ASTNode* root)
                 int patch = gotoAddr();
                 ++j;
 
-                pushLocalParameters();
                 assembleStatements(*j); // statements
-                popLocalParameters();
-                
+
                 subStateEnd();
                 _patchGoto(patch);
             }
@@ -271,7 +270,8 @@ void AssemblerBase::assembleNode(ASTNode* root)
 
 void AssemblerBase::assembleStatements(ASTNode* root)
 {
-    // first come designated parameters, because those will be coming from outside
+    // first come designated parameters, because those will be coming from outside.
+    // these will be externally cleaned
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if ((*i)->token == kTokenParam) {
             for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
@@ -281,6 +281,8 @@ void AssemblerBase::assembleStatements(ASTNode* root)
             }
         }
     }
+
+    int count = 0;
     // next come declared local variables which are all constructed right after designated parameters
     // because no instuction invoked in the statements block will have had a chance to modify the stack yet.
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
@@ -295,12 +297,17 @@ void AssemblerBase::assembleStatements(ASTNode* root)
                 pushStringConstant(name);
                 pushStringConstant(type);
                 callFactory();
+                ++count;
             }
         }
     }
 
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
         assembleNode(*i);
+
+    for (int i = 0; i < count; ++i) {
+        pop();
+    }
 }
 
 void AssemblerBase::assembleState(ASTNode* root)
@@ -314,11 +321,8 @@ void AssemblerBase::assembleState(ASTNode* root)
     }
     bool once = true;
 
-    pushLocalParameters();
-    
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if (once == false) {
-            popLocalParameters();
             lcRaiseError("Compile Error: should only be one statements node under a state node\n", 0, 0);
             return;
         }
@@ -326,7 +330,6 @@ void AssemblerBase::assembleState(ASTNode* root)
         
         assembleStatements(*i);
     }
-    popLocalParameters();
     stateEnd();
 }
 

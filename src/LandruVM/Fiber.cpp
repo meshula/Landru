@@ -32,10 +32,12 @@
 const bool verboseTrace = true;
 # define TRACE(f, pc, op) printf("%d:%s\n", pc, Instructions::opName(op));
 # define VERBOSE(fmt, ...) printf(fmt, __VA_ARGS__)
+# define STACKMON printf("%d [%d]\n", rc->pc, LStackDepth(rc->stack));
 #else
 const bool verboseTrace = false;
 # define VERBOSE(fmt, args...)
 # define TRACE(f, pc, op)
+# define STACKMON
 #endif
 
 namespace Landru {
@@ -125,7 +127,6 @@ namespace Landru {
     
     void Fiber::Create(VarObjFactory* factory, int maxStackDepth, int maxVars, std::shared_ptr<MachineCacheEntry> mce_)
     {
-        _suspendedPC = -1;
         mce = mce_;
 
         if (mce->exemplar->varCount > 0)
@@ -148,17 +149,16 @@ namespace Landru {
 
 
 
-
+#define BREAKPOINT -1
 
 
     Fiber::RunEndCondition Fiber::Run(RunContext* rc) {
         VarObjArray* locals = rc->locals;
-        if (!locals)
-            locals = _vars.get();
+        //if (!locals)
+        //    locals = _vars.get();  ... this never makes sense, right?
 
         RunEndCondition retval = kStateEnd;
-		_suspendedPC = -1;
-                
+
         unsigned int* programStore = mce->exemplar->programStore;
         
 		bool stateEnd = false;
@@ -166,9 +166,12 @@ namespace Landru {
             unsigned int instruction = programStore[rc->pc];
 			Instructions::Op op = (Instructions::Op) (instruction &0xffff);
             
-            //printf("%d [%d]\n", pc, LStackDepth(stack));
-            
-            TRACE(this, pc, op);
+            STACKMON
+            TRACE(this, rc->pc, op);
+
+            if (rc->pc == BREAKPOINT) {
+                printf("break\n");
+            }
 
 			switch (op) {
                 case Instructions::iLaunchMachine: {
@@ -204,24 +207,24 @@ namespace Landru {
                             printf("Couldn't launch machine %s\n", machineName);
                         }
                     }
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iPushConstant: {
 					int data = programStore[++rc->pc];
                     pushInt(rc->stack, data);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
 
                 case Instructions::iPushIntOne: {
                     pushInt(rc->stack, 1);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
 
                 case Instructions::iPushIntZero: {
                     pushInt(rc->stack, 0);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
 
                 case Instructions::iPushFloatConstant: {
 					union {
@@ -230,8 +233,13 @@ namespace Landru {
 					} data;
 					data.i = programStore[++rc->pc];
                     pushReal(rc->stack, data.f);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
+
+                case Instructions::iPop: {
+                    rc->stack->pop();
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iPopStore: {
                     // the current use of this instruction is after a machine is created, its pointer is on the stack
@@ -239,19 +247,18 @@ namespace Landru {
                     std::shared_ptr<VarObj> vp = rc->stack->top<VarObj>();
                     rc->stack->pop();
                     _vars->set(vp, varIndex);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
 
                 case Instructions::iCreateTempString: {
                     int index = LStackTopStringIndex(rc->stack);
                     rc->stack->pop();
                     const char* str = &mce->exemplar->stringData[mce->exemplar->stringArray[index]];
-                    if (verboseTrace)
-                        printf("\t\ttemp string: %s\n", str);
+                    VERBOSE("\t\ttemp string: %s\n", str);
 
                     rc->stack->push(StringVarObj::createString("temp", str));
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iFactory: {
                     int nameIndex = LStackTopStringIndex(rc->stack);
@@ -262,18 +269,18 @@ namespace Landru {
                     const char* varName = &mce->exemplar->stringData[mce->exemplar->stringArray[nameIndex]];
                     std::shared_ptr<VarObj> v(rc->engine->factory()->make(varType, varName));
                     rc->stack->push(v);
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
                     
                 case Instructions::iParamsStart: {
                     LStackPushParamMark(rc->stack);
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iParamsEnd: {
                     LStackFinalizeParamMark(rc->stack);
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iIfEq: {
 					// auto-promotes ints to floats for comparison.
@@ -338,30 +345,28 @@ namespace Landru {
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v1 + v2);
                 } break;
-                    
-            case Instructions::iOpSubtract: {
+
+                case Instructions::iOpSubtract: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v2 - v1);
-                }
-                break;
+                } break;
 
-            case Instructions::iOpMultiply: {
+                case Instructions::iOpMultiply: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v1 * v2);
-                }
-                break;
-                    
+                } break;
+
                 case Instructions::iOpDivide: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
 					float v2 = popReal(rc->stack);
                     pushReal(rc->stack, v2 / v1);
                 } break;
-
+                    
                 case Instructions::iOpNegate: {
                     ++rc->pc;
 					float v1 = popReal(rc->stack);
@@ -391,7 +396,7 @@ namespace Landru {
                             for (gen->begin(voa); !gen->done(); gen->next()) {
                                 Landru::VarObjArray forLocals("locals");
                                 gen->generate(forLocals);
-                                VERBOSE("\n\n\nForEach in generator -->>>>>> Start Run\n");
+                                VERBOSE("%s", "\n\n\nForEach in generator -->>>>>> Start Run\n");
 
                                 RunContext newRc;
                                 newRc.engine = rc->engine;
@@ -404,7 +409,7 @@ namespace Landru {
                                 Run(&newRc);
                                 //Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, &forLocals);
                                 forLocals.pop();
-                                VERBOSE("<<<<<<-- ForEach in generator End Run\n\n\n");
+                                VERBOSE("%s", "<<<<<<-- ForEach in generator End Run\n\n\n");
                             }
                         }
                         else {
@@ -431,35 +436,27 @@ namespace Landru {
                     rc->pc = nextPC;
                 } break;
 
-            case Instructions::iGotoState: {
+                case Instructions::iGotoState: {
 					int data = popInt(rc->stack);
 					rc->pc = mce->exemplar->stateTable[data];
                     rc->engine->ClearContinuations(rc->fiber);
-				}
-				break;
+				} break;
 
-			case Instructions::iGotoAddr:
-				rc->pc = programStore[++rc->pc];
-				break;
+                case Instructions::iGotoAddr:
+                    rc->pc = programStore[++rc->pc];
+                    break;
 
-			case Instructions::iStateEnd:
-				++rc->pc;
-				stateEnd = true;
-                retval = kStateEnd;
-				break;
+                case Instructions::iStateEnd:
+                    ++rc->pc;
+                    stateEnd = true;
+                    retval = kStateEnd;
+                    break;
 
-			case Instructions::iSubStateEnd:
-				++rc->pc;
-				stateEnd = true;
-                retval = kSubStateEnd;
-				break;
-
-            case Instructions::iStateSuspend:
-                ++rc->pc;
-				_suspendedPC = rc->pc;
-                stateEnd = true;
-                retval = kStateSuspend;
-                break;
+                case Instructions::iSubStateEnd:
+                    ++rc->pc;
+                    stateEnd = true;
+                    retval = kSubStateEnd;
+                    break;
 
                 case Instructions::iRangedRandom: {
 					float minF = popReal(rc->stack);
@@ -470,8 +467,7 @@ namespace Landru {
 					r += minF;
                     pushReal(rc->stack, r);
 					++rc->pc;
-				}
-                    break;
+				} break;
 
                 case Instructions::iGetRequire: {
                     shared_ptr<VarObj> vo = rc->engine->Require(instruction >> 16);
@@ -479,9 +475,8 @@ namespace Landru {
                         rc->stack->push(vo);
                     else
                         RaiseError(rc->pc, "COuldn't find required library", 0);
-                    ++rc->pc; }
-                    break;
-
+                    ++rc->pc;
+                } break;
 
 
                 case Instructions::iCallFunction: {
@@ -514,8 +509,8 @@ namespace Landru {
                             fn(&p); // if function could be resolved, call it
                         }
                     }
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
                     
                 case Instructions::iDotChain: {
                     rc->stack->pop();
@@ -549,8 +544,7 @@ namespace Landru {
                 } break;
 
                 case Instructions::iGetSelfVar: {
-					int varIndex = LStackTopStringIndex(rc->stack);
-                    rc->stack->pop();
+					int varIndex = instruction >> 16;
                     std::shared_ptr<VarObj> lvo = GetVar(varIndex).lock();
                     if (!lvo) {
                         if (varIndex > mce->exemplar->varCount)
@@ -562,22 +556,22 @@ namespace Landru {
                     }
 
                     rc->stack->push(lvo);
-					++rc->pc; }
-                    break;
+					++rc->pc;
+                } break;
 
                 case Instructions::iGetLocalVarObj: {
 					int paramIndex = instruction >> 16;
                     rc->stack->push(locals->get(paramIndex).lock());
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 case Instructions::iGetVarFromVar: {
                     shared_ptr<VarObj> vo = LStackTopVarObj(rc->stack).lock();
                     int func = instruction >> 16;
                     shared_ptr<VarObj> varVo = vo->GetVar(mce->exemplar->varNameIndex[func]).lock();
                     rc->stack->push(varVo);
-                    ++rc->pc; }
-                    break;
+                    ++rc->pc;
+                } break;
 
                 default:
                     ++rc->pc;

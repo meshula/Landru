@@ -38,13 +38,22 @@ namespace Landru
 	// callee. The Fiber has the PC, stack, and variables. This distinction is
     // important when a machine is executing $ function calls.
 
+    // Memory model
+    //
+    // class instance variables - currently called SelfVar, in variable _vars
+    // class shared variables - currently called _sharedVars
+    // named parameters - currently called rc->local
+    // stack values - called rc->stack
+    //
+
+
     class Fiber : public VarObj
 	{
 	public:
 
         Fiber(const char* name)
         : VarObj(name, &functions)
-        , mce(0), _suspendedPC(0)
+        , mce(0)
         {
         }
 		
@@ -56,7 +65,6 @@ namespace Landru
         {
             kStateEnd,
             kSubStateEnd,
-            kStateSuspend,
         };
 		
 		RunEndCondition Run(RunContext*);
@@ -104,11 +112,7 @@ namespace Landru
                                   VarObj** libObj);
 */        
         std::shared_ptr<MachineCacheEntry> mce;   ///< Has exemplar and sharedVars
-        
-		int _suspendedPC;
 
-        //        static VarObjPtr*   main;           ///< There is only one main fiber
-        
         LANDRU_DECL_BINDING_BEGIN
             LANDRU_DECL_BINDING(add)
             LANDRU_DECL_BINDING(sub)

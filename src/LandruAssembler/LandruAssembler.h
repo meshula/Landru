@@ -62,13 +62,16 @@ namespace Landru
 		std::map<std::string, int>			sharedVarIndex;
 		int									maxSharedVarIndex;
         
-        struct LocalParameters
+        struct LocalParameter
         {
-            std::vector<std::string>            localParams;
-            std::vector<std::string>            localParamTypes;
+            LocalParameter() { }
+            LocalParameter(const LocalParameter& rhs) : name(rhs.name), type(rhs.type) {}
+            LocalParameter(const char* name, const char* type) : name(name), type(type) {}
+            std::string name;
+            std::string type;
         };
         
-        std::vector<LocalParameters>    localParameters;
+        std::vector<LocalParameter> localParameters;
 
         CompilationContext* context;
 
@@ -83,6 +86,7 @@ namespace Landru
 		virtual void reset();
 		virtual int stringIndex(const char* s);		
 		int stateIndex(const char* s);
+        virtual int instanceVarIndex(const char* varName);
 		
 		virtual void callFunction(const char* fnName);
         virtual void getRequire(int i);
@@ -94,6 +98,7 @@ namespace Landru
 		virtual void pushFloatConstant(float v);
         virtual void createTempString();
 		virtual void rangedRandom();
+        virtual void pop();
 		virtual void popStore();		
 		virtual void pushIntOne();		
 		virtual void pushIntZero();		
@@ -104,7 +109,7 @@ namespace Landru
 		virtual void nop();		
         virtual void getGlobalVar();
 		virtual void getSharedVar();
-		virtual void getSelfVar();
+		virtual void getSelfVar(int);
         virtual void getLocalParam(int);
         virtual void forEach();
 		virtual void onMessage();		
@@ -143,8 +148,6 @@ namespace Landru
         virtual int  localParamIndex(const char* name);
         virtual void addLocalParam(const char* name, const char* type);
         virtual void callFactory();
-        virtual void pushLocalParameters();
-        virtual void popLocalParameters();
         
         virtual void dotChain();
 
