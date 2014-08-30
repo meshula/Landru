@@ -149,7 +149,7 @@ namespace Landru {
 
 
 
-#define BREAKPOINT -1
+#define BREAKPOINT 224
 
 
     Fiber::RunEndCondition Fiber::Run(RunContext* rc) {
@@ -236,8 +236,8 @@ namespace Landru {
 					++rc->pc;
                 } break;
 
-                case Instructions::iPop: {
-                    rc->stack->pop();
+                case Instructions::iPopLocal: {
+                    locals->pop();
                     ++rc->pc;
                 } break;
 
@@ -261,14 +261,13 @@ namespace Landru {
                 } break;
 
                 case Instructions::iFactory: {
-                    int nameIndex = LStackTopStringIndex(rc->stack);
-                    rc->stack->pop();
                     int typeNameIndex = LStackTopStringIndex(rc->stack);
+                    rc->stack->pop();
+                    int nameIndex = LStackTopStringIndex(rc->stack);
                     rc->stack->pop();
                     const char* varType = &mce->exemplar->stringData[mce->exemplar->stringArray[typeNameIndex]];
                     const char* varName = &mce->exemplar->stringData[mce->exemplar->stringArray[nameIndex]];
-                    std::shared_ptr<VarObj> v(rc->engine->factory()->make(varType, varName));
-                    rc->stack->push(v);
+                    locals->push_back(rc->engine->factory()->make(varType, varName));
                     ++rc->pc;
                 } break;
                     
@@ -386,51 +385,34 @@ namespace Landru {
                     int nextPC = programStore[rc->pc];
                     int loopTop = ++rc->pc;
 
-                    std::shared_ptr<VarObjArray> vp = rc->stack->top<VarObjArray>();
-                    rc->stack->pop();
-
-                    VarObjArray* voa = vp.get();
-                    if (voa->size() > 0) {
-                        Landru::GeneratorVarObj* gen = dynamic_cast<Landru::GeneratorVarObj*>(voa->get(0).lock().get());
-                        if (gen) {
-                            for (gen->begin(voa); !gen->done(); gen->next()) {
-                                Landru::VarObjArray forLocals("locals");
-                                gen->generate(forLocals);
-                                VERBOSE("%s", "\n\n\nForEach in generator -->>>>>> Start Run\n");
-
-                                RunContext newRc;
-                                newRc.engine = rc->engine;
-                                newRc.fiber = rc->fiber;
-                                newRc.elapsedTime = rc->elapsedTime;
-                                newRc.pc = loopTop;
-                                newRc.stack = rc->stack;
-                                newRc.continuationContext = rc->continuationContext;
-                                newRc.locals = &forLocals;
-                                Run(&newRc);
-                                //Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, &forLocals);
-                                forLocals.pop();
-                                VERBOSE("%s", "<<<<<<-- ForEach in generator End Run\n\n\n");
-                            }
+                    std::shared_ptr<GeneratorVarObj> vp = rc->stack->top<GeneratorVarObj>();
+                    GeneratorVarObj* gen = vp.get();
+                    if (gen) {
+                        rc->stack->pop();
+                        VarObjArray* voa = 0; // params...
+                        for (gen->begin(voa); !gen->done(); gen->next()) {
+                            gen->generate(*rc->locals);
+                            VERBOSE("%s", "\n\n\nForEach in generator -->>>>>> Start Run\n");
+                            RunContext newRc(*rc);
+                            newRc.pc = loopTop;
+                            Run(&newRc);
+                            gen->generateDone(*rc->locals);
+                            VERBOSE("%s", "<<<<<<-- ForEach in generator End Run\n\n\n");
                         }
-                        else {
-                            Landru::VarObjArray forLocals("locals");
-                            for (int i = 0; i < voa->size(); ++i) {
-                                forLocals.add(voa->get(i).lock());
-                                VERBOSE("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
+                    }
+                    else {
+                        std::shared_ptr<VarObjArray> voa = rc->stack->top<VarObjArray>();
+                        rc->stack->pop();
+                        for (int i = 0; i < voa->size(); ++i) {
+                            rc->locals->add(voa->get(i).lock());
+                            VERBOSE("\n\n\nForEach %d of %d -->>>>>> Start Run\n", i, voa->size());
 
-                                RunContext newRc;
-                                newRc.engine = rc->engine;
-                                newRc.fiber = rc->fiber;
-                                newRc.elapsedTime = rc->elapsedTime;
-                                newRc.pc = loopTop;
-                                newRc.stack = rc->stack;
-                                newRc.continuationContext = rc->continuationContext;
-                                newRc.locals = &forLocals;
-                                Run(&newRc);
-                                //Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, &forLocals);
-                                forLocals.pop();
-                                VERBOSE("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
-                            }
+                            RunContext newRc(*rc);
+                            newRc.pc = loopTop;
+                            Run(&newRc);
+                            //Run(engine, self, elapsedTime, loopTop, stack, contextContinuation, &forLocals);
+                            rc->locals->pop();
+                            VERBOSE("<<<<<<-- ForEach %d of %d End Run\n\n\n", i, voa->size());
                         }
                     }
                     rc->pc = nextPC;
@@ -561,7 +543,8 @@ namespace Landru {
 
                 case Instructions::iGetLocalVarObj: {
 					int paramIndex = instruction >> 16;
-                    rc->stack->push(locals->get(paramIndex).lock());
+                    // index locals off the back of the locals stack
+                    rc->stack->push(locals->get(-paramIndex - 1).lock());
                     ++rc->pc;
                 } break;
 

@@ -265,7 +265,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0600;
 			};
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Landru" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -338,7 +338,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = build/Release;
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
@@ -380,59 +380,12 @@
 			};
 			name = "Debug Native 64-bit";
 		};
-		58F14BE671E91D5F4A0A005D /* Release Native 32-bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = build/Release;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/local/lib;
-				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = Landru;
-			};
-			name = "Release Native 32-bit";
-		};
-		5ABB4C001C430C3A433613FB /* Debug Native 32-bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
-				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
-				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					DEBUG,
-					__MACOSX_CORE__,
-					OSX,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					src,
-					../LabText/src,
-					../LabJson/src,
-				);
-				OBJROOT = obj/x32/Debug;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-std=c++11",
-					"-stdlib=libc++",
-				);
-				SYMROOT = build/Debug;
-				VALID_ARCHS = x86_64;
-			};
-			name = "Debug Native 32-bit";
-		};
 		624D6D7C26A53EF202BB4F74 /* Debug Native 64-bit */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = build/Debug;
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
 				INSTALL_PATH = /usr/local/lib;
@@ -472,75 +425,26 @@
 			};
 			name = "Release Native 64-bit";
 		};
-		7951617577ED71F10E5E7CB8 /* Release Native 32-bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
-				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
-				GCC_OPTIMIZATION_LEVEL = s;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					NDEBUG,
-					__MACOSX_CORE__,
-					OSX,
-				);
-				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = (
-					src,
-					../LabText/src,
-					../LabJson/src,
-				);
-				OBJROOT = obj/x32/Release;
-				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = (
-					"-std=c++11",
-					"-stdlib=libc++",
-				);
-				SYMROOT = build/Release;
-				VALID_ARCHS = x86_64;
-			};
-			name = "Release Native 32-bit";
-		};
-		7D5B0D7127A7577751616177 /* Debug Native 32-bit */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				COMBINE_HIDPI_IMAGES = YES;
-				CONFIGURATION_BUILD_DIR = build/Debug;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_MODEL_TUNING = G5;
-				INSTALL_PATH = /usr/local/lib;
-				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_NAME = Landru;
-			};
-			name = "Debug Native 32-bit";
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Landru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5ABB4C001C430C3A433613FB /* Debug Native 32-bit */,
 				4D29763135D42DEC21DD380E /* Debug Native 64-bit */,
-				7951617577ED71F10E5E7CB8 /* Release Native 32-bit */,
 				69F908425473055139173FE0 /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = "Debug Native 32-bit";
+			defaultConfigurationName = "Debug Native 64-bit";
 		};
 		63BD33F1213672FE432E0A98 /* Build configuration list for PBXNativeTarget "Landru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				7D5B0D7127A7577751616177 /* Debug Native 32-bit */,
 				624D6D7C26A53EF202BB4F74 /* Debug Native 64-bit */,
-				58F14BE671E91D5F4A0A005D /* Release Native 32-bit */,
 				14707F0D5AF05FEF4F1E65FB /* Release Native 64-bit */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = "Debug Native 32-bit";
+			defaultConfigurationName = "Debug Native 64-bit";
 		};
 /* End XCConfigurationList section */
 	};

@@ -35,7 +35,7 @@ namespace Landru
 		virtual void pushFloatConstant(float) = 0;
 		virtual void rangedRandom() = 0;
         virtual void createTempString() = 0;
-        virtual void pop() = 0;
+        virtual void popLocal() = 0;
 		virtual void popStore() = 0;
 		virtual void pushIntOne() = 0;
 		virtual void pushIntZero() = 0;
@@ -95,6 +95,7 @@ namespace Landru
         // local parameters
         virtual bool isLocalParam(const char* name) = 0;
         virtual int  localParamIndex(const char* name) = 0;
+        virtual void localParamPop() = 0;
         virtual void addLocalParam(const char* name, const char* type) = 0;
         virtual void callFactory() = 0;
         

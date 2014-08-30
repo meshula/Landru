@@ -219,6 +219,7 @@ void AssemblerBase::assembleNode(ASTNode* root)
                 assembleStatements(*j); // statements
                 subStateEnd();
                 _patchGoto(patch);
+                localParamPop();
             }
             break;
             
@@ -306,7 +307,8 @@ void AssemblerBase::assembleStatements(ASTNode* root)
         assembleNode(*i);
 
     for (int i = 0; i < count; ++i) {
-        pop();
+        popLocal();
+        localParamPop();
     }
 }
 

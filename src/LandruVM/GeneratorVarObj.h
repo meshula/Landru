@@ -21,6 +21,7 @@ namespace Landru {
             virtual void next() = 0;
 
             virtual void generate(VarObjArray& locals) = 0;
+            virtual void generateDone(VarObjArray& locals) = 0;
         };
 
         VAROBJ_FACTORY(generator, GeneratorVarObj)
@@ -33,6 +34,7 @@ namespace Landru {
         void next() { if (generator) generator->next(); }
 
         void generate(VarObjArray& locals) { if (generator) generator->generate(locals); }
+        void generateDone(VarObjArray& locals) { if (generator) generator->generateDone(locals); }
 
         Generator* generator;
 

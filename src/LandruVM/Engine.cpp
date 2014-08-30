@@ -209,16 +209,17 @@ namespace Landru
             Fiber* f = vop.get();
             AddGlobal(machineName, vop);
             f->Create(factory(), MAX_STACK_DEPTH, MAX_VARS, mce);
-            std::shared_ptr<LStack> stack = std::make_shared<LStack>();
+            LStack stack;
+            VarObjArray locals("locals");
 
             Landru::RunContext rc;
             rc.engine = this;
             rc.fiber = vop;
             rc.elapsedTime = detail->currentElapsedTime;
             rc.pc = f->EntryPoint();
-            rc.stack = stack.get();
+            rc.stack = &stack;
             rc.continuationContext = 0;
-            rc.locals = 0;
+            rc.locals = &locals;
             f->Run(&rc);
         }
     }

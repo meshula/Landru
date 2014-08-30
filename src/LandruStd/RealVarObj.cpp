@@ -28,6 +28,9 @@ namespace Landru {
             ivo->set(curr <= last ? curr : last);
             locals.push_back(i);
         }
+        virtual void generateDone(VarObjArray& locals) {
+            locals.pop();
+        }
 
         float first, last, incr, curr;
     };

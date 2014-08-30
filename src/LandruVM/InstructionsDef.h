@@ -4,7 +4,7 @@
 
 // name, operand count, description
 INSTR_DECL(Nop,							0, ". -> .")
-INSTR_DECL(Pop,                         0, ". ->")
+INSTR_DECL(PopLocal,                    0, ". -> .")
 INSTR_DECL(PopStore,					0, "var varIndex -> .")
 INSTR_DECL(LaunchMachine,				0, "instanceHandle -> .")
 INSTR_DECL(PushConstant,				1, ". -> constant")

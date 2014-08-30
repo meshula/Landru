@@ -305,16 +305,17 @@ namespace Landru {
         int m = localParameters.size() - 1;
         for (int i = m; i >= 0; --i)
             if (!strcmp(name, localParameters[i].name.c_str()))
-                return m - i - 1;
+                return m - i;
         return -1;
     }
 
     void Assembler::addLocalParam(const char* name, const char* type)
     {
-        if (localParameters.empty())
-            lcRaiseError("no local parameters", 0, 0);
-        
         localParameters.push_back(LocalParameter(name, type));
+    }
+
+    void Assembler::localParamPop() {
+        localParameters.pop_back();
     }
 
 
@@ -534,8 +535,8 @@ namespace Landru {
         program.push_back(Instructions::iRangedRandom);
     }
 
-    void Assembler::pop() {
-        program.push_back(Instructions::iPop);
+    void Assembler::popLocal() {
+        program.push_back(Instructions::iPopLocal);
     }
 
     void Assembler::popStore() {

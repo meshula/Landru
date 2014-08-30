@@ -63,8 +63,8 @@ namespace Landru {
         FunctorCond fc;
         fc.t = elapsedTime;
         expireConditional(fc);
-        
-        std::shared_ptr<LStack> stack = std::make_shared<LStack>();
+
+        LStack stack;
         for (size_t i = 0; i < checkForRunners.runners.size(); ++i) {
             // refs were incremented above
             std::shared_ptr<Fiber> f = checkForRunners.runners[i];
@@ -74,11 +74,11 @@ namespace Landru {
             rc.fiber = checkForRunners.runners[i];
             rc.elapsedTime = elapsedTime;
             rc.pc = checkForRunners.pc[i];
-            rc.stack = stack.get();
+            rc.stack = &stack;
             rc.continuationContext = checkForRunners.continuations[i];
             rc.locals = 0;
             checkForRunners.runners[i]->Run(&rc);
-            stack->clear();
+            stack.clear();
         }
 
         checkForRunners.runners.clear();

@@ -97,6 +97,7 @@ namespace Landru {
 
         LANDRU_DECL_BINDING_BEGIN
         LANDRU_DECL_BINDING(create)
+        LANDRU_DECL_BINDING(pushBack)
         LANDRU_DECL_BINDING_END
     
     private:

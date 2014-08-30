@@ -91,9 +91,12 @@ namespace Landru {
         VarObjArray* continuationParams;
     };
 
-    struct RunContext {
-        RunContext()
-        : elapsedTime(0), locals(0), continuationContext(0), pc(0), stack(0), engine(0) { }
+    class RunContext {
+    public:
+        RunContext() : elapsedTime(0), locals(0), continuationContext(0), pc(0), stack(0), engine(0) { }
+        RunContext(const RunContext& rhs) : elapsedTime(rhs.elapsedTime), locals(rhs.locals)
+                                          , continuationContext(rhs.continuationContext), pc(rhs.pc)
+                                          , fiber(rhs.fiber), stack(rhs.stack), engine(rhs.engine) { }
         ~RunContext() { }
         
         float elapsedTime;

@@ -46,18 +46,19 @@ namespace Landru {
                     if (printFn)
                         printFn(printString);
                     else
-                        printf("%s\n", printString);
+                        printf("%s", printString);
                 }
             }
             else if (vo->TypeId() == IntVarObj::StaticTypeId()) {
                 IntVarObj* ivo = (IntVarObj*) vo;
-                printf("%d\n", ivo->value());
+                printf("%d", ivo->value());
             }
             else if (vo->TypeId() == RealVarObj::StaticTypeId()) {
                 RealVarObj* ivo = (RealVarObj*) vo;
-                printf("%f\n", ivo->value());
+                printf("%f", ivo->value());
             }
         }
+        printf("\n");
 	}
 
     LANDRU_DECL_TABLE_BEGIN(IoVarObj)
@@ -124,7 +125,7 @@ namespace Landru {
         
             for (size_t i = 0; i < functor.runners.size(); ++i) {
                 // refs were incremented above
-                LStack* stack = LStackGetFromPool(1024);
+                LStack stack;
                 std::pair<int, int>& xy = functor.coords[i];
 
                 Landru::VarObjArray locals("locals");
@@ -141,7 +142,7 @@ namespace Landru {
                 rc.fiber = functor.runners[i];
                 rc.elapsedTime = elapsedTime;
                 rc.pc = functor.pc[i];
-                rc.stack = stack;
+                rc.stack = &stack;
                 rc.continuationContext = functor.continuations[i];
                 rc.locals = &locals;
                 functor.runners[i]->Run(&rc);

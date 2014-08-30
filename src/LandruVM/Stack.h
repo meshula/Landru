@@ -49,19 +49,6 @@ private:
     std::vector<std::shared_ptr<Landru::VarObjArray>> _stackstack;
 };
 
-inline LStack* LStackGetFromPool(int depth) {
-    return new LStack();
-}
-inline void LStackReleaseToPool(LStack* ls) {
-    delete ls;
-}
-
-inline LStack* LStackCreate(int depth) {
-    return new LStack();
-}
-inline void LStackFree(LStack* ls) {
-    delete ls;
-}
 inline int LStackDepth(LStack* ls) {
     return ls->curr()->size();
 }

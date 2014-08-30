@@ -218,7 +218,7 @@ namespace Landru
         return token;
     }
 
-    
+    /// @TODO - this kills thread safety. It should be passed through the parser as part of a parse context object
     ASTNode* currNode = 0;
 } // Landru
 
