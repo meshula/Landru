@@ -7,6 +7,11 @@
 		<key>Landru.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
+			<integer>6</integer>
+		</dict>
+		<key>landruc.xcscheme</key>
+		<dict>
+			<key>orderHint</key>
 			<integer>7</integer>
 		</dict>
 	</dict>
@@ -93,6 +98,11 @@
 			<true/>
 		</dict>
 		<key>7BA310B0521D18712C274C45</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>E2BD649719B1B453000E4EBE</key>
 		<dict>
 			<key>primary</key>
 			<true/>

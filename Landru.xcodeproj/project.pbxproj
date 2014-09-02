@@ -35,8 +35,35 @@
 		740F1DF703CA007339B54068 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 797F35AF0FD31E91654C1B3F /* Engine.cpp */; };
 		74B9417169915EC90F490F22 /* StackPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C0A396660B66B7D64CE3B0B /* StackPrint.cpp */; };
 		E24B9D7B18F2EE5500C3D466 /* GeneratorVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */; };
+		E2BD649F19B1B45C000E4EBE /* landruc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BD648F19B1B429000E4EBE /* landruc.cpp */; };
+		E2BD64A019B1B469000E4EBE /* OptionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BD649019B1B429000E4EBE /* OptionParser.cpp */; };
+		E2BD64A119B1B50B000E4EBE /* libLandru.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 64B52C396AFB2D5F6AFA72C9 /* libLandru.a */; };
+		E2BD64A619B1B6B2000E4EBE /* libLabJson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2BD64A419B1B6B2000E4EBE /* libLabJson.a */; };
+		E2BD64A719B1B6B2000E4EBE /* libLabText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2BD64A519B1B6B2000E4EBE /* libLabText.a */; };
 		E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2F51121187518A100D181A2 /* FileVarObj.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E2BD64A219B1B51F000E4EBE /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1F154B0C3BA0257825B803C6;
+			remoteInfo = Landru;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E2BD649619B1B453000E4EBE /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		020A697D288942483A7A4A24 /* ColorVarObj.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ColorVarObj.cpp; sourceTree = "<group>"; };
@@ -103,6 +130,13 @@
 		7D4A2E1A4144040F1EEF0367 /* Exemplar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Exemplar.h; sourceTree = "<group>"; };
 		E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratorVarObj.cpp; sourceTree = "<group>"; };
 		E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GeneratorVarObj.h; sourceTree = "<group>"; };
+		E2BD648F19B1B429000E4EBE /* landruc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = landruc.cpp; path = LandruC/landruc.cpp; sourceTree = "<group>"; };
+		E2BD649019B1B429000E4EBE /* OptionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionParser.cpp; path = LandruC/OptionParser.cpp; sourceTree = "<group>"; };
+		E2BD649119B1B429000E4EBE /* OptionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionParser.h; path = LandruC/OptionParser.h; sourceTree = "<group>"; };
+		E2BD649819B1B453000E4EBE /* landruc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = landruc; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2BD64A419B1B6B2000E4EBE /* libLabJson.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabJson.a; path = "../LabJson/build/Debug/Debug Native 64-bit/libLabJson.a"; sourceTree = "<group>"; };
+		E2BD64A519B1B6B2000E4EBE /* libLabText.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabText.a; path = "../LabText/build/Debug/Debug Native 64-bit/libLabText.a"; sourceTree = "<group>"; };
+		E2BD64A819B260D7000E4EBE /* LandruActorAssembler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LandruActorAssembler.h; sourceTree = "<group>"; };
 		E2F51121187518A100D181A2 /* FileVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileVarObj.cpp; sourceTree = "<group>"; };
 		E2F51122187518A100D181A2 /* FileVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileVarObj.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -115,6 +149,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E2BD649519B1B453000E4EBE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2BD64A619B1B6B2000E4EBE /* libLabJson.a in Frameworks */,
+				E2BD64A719B1B6B2000E4EBE /* libLabText.a in Frameworks */,
+				E2BD64A119B1B50B000E4EBE /* libLandru.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -122,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				64B52C396AFB2D5F6AFA72C9 /* libLandru.a */,
+				E2BD649819B1B453000E4EBE /* landruc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -129,6 +174,8 @@
 		1098143E034D70286A571335 /* Landru */ = {
 			isa = PBXGroup;
 			children = (
+				E2BD64A419B1B6B2000E4EBE /* libLabJson.a */,
+				E2BD64A519B1B6B2000E4EBE /* libLabText.a */,
 				1C910F7B54A31FE32C841AC0 /* src */,
 				053912B81AEE14B5299F143B /* Products */,
 			);
@@ -138,6 +185,7 @@
 		1C910F7B54A31FE32C841AC0 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				E2BD648E19B1B3E6000E4EBE /* landruc */,
 				57006C23272651A15AC82375 /* LandruAssembler */,
 				6D8A3C401B1E6FC3068F55F1 /* LandruCompiler */,
 				739C0F8D18F65B9E659E6A32 /* LandruStd */,
@@ -187,6 +235,7 @@
 				08904CF6488136BB41E40B30 /* AssemblerBase.h */,
 				35746FAB01FD095D4E0F7345 /* LandruAssembler.cpp */,
 				139E745053D140B73CEB7CA3 /* LandruAssembler.h */,
+				E2BD64A819B260D7000E4EBE /* LandruActorAssembler.h */,
 			);
 			path = LandruAssembler;
 			sourceTree = "<group>";
@@ -239,6 +288,16 @@
 			path = LandruStd;
 			sourceTree = "<group>";
 		};
+		E2BD648E19B1B3E6000E4EBE /* landruc */ = {
+			isa = PBXGroup;
+			children = (
+				E2BD648F19B1B429000E4EBE /* landruc.cpp */,
+				E2BD649019B1B429000E4EBE /* OptionParser.cpp */,
+				E2BD649119B1B429000E4EBE /* OptionParser.h */,
+			);
+			name = landruc;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -259,6 +318,24 @@
 			productReference = 64B52C396AFB2D5F6AFA72C9 /* libLandru.a */;
 			productType = "com.apple.product-type.library.static";
 		};
+		E2BD649719B1B453000E4EBE /* landruc */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2BD649C19B1B453000E4EBE /* Build configuration list for PBXNativeTarget "landruc" */;
+			buildPhases = (
+				E2BD649419B1B453000E4EBE /* Sources */,
+				E2BD649519B1B453000E4EBE /* Frameworks */,
+				E2BD649619B1B453000E4EBE /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2BD64A319B1B51F000E4EBE /* PBXTargetDependency */,
+			);
+			name = landruc;
+			productName = landruc;
+			productReference = E2BD649819B1B453000E4EBE /* landruc */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -266,6 +343,11 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0600;
+				TargetAttributes = {
+					E2BD649719B1B453000E4EBE = {
+						CreatedOnToolsVersion = 6.0;
+					};
+				};
 			};
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Landru" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -279,6 +361,7 @@
 			projectRoot = "";
 			targets = (
 				1F154B0C3BA0257825B803C6 /* Landru */,
+				E2BD649719B1B453000E4EBE /* landruc */,
 			);
 		};
 /* End PBXProject section */
@@ -330,7 +413,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E2BD649419B1B453000E4EBE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2BD64A019B1B469000E4EBE /* OptionParser.cpp in Sources */,
+				E2BD649F19B1B45C000E4EBE /* landruc.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E2BD64A319B1B51F000E4EBE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1F154B0C3BA0257825B803C6 /* Landru */;
+			targetProxy = E2BD64A219B1B51F000E4EBE /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		14707F0D5AF05FEF4F1E65FB /* Release Native 64-bit */ = {
@@ -425,6 +525,103 @@
 			};
 			name = "Release Native 64-bit";
 		};
+		E2BD649D19B1B453000E4EBE /* Debug Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/dp/Projects/Lab/src/External/LabJson/build/Debug/Debug,
+					Native,
+					"64-bit",
+					/Users/dp/Projects/Lab/src/External/LabText/build/Debug/Debug,
+					Native,
+					"64-bit",
+				);
+				"LIBRARY_SEARCH_PATHS[arch=*]" = "\"/Users/dp/build/Build/Products/Debug Native 64-bit\"";
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = "Debug Native 64-bit";
+		};
+		E2BD649E19B1B453000E4EBE /* Release Native 64-bit */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LIBRARY_SEARCH_PATHS = (
+					/Users/dp/build/Build/Products/Release,
+					Native,
+					"64-bit",
+					/Users/dp/Projects/Lab/src/External/LabJson/build/Debug/Debug,
+					Native,
+					"64-bit",
+					/Users/dp/Projects/Lab/src/External/LabText/build/Debug/Debug,
+					Native,
+					"64-bit",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+			};
+			name = "Release Native 64-bit";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -445,6 +642,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = "Debug Native 64-bit";
+		};
+		E2BD649C19B1B453000E4EBE /* Build configuration list for PBXNativeTarget "landruc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2BD649D19B1B453000E4EBE /* Debug Native 64-bit */,
+				E2BD649E19B1B453000E4EBE /* Release Native 64-bit */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};

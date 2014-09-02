@@ -16,47 +16,45 @@
 #include <string>
 #include <vector>
 
-namespace Landru 
-{
+namespace Landru {
 	class ASTNode;
 
-	class AssemblerBase
-	{
+	class AssemblerBase {
 	public:
-		AssemblerBase() { }
-		virtual ~AssemblerBase() { }
-		
+		AssemblerBase() {}
+		virtual ~AssemblerBase() {}
 		virtual void callFunction(const char* fnName) = 0;
 		virtual void pushStringConstant(const char* str) = 0;
-		virtual void pushVarIndex(const char* varName) = 0;
-		virtual void pushGlobalVarIndex(const char* varName) = 0;
+        virtual void storeToVar(const char* varName) = 0;
+
+        virtual void pushGlobalVarIndex(const char* varName) = 0;
 		virtual void pushSharedVarIndex(const char* varName) = 0;
 		virtual void pushConstant(int) = 0;
 		virtual void pushFloatConstant(float) = 0;
 		virtual void rangedRandom() = 0;
         virtual void createTempString() = 0;
-        virtual void popLocal() = 0;
-		virtual void popStore() = 0;
 		virtual void pushIntOne() = 0;
 		virtual void pushIntZero() = 0;
-		virtual void stateEnd() = 0;
-		virtual void subStateEnd() = 0;
+        virtual void stateEnd() = 0;
         virtual void paramsStart() = 0;
         virtual void paramsEnd() = 0;
-		virtual void nop() = 0;
 		virtual void getGlobalVar() = 0;
-		virtual void getSharedVar() = 0;
+        virtual void getSharedVar() = 0;
 		virtual void getSelfVar(int) = 0;
         virtual void getLocalParam(int) = 0; // int is an index into the surrounding stack frame
-        virtual void forEach() = 0;
-		virtual void onMessage() = 0;
-		virtual void onTick() = 0;
+        virtual void beginForEach(const char* name, const char* type) = 0;
+        virtual void endForEach() = 0;
+        virtual void beginOn() = 0;
+        virtual void endOn() = 0;
         virtual void getRequire(int i) = 0;
-		virtual int  gotoAddr() = 0;	// returns address to patch
-		virtual void gotoAddr(int) = 0; // use when destination address is already known
-		virtual void gotoState(const char* stateName) = 0;
+        
+        virtual void beginConditionalClause() = 0;
+        virtual void beginContraConditionalClause() = 0;
+        virtual void endConditionalClause() = 0;
+        
+        virtual void gotoState(const char* stateName) = 0;
 		virtual void launchMachine() = 0;
-		virtual void ifEq() = 0;
+        virtual void ifEq() = 0;
 		virtual void ifLte0() = 0;
 		virtual void ifGte0() = 0;
 		virtual void ifLt0() = 0;
@@ -85,20 +83,19 @@ namespace Landru
 		virtual void _addState(const char* name) = 0;
 		
 		// housekeeping
-        virtual void finalize() = 0;
-		virtual void reset() = 0;
-		virtual void _patchGoto(int patch) = 0;
-		virtual int  stringIndex(const char*) = 0;
-		virtual void disassemble(const std::string& machineName, FILE* f) = 0;
-		virtual int  programSize() = 0;
+		virtual void startAssembling() = 0;
+        virtual void finalizeAssembling() = 0;
+
+        virtual int  stringIndex(const char*) = 0;
+        virtual void disassemble(const std::string& machineName, FILE* f) = 0;
 
         // local parameters
         virtual bool isLocalParam(const char* name) = 0;
         virtual int  localParamIndex(const char* name) = 0;
-        virtual void localParamPop() = 0;
-        virtual void addLocalParam(const char* name, const char* type) = 0;
-        virtual void callFactory() = 0;
-        
+        virtual void beginLocalVariableScope() = 0;
+        virtual void addLocalVariable(const char* name, const char* type) = 0;
+        virtual void endLocalVariableScope() = 0;
+
         virtual void dotChain() = 0;
         
         // assembler

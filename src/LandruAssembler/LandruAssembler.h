@@ -37,34 +37,33 @@ EXTERNC void landruAssembleProgramToRuntime(void* rootNode, void* runtime, std::
 
 
 
-namespace Landru
-{
+namespace Landru {
     class CompilationContext;
 	class Exemplar;
     
-	class Assembler : public AssemblerBase
-	{
+	class Assembler : public AssemblerBase {
 		std::map<std::string, int>	stateAddrMap;
 		std::map<std::string, int>	stateOrdinalMap;
-		int							maxStateOrd;
+		int maxStateOrd;
 		
 		std::map<std::string, int>	stringOrdinalMap;
-		int							maxStringOrd;
+		int maxStringOrd;
 		
 		std::vector<unsigned int>	program;
 		
 		// key is name, value is type
 		std::map<std::string, std::string>	varType;
 		std::map<std::string, int>			varIndex;
-		int									maxVarIndex;
+		int maxVarIndex;
         
 		std::map<std::string, std::string>	sharedVarType;
 		std::map<std::string, int>			sharedVarIndex;
-		int									maxSharedVarIndex;
+		int maxSharedVarIndex;
         
-        struct LocalParameter
-        {
-            LocalParameter() { }
+        std::vector<int> localVariableState;
+        
+        struct LocalParameter {
+            LocalParameter() {}
             LocalParameter(const LocalParameter& rhs) : name(rhs.name), type(rhs.type) {}
             LocalParameter(const char* name, const char* type) : name(name), type(type) {}
             std::string name;
@@ -72,87 +71,99 @@ namespace Landru
         };
         
         std::vector<LocalParameter> localParameters;
+        std::vector<int> clauseStack;
 
         CompilationContext* context;
 
+        void addLocalParam(const char* name, const char* type);
+        void subStateEnd();
+        void popStore();
+        void popLocal();
+        void nop();
+        int  gotoAddr();
+        void gotoAddr(int addr);
+        void _patchGoto(int patch);
+        void localParamPop();
+
 	public:
-        
         std::vector<std::shared_ptr<Exemplar>> exemplars;
         
 		Assembler(CompilationContext* context);
 		virtual ~Assembler();
         
-        virtual void finalize();
-		virtual void reset();
-		virtual int stringIndex(const char* s);		
-		int stateIndex(const char* s);
-        virtual int instanceVarIndex(const char* varName);
-		
-		virtual void callFunction(const char* fnName);
-        virtual void getRequire(int i);
-		virtual void pushStringConstant(const char* str);
-		virtual void pushVarIndex(const char* varName);
-		virtual void pushGlobalVarIndex(const char* varName);
-		virtual void pushSharedVarIndex(const char* varName);
-		virtual void pushConstant(int i);
-		virtual void pushFloatConstant(float v);
-        virtual void createTempString();
-		virtual void rangedRandom();
-        virtual void popLocal();
-		virtual void popStore();		
-		virtual void pushIntOne();		
-		virtual void pushIntZero();		
-		virtual void stateEnd();		
-		virtual void subStateEnd();
-        virtual void paramsStart();
-        virtual void paramsEnd();
-		virtual void nop();		
-        virtual void getGlobalVar();
-		virtual void getSharedVar();
-		virtual void getSelfVar(int);
-        virtual void getLocalParam(int);
-        virtual void forEach();
-		virtual void onMessage();		
-		virtual void onTick();		
-		virtual int  gotoAddr();		
-		virtual void gotoAddr(int addr);		
-		virtual void gotoState(const char* stateName);
-		virtual void launchMachine();
-		virtual void ifEq();		
-		virtual void ifLte0();		
-		virtual void ifGte0();		
-		virtual void ifLt0();		
-		virtual void ifGt0();
-		virtual void ifEq0();		
-		virtual void ifNotEq0();
-        
-        virtual void opAdd();
-        virtual void opSubtract();
-        virtual void opMultiply();
-        virtual void opDivide();
-        virtual void opNegate();
-        virtual void opModulus();
-        
-		virtual void _addState(const char* name);		
-		virtual void _addVariable(const char* name, const char* type, bool shared);		
-		virtual void _patchGoto(int patch);
-		
-        virtual void disassemble(const std::string& machineName, FILE* f);		
-		virtual int programSize();		
-		virtual std::unique_ptr<Exemplar> createExemplar();
-
-        virtual bool isRequire(const char* name);
-        virtual int  requireIndex(const char* name);
-        virtual bool isGlobalVariable(const char* name);
-        virtual bool isLocalParam(const char* name);
-        virtual int  localParamIndex(const char* name);
-        virtual void addLocalParam(const char* name, const char* type);
-        virtual void localParamPop();
+        int programSize();
+        int stateIndex(const char* s);
+        std::unique_ptr<Exemplar> createExemplar();
         virtual void callFactory();
         
-        virtual void dotChain();
+        virtual void startAssembling() override;
+        virtual void finalizeAssembling() override;
+		virtual int stringIndex(const char* s) override;
+        virtual int instanceVarIndex(const char* varName) override;
+		
+		virtual void callFunction(const char* fnName) override;
+        virtual void getRequire(int i) override;
+		virtual void pushStringConstant(const char* str) override;
+        virtual void storeToVar(const char* varName) override;
+		virtual void pushGlobalVarIndex(const char* varName) override;
+		virtual void pushSharedVarIndex(const char* varName) override;
+		virtual void pushConstant(int i) override;
+		virtual void pushFloatConstant(float v) override;
+        virtual void createTempString() override;
+		virtual void rangedRandom() override;
+		virtual void pushIntOne() override;
+        virtual void pushIntZero() override;
+		virtual void stateEnd() override;
+        virtual void paramsStart() override;
+        virtual void paramsEnd() override;
+        virtual void getGlobalVar() override;
+		virtual void getSharedVar() override;
+		virtual void getSelfVar(int) override;
+        virtual void getLocalParam(int) override;
+        virtual void beginForEach(const char* name, const char* type) override;
+        virtual void endForEach() override;
+        virtual void beginOn() override;
+        virtual void endOn() override;
+        
+        virtual void beginConditionalClause() override;
+        virtual void beginContraConditionalClause() override;
+        virtual void endConditionalClause() override;
+        
+		virtual void gotoState(const char* stateName) override;
+		virtual void launchMachine() override;
+		virtual void ifEq() override;
+		virtual void ifLte0() override;
+		virtual void ifGte0() override;
+		virtual void ifLt0() override;
+		virtual void ifGt0() override;
+		virtual void ifEq0() override;
+		virtual void ifNotEq0() override;
+        
+        virtual void opAdd() override;
+        virtual void opSubtract() override;
+        virtual void opMultiply() override;
+        virtual void opDivide() override;
+        virtual void opNegate() override;
+        virtual void opModulus() override;
+        
+		virtual void _addState(const char* name) override;
+		virtual void _addVariable(const char* name, const char* type, bool shared) override;
+		
+        virtual void disassemble(const std::string& machineName, FILE* f) override;
 
-        virtual bool isSharedVariable(const char* name);
+        virtual bool isRequire(const char* name) override;
+        virtual int  requireIndex(const char* name) override;
+        virtual bool isGlobalVariable(const char* name) override;
+        virtual bool isLocalParam(const char* name) override;
+        virtual int  localParamIndex(const char* name) override;
+        
+        virtual void beginLocalVariableScope() override;
+        virtual void addLocalVariable(const char* name, const char* type) override;
+        virtual void endLocalVariableScope() override;
+        
+        virtual void dotChain() override;
+
+        virtual bool isSharedVariable(const char* name) override;
 	};
 	
 	

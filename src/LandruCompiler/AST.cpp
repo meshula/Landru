@@ -51,12 +51,10 @@ namespace Landru
 			case kTokenGt0:
 			case kTokenEq0:
 			case kTokenNotEq0:
-			case kTokenMessage:
-			case kTokenTick:
 				printf("%s", tokenName(token));
 				break;
 				
-			case kTokenLibEvent:
+			case kTokenFunction:
 				printf("%s", str2.c_str());
 				break;
 				
@@ -122,7 +120,6 @@ namespace Landru
 		switch (token)
 		{
 			case kTokenDeclare:
-            case kTokenParam:
 				printf("%s%s:\n", 
 					   tabStr, 
 					   tokenName(token));

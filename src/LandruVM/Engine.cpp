@@ -124,12 +124,6 @@ namespace Landru
 		detail->messageQueue->sendMessageToAll(detail->currentElapsedTime, machineType, message);
 	}
 
-    void Engine::RegisterOnMessage(Fiber* f, LStack* stack, int pc)
-    {
-        const char* messageString = f->TopString(stack);
-        stack->pop();
-		detail->messageQueue->registerContinuation(f, stack, messageString, pc);
-    }
 #endif
 	
 	//---------------------------------------------

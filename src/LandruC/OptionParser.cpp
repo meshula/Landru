@@ -699,7 +699,7 @@ bool OptionParser::Parse(int argc, char** argv)
         ArgType argType;
         if (argv[i][0] == '-')
         {
-            int arglength = strlen(argv[i]);
+            size_t arglength = strlen(argv[i]);
             argType = argv[i][1] == '-' ? longArg : shortArg;
             if ((argType == shortArg && arglength == 1) ||
                 (argType == longArg && arglength == 2))
@@ -840,8 +840,8 @@ std::string OptionParser::Canonicalize(const std::string& commandLine)
             if ((argType == shortArg && (*i).length() == 1) ||
                 (argType == longArg && (*i).length() == 2))
             {
-                std::cout << "Malformed argument: " << (*i) << std::endl;
-                return false;
+                std::cerr << "Malformed argument: " << (*i) << std::endl;
+                return "";
             }
 
             std::string arg = *i;
@@ -853,8 +853,8 @@ std::string OptionParser::Canonicalize(const std::string& commandLine)
                 vector<string> split = Split(arg, '=', false, true);
                 if (split.size() != 2)
                 {
-                    std::cout << "Malformed argument: " << (*i) << std::endl;
-                    return false;
+                    std::cerr << "Malformed argument: " << (*i) << std::endl;
+                    return "";
                 }
                 arg = split[0];
                 val = split[1];
@@ -874,8 +874,8 @@ std::string OptionParser::Canonicalize(const std::string& commandLine)
                             ++i;
                             if (i == args.end())
                             {
-                                std::cout << "Missing argument for option: " << arg << " (" << (*j)->Help() << ")" << std::endl;
-                                return false;
+                                std::cerr << "Missing argument for option: " << arg << " (" << (*j)->Help() << ")" << std::endl;
+                                return "";
                             }
                             val = *i;
                         }

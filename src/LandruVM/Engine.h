@@ -47,7 +47,6 @@ namespace Landru
         void RunScript(const char* machineName);
 
 		//----------------------------------------------------------------------
-//		void	RegisterOnMessage(Fiber* f, LStack*, int pc); // message string must be on top of stack
 //		void	SendMessageToAll(const char* machineType, const char* message);
 		//----------------------------------------------------------------------
 //        void    RegisterRender(Fiber* f, int pc);

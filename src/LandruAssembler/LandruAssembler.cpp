@@ -67,8 +67,8 @@ namespace Landru {
             switch(rootNode->token) {
 
                 case kTokenDataObject:
-                    ASSEMBLER_TRACE(kTokenDataObject);
                 {
+                    ASSEMBLER_TRACE(kTokenDataObject);
                     if (bsonArrayNesting.size() > 0) {
                         char indexStr[16];
                         itoa(bsonCurrArrayIndex, indexStr, 10);
@@ -80,23 +80,23 @@ namespace Landru {
                     }
                     else
                         compileBsonData(rootNode, b); // recurse
-                }
                     break;
+                }
 
                 case kTokenDataArray:
-                    ASSEMBLER_TRACE(kTokenDataArray);
                 {
+                    ASSEMBLER_TRACE(kTokenDataArray);
                     bsonArrayNesting.push_back(bsonCurrArrayIndex);
                     bsonCurrArrayIndex = 0;
                     compileBsonData(rootNode, b); // recurse
                     bsonCurrArrayIndex = bsonArrayNesting.back();
                     bsonArrayNesting.pop_back();
-                }
                     break;
+                }
 
                 case kTokenDataElement:
-                    ASSEMBLER_TRACE(kTokenDataElement);
                 {
+                    ASSEMBLER_TRACE(kTokenDataElement);
                     ASTConstIter i = rootNode->children.begin();
                     if ((*i)->token == kTokenDataIntLiteral) {
                         int val;
@@ -116,38 +116,38 @@ namespace Landru {
                         compileBsonData(rootNode, b); // recurse
                         bson_append_finish_object(b);
                     }
-                }
                     break;
+                }
 
                 case kTokenDataFloatLiteral:
-                    ASSEMBLER_TRACE(kTokenDataFloatLiteral);
                 {
+                    ASSEMBLER_TRACE(kTokenDataFloatLiteral);
                     float val = atof(rootNode->str2.c_str());
                     bson_append_double(b, rootNode->str2.c_str(), val);
-                }
                     break;
+                }
 
                 case kTokenDataIntLiteral:
-                    ASSEMBLER_TRACE(kTokenDataIntLiteral);
                 {
+                    ASSEMBLER_TRACE(kTokenDataIntLiteral);
                     int val = atoi(rootNode->str2.c_str());
                     bson_append_int(b, rootNode->str2.c_str(), val);
-                }
                     break;
+                }
 
                 case kTokenDataNullLiteral:
-                    ASSEMBLER_TRACE(kTokenDataNullLiteral);
                 {
+                    ASSEMBLER_TRACE(kTokenDataNullLiteral);
                     bson_append_null(b, rootNode->str2.c_str());
-                }
                     break;
+                }
 
                 case kTokenDataStringLiteral:
-                    ASSEMBLER_TRACE(kTokenDataStringLiteral);
                 {
+                    ASSEMBLER_TRACE(kTokenDataStringLiteral);
                     bson_append_string(b, rootNode->str2.c_str(), rootNode->str1.c_str());
-                }
                     break;
+                }
 
                 default:
                     break;
@@ -251,7 +251,7 @@ namespace Landru {
     : context(cc)
     {
         program.reserve(1000);
-        reset();
+        startAssembling();
     }
 
     Assembler::~Assembler()
@@ -309,22 +309,46 @@ namespace Landru {
         return -1;
     }
 
-    void Assembler::addLocalParam(const char* name, const char* type)
-    {
+    void Assembler::addLocalParam(const char* name, const char* type) {
         localParameters.push_back(LocalParameter(name, type));
     }
-
+    
+    void Assembler::beginLocalVariableScope() {
+        localVariableState.push_back(0);
+    }
+    
+    void Assembler::addLocalVariable(const char *name,  const char* type) {
+        addLocalParam(name, type);
+        pushStringConstant(name);
+        pushStringConstant(type);
+        callFactory();
+        localVariableState[localVariableState.size()-1] += 1;
+    }
+    
+    void Assembler::endLocalVariableScope() {
+        int localsCount = localVariableState[localVariableState.size()-1];
+        localVariableState.pop_back();
+        
+        for (int i = 0; i < localsCount; ++i) {
+            popLocal();
+            localParamPop();
+        }
+    }
+    
     void Assembler::localParamPop() {
         localParameters.pop_back();
     }
 
-
+    void Assembler::popLocal() {
+        program.push_back(Instructions::iPopLocal);
+    }
+    
     void Assembler::callFactory() {
         program.push_back(Instructions::iFactory);
     }
 
         
-    void Assembler::reset()
+    void Assembler::startAssembling()
     {
         maxStateOrd = 0;
         maxStringOrd = 0;
@@ -340,7 +364,7 @@ namespace Landru {
         sharedVarIndex.clear();
     }
         
-    void Assembler::finalize()
+    void Assembler::finalizeAssembling()
     {
         std::unique_ptr<Exemplar> e = createExemplar();
         if (e) {
@@ -481,8 +505,7 @@ namespace Landru {
         return -1;
     }
 
-    void Assembler::pushVarIndex(const char* varName)
-    {
+    void Assembler::storeToVar(const char *varName) {
         std::map<std::string, int>::const_iterator i = varIndex.find(varName);
         if (i == varIndex.end()) {
             i = sharedVarIndex.find(varName);
@@ -497,8 +520,9 @@ namespace Landru {
         else {
             pushConstant(i->second);
         }
+        popStore();
     }
-        
+    
     void Assembler::pushSharedVarIndex(const char* varName)
     {
         std::map<std::string, int>::const_iterator i = sharedVarIndex.find(varName);
@@ -533,10 +557,6 @@ namespace Landru {
         
     void Assembler::rangedRandom() {
         program.push_back(Instructions::iRangedRandom);
-    }
-
-    void Assembler::popLocal() {
-        program.push_back(Instructions::iPopLocal);
     }
 
     void Assembler::popStore() {
@@ -623,21 +643,56 @@ namespace Landru {
         program.push_back(Instructions::iGetLocalVarObj | e);
     }
         
-    void Assembler::forEach()
-    {
+    void Assembler::beginForEach(const char* name, const char* type) {
+        // for each will call Run as if executing substates
+        // in the case of for body in bodies, type will be varobj and name will be body
+        // the local parameters will be created, pushed, and cleaned up by the forEach instruction itself
+        //
+        addLocalParam(name, type);
         program.push_back(Instructions::iForEach);
+        int patch = gotoAddr();
+        clauseStack.push_back(patch);
+    }
+    
+    void Assembler::endForEach() {
+        localParamPop();
+        subStateEnd();
+        int patch = clauseStack.back();
+        clauseStack.pop_back();
+        _patchGoto(patch);
     }
 
-    void Assembler::onMessage()
-    {
-        program.push_back(Instructions::iOnMessage);
+    void Assembler::beginOn() {
+        int patch = gotoAddr();
+        clauseStack.push_back(patch);
     }
-
-    void Assembler::onTick()
-    {
-        program.push_back(Instructions::iOnTick);
+    
+    void Assembler::endOn() {
+        int patch = clauseStack.back();
+        clauseStack.pop_back();
+        _patchGoto(patch);
+        subStateEnd();
     }
-
+    
+    void Assembler::beginConditionalClause() {
+        int patch = gotoAddr();
+        clauseStack.push_back(patch);
+    }
+    
+    void Assembler::beginContraConditionalClause() {
+        int patch = clauseStack.back();
+        clauseStack.pop_back();
+        int patch2 = gotoAddr();
+        _patchGoto(patch);
+        clauseStack.push_back(patch2);
+    }
+    
+    void Assembler::endConditionalClause() {
+        int patch = clauseStack.back();
+        clauseStack.pop_back();
+        _patchGoto(patch);
+    }
+    
     int Assembler::gotoAddr()
     {
         program.push_back(Instructions::iGotoAddr);
