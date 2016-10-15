@@ -34,13 +34,31 @@
 		71D214E0013F59347D510A03 /* Stack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF4C0311AC3781177541BB /* Stack.cpp */; };
 		740F1DF703CA007339B54068 /* Engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 797F35AF0FD31E91654C1B3F /* Engine.cpp */; };
 		74B9417169915EC90F490F22 /* StackPrint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6C0A396660B66B7D64CE3B0B /* StackPrint.cpp */; };
+		E2253DA11A26FD4200A27E49 /* Library.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2253DA01A26FD4200A27E49 /* Library.cpp */; };
 		E24B9D7B18F2EE5500C3D466 /* GeneratorVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */; };
 		E2BD649F19B1B45C000E4EBE /* landruc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BD648F19B1B429000E4EBE /* landruc.cpp */; };
 		E2BD64A019B1B469000E4EBE /* OptionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BD649019B1B429000E4EBE /* OptionParser.cpp */; };
 		E2BD64A119B1B50B000E4EBE /* libLandru.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 64B52C396AFB2D5F6AFA72C9 /* libLandru.a */; };
-		E2BD64A619B1B6B2000E4EBE /* libLabJson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2BD64A419B1B6B2000E4EBE /* libLabJson.a */; };
-		E2BD64A719B1B6B2000E4EBE /* libLabText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2BD64A519B1B6B2000E4EBE /* libLabText.a */; };
+		E2BD64AA19B610A4000E4EBE /* LandruActorAssembler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2BD64A919B610A4000E4EBE /* LandruActorAssembler.cpp */; };
+		E2D5CD3A19FFEE7300B031C8 /* MachineDefinition.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD3919FFEE7300B031C8 /* MachineDefinition.cpp */; };
+		E2D5CD3C19FFEEC200B031C8 /* State.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD3B19FFEEC200B031C8 /* State.cpp */; };
+		E2D5CD4019FFF0D000B031C8 /* Property.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD3F19FFF0D000B031C8 /* Property.cpp */; };
+		E2D5CD461A01376800B031C8 /* FiberLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD451A01376800B031C8 /* FiberLib.cpp */; };
+		E2D5CD4C1A013CB600B031C8 /* StdLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD4B1A013CB600B031C8 /* StdLib.cpp */; };
+		E2D5CD4E1A013D4E00B031C8 /* IntLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD4D1A013D4E00B031C8 /* IntLib.cpp */; };
+		E2D5CD521A013E5A00B031C8 /* IoLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD511A013E5A00B031C8 /* IoLib.cpp */; };
+		E2D5CD581A0A7E8300B031C8 /* VMContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD571A0A7E8300B031C8 /* VMContext.cpp */; };
+		E2D5CD5A1A0D1D3500B031C8 /* Fiber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD591A0D1D3400B031C8 /* Fiber.cpp */; };
+		E2D5CD5D1A111CF900B031C8 /* TimeLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2D5CD5C1A111CF900B031C8 /* TimeLib.cpp */; };
+		E2DE8BEF1DB2B82A00425245 /* RealLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2DE8BEE1DB2B82A00425245 /* RealLib.cpp */; };
 		E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E2F51121187518A100D181A2 /* FileVarObj.cpp */; };
+		E2F834111A2462A6007E8B75 /* libLabJson.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F834101A2462A6007E8B75 /* libLabJson.a */; };
+		E2F834131A2462A9007E8B75 /* libLabText.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F834121A2462A9007E8B75 /* libLabText.a */; };
+		E2F834171A2465A5007E8B75 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F834161A2465A5007E8B75 /* CoreAudio.framework */; };
+		E2F834191A2465AC007E8B75 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F834181A2465AC007E8B75 /* Accelerate.framework */; };
+		E2F8341B1A2465BF007E8B75 /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F8341A1A2465BF007E8B75 /* AudioUnit.framework */; };
+		E2F8341D1A2465C5007E8B75 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F8341C1A2465C5007E8B75 /* Cocoa.framework */; };
+		E2F8341F1A2465D3007E8B75 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E2F8341E1A2465D3007E8B75 /* AudioToolbox.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -128,17 +146,57 @@
 		797F35AF0FD31E91654C1B3F /* Engine.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Engine.cpp; sourceTree = "<group>"; };
 		7C8730795B1A085D23DE564D /* Fiber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Fiber.h; sourceTree = "<group>"; };
 		7D4A2E1A4144040F1EEF0367 /* Exemplar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Exemplar.h; sourceTree = "<group>"; };
+		E2253DA01A26FD4200A27E49 /* Library.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Library.cpp; path = LandruActorVM/Library.cpp; sourceTree = "<group>"; };
 		E24B9D7918F2EE5500C3D466 /* GeneratorVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GeneratorVarObj.cpp; sourceTree = "<group>"; };
 		E24B9D7A18F2EE5500C3D466 /* GeneratorVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GeneratorVarObj.h; sourceTree = "<group>"; };
+		E263957F1A1CED26007A6423 /* LandruLibForward.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = LandruLibForward.h; path = LandruActorVM/LandruLibForward.h; sourceTree = "<group>"; };
+		E26395801A1CFDCF007A6423 /* FnContext.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FnContext.h; path = LandruActorVM/FnContext.h; sourceTree = "<group>"; };
+		E267B78E1A245E59004F0011 /* libLandruLabSound.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLandruLabSound.a; path = ../../../../../build/Build/Products/Debug/libLandruLabSound.a; sourceTree = "<group>"; };
 		E2BD648F19B1B429000E4EBE /* landruc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = landruc.cpp; path = LandruC/landruc.cpp; sourceTree = "<group>"; };
 		E2BD649019B1B429000E4EBE /* OptionParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionParser.cpp; path = LandruC/OptionParser.cpp; sourceTree = "<group>"; };
 		E2BD649119B1B429000E4EBE /* OptionParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionParser.h; path = LandruC/OptionParser.h; sourceTree = "<group>"; };
 		E2BD649819B1B453000E4EBE /* landruc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = landruc; sourceTree = BUILT_PRODUCTS_DIR; };
-		E2BD64A419B1B6B2000E4EBE /* libLabJson.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabJson.a; path = "../LabJson/build/Debug/Debug Native 64-bit/libLabJson.a"; sourceTree = "<group>"; };
-		E2BD64A519B1B6B2000E4EBE /* libLabText.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabText.a; path = "../LabText/build/Debug/Debug Native 64-bit/libLabText.a"; sourceTree = "<group>"; };
 		E2BD64A819B260D7000E4EBE /* LandruActorAssembler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LandruActorAssembler.h; sourceTree = "<group>"; };
+		E2BD64A919B610A4000E4EBE /* LandruActorAssembler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LandruActorAssembler.cpp; sourceTree = "<group>"; };
+		E2BD65BA19B763B5000E4EBE /* WiresTypedData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WiresTypedData.h; path = LandruActorVM/WiresTypedData.h; sourceTree = "<group>"; };
+		E2D5CD3819FFED8C00B031C8 /* MachineDefinition.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MachineDefinition.h; path = LandruActorVM/MachineDefinition.h; sourceTree = "<group>"; };
+		E2D5CD3919FFEE7300B031C8 /* MachineDefinition.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MachineDefinition.cpp; path = LandruActorVM/MachineDefinition.cpp; sourceTree = "<group>"; };
+		E2D5CD3B19FFEEC200B031C8 /* State.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = State.cpp; path = LandruActorVM/State.cpp; sourceTree = "<group>"; };
+		E2D5CD3D19FFEED400B031C8 /* State.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = State.h; path = LandruActorVM/State.h; sourceTree = "<group>"; };
+		E2D5CD3E19FFEF4500B031C8 /* Property.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Property.h; path = LandruActorVM/Property.h; sourceTree = "<group>"; };
+		E2D5CD3F19FFF0D000B031C8 /* Property.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Property.cpp; path = LandruActorVM/Property.cpp; sourceTree = "<group>"; };
+		E2D5CD4119FFF18500B031C8 /* VMContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VMContext.h; path = LandruActorVM/VMContext.h; sourceTree = "<group>"; };
+		E2D5CD4219FFF21900B031C8 /* Library.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Library.h; path = LandruActorVM/Library.h; sourceTree = "<group>"; };
+		E2D5CD441A0136D900B031C8 /* FiberLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FiberLib.h; path = LandruActorVM/StdLib/FiberLib.h; sourceTree = "<group>"; };
+		E2D5CD451A01376800B031C8 /* FiberLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FiberLib.cpp; path = LandruActorVM/StdLib/FiberLib.cpp; sourceTree = "<group>"; };
+		E2D5CD471A0137D600B031C8 /* StdLib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = StdLib.h; path = LandruActorVM/StdLib/StdLib.h; sourceTree = "<group>"; };
+		E2D5CD481A01386C00B031C8 /* Fiber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Fiber.h; path = LandruActorVM/Fiber.h; sourceTree = "<group>"; };
+		E2D5CD4A1A013AB300B031C8 /* Exception.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Exception.h; path = LandruActorVM/Exception.h; sourceTree = "<group>"; };
+		E2D5CD4B1A013CB600B031C8 /* StdLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StdLib.cpp; path = LandruActorVM/StdLib/StdLib.cpp; sourceTree = "<group>"; };
+		E2D5CD4D1A013D4E00B031C8 /* IntLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntLib.cpp; path = LandruActorVM/StdLib/IntLib.cpp; sourceTree = "<group>"; };
+		E2D5CD4F1A013D6100B031C8 /* IntLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IntLib.h; path = LandruActorVM/StdLib/IntLib.h; sourceTree = "<group>"; };
+		E2D5CD501A013E3A00B031C8 /* IoLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IoLib.h; path = LandruActorVM/StdLib/IoLib.h; sourceTree = "<group>"; };
+		E2D5CD511A013E5A00B031C8 /* IoLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IoLib.cpp; path = LandruActorVM/StdLib/IoLib.cpp; sourceTree = "<group>"; };
+		E2D5CD531A013F1900B031C8 /* RealLib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RealLib.h; path = LandruActorVM/StdLib/RealLib.h; sourceTree = "<group>"; };
+		E2D5CD561A01CEA400B031C8 /* Generator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Generator.h; path = LandruActorVM/Generator.h; sourceTree = "<group>"; };
+		E2D5CD571A0A7E8300B031C8 /* VMContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VMContext.cpp; path = LandruActorVM/VMContext.cpp; sourceTree = "<group>"; };
+		E2D5CD591A0D1D3400B031C8 /* Fiber.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Fiber.cpp; path = LandruActorVM/Fiber.cpp; sourceTree = "<group>"; };
+		E2D5CD5B1A111BB400B031C8 /* Continuation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Continuation.h; path = LandruActorVM/Continuation.h; sourceTree = "<group>"; };
+		E2D5CD5C1A111CF900B031C8 /* TimeLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimeLib.cpp; path = LandruActorVM/StdLib/TimeLib.cpp; sourceTree = "<group>"; };
+		E2D5CD5E1A111D0F00B031C8 /* TimeLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimeLib.h; path = LandruActorVM/StdLib/TimeLib.h; sourceTree = "<group>"; };
+		E2D5CD601A13C0A600B031C8 /* Comparable.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Comparable.hpp; path = LandruActorVM/Detail/Comparable.hpp; sourceTree = "<group>"; };
+		E2DE8BEE1DB2B82A00425245 /* RealLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RealLib.cpp; path = LandruActorVM/StdLib/RealLib.cpp; sourceTree = "<group>"; };
 		E2F51121187518A100D181A2 /* FileVarObj.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileVarObj.cpp; sourceTree = "<group>"; };
 		E2F51122187518A100D181A2 /* FileVarObj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileVarObj.h; sourceTree = "<group>"; };
+		E2F834101A2462A6007E8B75 /* libLabJson.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabJson.a; path = ../LabJson/build/Debug/Debug/libLabJson.a; sourceTree = "<group>"; };
+		E2F834121A2462A9007E8B75 /* libLabText.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabText.a; path = ../LabText/build/Debug/Debug/libLabText.a; sourceTree = "<group>"; };
+		E2F834141A2463DD007E8B75 /* libLandruLabSound.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLandruLabSound.a; path = ../../../LandruLabSound/build/Debug/libLandruLabSound.a; sourceTree = "<group>"; };
+		E2F834161A2465A5007E8B75 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		E2F834181A2465AC007E8B75 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
+		E2F8341A1A2465BF007E8B75 /* AudioUnit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioUnit.framework; path = System/Library/Frameworks/AudioUnit.framework; sourceTree = SDKROOT; };
+		E2F8341C1A2465C5007E8B75 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		E2F8341E1A2465D3007E8B75 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		E2F834201A246D01007E8B75 /* libLabSound.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libLabSound.a; path = ../LabSound/osx/build/Debug/libLabSound.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -153,8 +211,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E2BD64A619B1B6B2000E4EBE /* libLabJson.a in Frameworks */,
-				E2BD64A719B1B6B2000E4EBE /* libLabText.a in Frameworks */,
+				E2F8341F1A2465D3007E8B75 /* AudioToolbox.framework in Frameworks */,
+				E2F8341D1A2465C5007E8B75 /* Cocoa.framework in Frameworks */,
+				E2F8341B1A2465BF007E8B75 /* AudioUnit.framework in Frameworks */,
+				E2F834191A2465AC007E8B75 /* Accelerate.framework in Frameworks */,
+				E2F834171A2465A5007E8B75 /* CoreAudio.framework in Frameworks */,
+				E2F834131A2462A9007E8B75 /* libLabText.a in Frameworks */,
+				E2F834111A2462A6007E8B75 /* libLabJson.a in Frameworks */,
 				E2BD64A119B1B50B000E4EBE /* libLandru.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -174,8 +237,7 @@
 		1098143E034D70286A571335 /* Landru */ = {
 			isa = PBXGroup;
 			children = (
-				E2BD64A419B1B6B2000E4EBE /* libLabJson.a */,
-				E2BD64A519B1B6B2000E4EBE /* libLabText.a */,
+				E2DD29461A290FA2001D5AAD /* Frameworks and Libraries */,
 				1C910F7B54A31FE32C841AC0 /* src */,
 				053912B81AEE14B5299F143B /* Products */,
 			);
@@ -186,6 +248,7 @@
 			isa = PBXGroup;
 			children = (
 				E2BD648E19B1B3E6000E4EBE /* landruc */,
+				E2BD65B619B6A790000E4EBE /* LandruActorVM */,
 				57006C23272651A15AC82375 /* LandruAssembler */,
 				6D8A3C401B1E6FC3068F55F1 /* LandruCompiler */,
 				739C0F8D18F65B9E659E6A32 /* LandruStd */,
@@ -236,6 +299,7 @@
 				35746FAB01FD095D4E0F7345 /* LandruAssembler.cpp */,
 				139E745053D140B73CEB7CA3 /* LandruAssembler.h */,
 				E2BD64A819B260D7000E4EBE /* LandruActorAssembler.h */,
+				E2BD64A919B610A4000E4EBE /* LandruActorAssembler.cpp */,
 			);
 			path = LandruAssembler;
 			sourceTree = "<group>";
@@ -298,6 +362,77 @@
 			name = landruc;
 			sourceTree = "<group>";
 		};
+		E2BD65B619B6A790000E4EBE /* LandruActorVM */ = {
+			isa = PBXGroup;
+			children = (
+				E2D5CD5F1A13C08400B031C8 /* Detail */,
+				E2D5CD431A01368C00B031C8 /* StdLib */,
+				E2D5CD5B1A111BB400B031C8 /* Continuation.h */,
+				E2D5CD4A1A013AB300B031C8 /* Exception.h */,
+				E2D5CD591A0D1D3400B031C8 /* Fiber.cpp */,
+				E2D5CD481A01386C00B031C8 /* Fiber.h */,
+				E2D5CD561A01CEA400B031C8 /* Generator.h */,
+				E2D5CD4219FFF21900B031C8 /* Library.h */,
+				E2D5CD3819FFED8C00B031C8 /* MachineDefinition.h */,
+				E2D5CD3919FFEE7300B031C8 /* MachineDefinition.cpp */,
+				E2D5CD3E19FFEF4500B031C8 /* Property.h */,
+				E2D5CD3F19FFF0D000B031C8 /* Property.cpp */,
+				E2D5CD3B19FFEEC200B031C8 /* State.cpp */,
+				E2D5CD3D19FFEED400B031C8 /* State.h */,
+				E2D5CD571A0A7E8300B031C8 /* VMContext.cpp */,
+				E2D5CD4119FFF18500B031C8 /* VMContext.h */,
+				E2BD65BA19B763B5000E4EBE /* WiresTypedData.h */,
+				E263957F1A1CED26007A6423 /* LandruLibForward.h */,
+				E26395801A1CFDCF007A6423 /* FnContext.h */,
+				E2253DA01A26FD4200A27E49 /* Library.cpp */,
+			);
+			name = LandruActorVM;
+			sourceTree = "<group>";
+		};
+		E2D5CD431A01368C00B031C8 /* StdLib */ = {
+			isa = PBXGroup;
+			children = (
+				E2D5CD441A0136D900B031C8 /* FiberLib.h */,
+				E2D5CD451A01376800B031C8 /* FiberLib.cpp */,
+				E2D5CD471A0137D600B031C8 /* StdLib.h */,
+				E2D5CD4B1A013CB600B031C8 /* StdLib.cpp */,
+				E2D5CD4F1A013D6100B031C8 /* IntLib.h */,
+				E2D5CD4D1A013D4E00B031C8 /* IntLib.cpp */,
+				E2D5CD511A013E5A00B031C8 /* IoLib.cpp */,
+				E2D5CD501A013E3A00B031C8 /* IoLib.h */,
+				E2D5CD531A013F1900B031C8 /* RealLib.h */,
+				E2DE8BEE1DB2B82A00425245 /* RealLib.cpp */,
+				E2D5CD5C1A111CF900B031C8 /* TimeLib.cpp */,
+				E2D5CD5E1A111D0F00B031C8 /* TimeLib.h */,
+			);
+			name = StdLib;
+			sourceTree = "<group>";
+		};
+		E2D5CD5F1A13C08400B031C8 /* Detail */ = {
+			isa = PBXGroup;
+			children = (
+				E2D5CD601A13C0A600B031C8 /* Comparable.hpp */,
+			);
+			name = Detail;
+			sourceTree = "<group>";
+		};
+		E2DD29461A290FA2001D5AAD /* Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				E2F8341C1A2465C5007E8B75 /* Cocoa.framework */,
+				E2F8341A1A2465BF007E8B75 /* AudioUnit.framework */,
+				E2F834181A2465AC007E8B75 /* Accelerate.framework */,
+				E2F834161A2465A5007E8B75 /* CoreAudio.framework */,
+				E2F834201A246D01007E8B75 /* libLabSound.a */,
+				E2F834141A2463DD007E8B75 /* libLandruLabSound.a */,
+				E2F834121A2462A9007E8B75 /* libLabText.a */,
+				E2F834101A2462A6007E8B75 /* libLabJson.a */,
+				E267B78E1A245E59004F0011 /* libLandruLabSound.a */,
+				E2F8341E1A2465D3007E8B75 /* AudioToolbox.framework */,
+			);
+			name = "Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -342,7 +477,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0600;
+				LastUpgradeCheck = 0710;
 				TargetAttributes = {
 					E2BD649719B1B453000E4EBE = {
 						CreatedOnToolsVersion = 6.0;
@@ -382,20 +517,33 @@
 			buildActionMask = 2147483647;
 			files = (
 				60794A7634B1759A0C7365BF /* AssemblerBase.cpp in Sources */,
+				E2D5CD4C1A013CB600B031C8 /* StdLib.cpp in Sources */,
+				E2D5CD3C19FFEEC200B031C8 /* State.cpp in Sources */,
 				4D6F60E024AF10885491007F /* LandruAssembler.cpp in Sources */,
 				48036ED042D421475CFF0258 /* AST.cpp in Sources */,
+				E2D5CD3A19FFEE7300B031C8 /* MachineDefinition.cpp in Sources */,
+				E2D5CD4019FFF0D000B031C8 /* Property.cpp in Sources */,
 				4893584B4F6103B1707817BF /* ParseExpression.cpp in Sources */,
+				E2D5CD5D1A111CF900B031C8 /* TimeLib.cpp in Sources */,
 				16305EF5653B16B979A34487 /* Parser.cpp in Sources */,
 				68C776893695779033DF2477 /* Tokens.cpp in Sources */,
 				70C85E2C41BD6BFE1FD30FD2 /* lcRaiseError.cpp in Sources */,
 				E2F51123187518A100D181A2 /* FileVarObj.cpp in Sources */,
+				E2D5CD581A0A7E8300B031C8 /* VMContext.cpp in Sources */,
+				E2BD64AA19B610A4000E4EBE /* LandruActorAssembler.cpp in Sources */,
+				E2253DA11A26FD4200A27E49 /* Library.cpp in Sources */,
 				155F4433256800FE518D3FF7 /* ColorVarObj.cpp in Sources */,
 				292E45F2175832AE5E20070B /* IntVarObj.cpp in Sources */,
 				5E844C33679A5E8905676AFB /* IoVarObj.cpp in Sources */,
+				E2D5CD4E1A013D4E00B031C8 /* IntLib.cpp in Sources */,
 				1ABC5BE65B7104056D5A6734 /* JsonVarObj.cpp in Sources */,
 				166E3DDD7F15798B55481BF6 /* LandruStd.cpp in Sources */,
+				E2DE8BEF1DB2B82A00425245 /* RealLib.cpp in Sources */,
 				120B4D1D68061B7E0A347A5B /* MathVarObj.cpp in Sources */,
+				E2D5CD5A1A0D1D3500B031C8 /* Fiber.cpp in Sources */,
+				E2D5CD521A013E5A00B031C8 /* IoLib.cpp in Sources */,
 				24C047F52B2F47DC51014439 /* RealVarObj.cpp in Sources */,
+				E2D5CD461A01376800B031C8 /* FiberLib.cpp in Sources */,
 				3337168379405CE00B4B6D74 /* StringVarObj.cpp in Sources */,
 				48115BA627ED606931EA0FE5 /* TimeVarObj.cpp in Sources */,
 				5E0543E305514A0F3E37494B /* Continuation.cpp in Sources */,
@@ -433,7 +581,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		14707F0D5AF05FEF4F1E65FB /* Release Native 64-bit */ = {
+		14707F0D5AF05FEF4F1E65FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -442,19 +590,26 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
+				HEADER_SEARCH_PATHS = (
+					src,
+					../LabText/src,
+					../LabJson/src,
+					src/extern/leveldb/include,
+				);
 				INSTALL_PATH = /usr/local/lib;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Landru;
 			};
-			name = "Release Native 64-bit";
+			name = Release;
 		};
-		4D29763135D42DEC21DD380E /* Debug Native 64-bit */ = {
+		4D29763135D42DEC21DD380E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
 				COPY_PHASE_STRIP = NO;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					DEBUG,
@@ -469,18 +624,19 @@
 					../LabText/src,
 					../LabJson/src,
 				);
-				OBJROOT = obj/x64/Debug;
+				OBJROOT = "$(PROJECT_DIR)/build/obj/x64/Debug";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-std=c++11",
 					"-stdlib=libc++",
 				);
-				SYMROOT = build/Debug;
+				SYMROOT = "$(PROJECT_DIR)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USER_HEADER_SEARCH_PATHS = "";
 				VALID_ARCHS = x86_64;
 			};
-			name = "Debug Native 64-bit";
+			name = Debug;
 		};
-		624D6D7C26A53EF202BB4F74 /* Debug Native 64-bit */ = {
+		624D6D7C26A53EF202BB4F74 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -488,18 +644,24 @@
 				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
+				HEADER_SEARCH_PATHS = (
+					src,
+					../LabText/src,
+					../LabJson/src,
+					src/extern/leveldb/include,
+				);
 				INSTALL_PATH = /usr/local/lib;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Landru;
 			};
-			name = "Debug Native 64-bit";
+			name = Debug;
 		};
-		69F908425473055139173FE0 /* Release Native 64-bit */ = {
+		69F908425473055139173FE0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CONFIGURATION_BUILD_DIR = "$(SYMROOT)";
+				CONFIGURATION_BUILD_DIR = "$(PROJECT_DIR)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				CONFIGURATION_TEMP_DIR = "$(OBJROOT)";
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					NDEBUG,
@@ -514,18 +676,19 @@
 					../LabText/src,
 					../LabJson/src,
 				);
-				OBJROOT = obj/x64/Release;
+				OBJROOT = "$(PROJECT_DIR)/build/obj/x64/Release";
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
 					"-std=c++11",
 					"-stdlib=libc++",
 				);
-				SYMROOT = build/Release;
+				SYMROOT = "$(PROJECT_DIR)/build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USER_HEADER_SEARCH_PATHS = "";
 				VALID_ARCHS = x86_64;
 			};
-			name = "Release Native 64-bit";
+			name = Release;
 		};
-		E2BD649D19B1B453000E4EBE /* Debug Native 64-bit */ = {
+		E2BD649D19B1B453000E4EBE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -544,7 +707,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -560,23 +723,19 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/dp/Projects/Lab/src/External/LabJson/build/Debug/Debug,
-					Native,
-					"64-bit",
-					/Users/dp/Projects/Lab/src/External/LabText/build/Debug/Debug,
-					Native,
-					"64-bit",
+					/Users/dp/build/Build/Products/Debug,
+					/Users/dp/build/Build/Products/Release,
 				);
-				"LIBRARY_SEARCH_PATHS[arch=*]" = "\"/Users/dp/build/Build/Products/Debug Native 64-bit\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = ../../../LandruLabSound/src;
 			};
-			name = "Debug Native 64-bit";
+			name = Debug;
 		};
-		E2BD649E19B1B453000E4EBE /* Release Native 64-bit */ = {
+		E2BD649E19B1B453000E4EBE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -597,7 +756,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_C_LANGUAGE_STANDARD = c11;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -605,22 +764,17 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/dp/build/Build/Products/Debug,
 					/Users/dp/build/Build/Products/Release,
-					Native,
-					"64-bit",
-					/Users/dp/Projects/Lab/src/External/LabJson/build/Debug/Debug,
-					Native,
-					"64-bit",
-					/Users/dp/Projects/Lab/src/External/LabText/build/Debug/Debug,
-					Native,
-					"64-bit",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				USER_HEADER_SEARCH_PATHS = ../../../LandruLabSound/src;
 			};
-			name = "Release Native 64-bit";
+			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -628,28 +782,29 @@
 		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "Landru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				4D29763135D42DEC21DD380E /* Debug Native 64-bit */,
-				69F908425473055139173FE0 /* Release Native 64-bit */,
+				4D29763135D42DEC21DD380E /* Debug */,
+				69F908425473055139173FE0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = "Debug Native 64-bit";
+			defaultConfigurationName = Debug;
 		};
 		63BD33F1213672FE432E0A98 /* Build configuration list for PBXNativeTarget "Landru" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				624D6D7C26A53EF202BB4F74 /* Debug Native 64-bit */,
-				14707F0D5AF05FEF4F1E65FB /* Release Native 64-bit */,
+				624D6D7C26A53EF202BB4F74 /* Debug */,
+				14707F0D5AF05FEF4F1E65FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = "Debug Native 64-bit";
+			defaultConfigurationName = Debug;
 		};
 		E2BD649C19B1B453000E4EBE /* Build configuration list for PBXNativeTarget "landruc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				E2BD649D19B1B453000E4EBE /* Debug Native 64-bit */,
-				E2BD649E19B1B453000E4EBE /* Release Native 64-bit */,
+				E2BD649D19B1B453000E4EBE /* Debug */,
+				E2BD649E19B1B453000E4EBE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};

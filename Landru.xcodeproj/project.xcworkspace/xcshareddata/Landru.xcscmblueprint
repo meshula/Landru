@@ -1,0 +1,37 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "6C2CEA2AEF9BA8C49331593B13E696BBDC9A5284",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "20B0349316C71D8A97AE25B116B2A8A89074BDC1" : 0,
+    "6C2CEA2AEF9BA8C49331593B13E696BBDC9A5284" : 0,
+    "991AC7A109D7387E2A1E4152930E5E7F422F36E0" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "601CCC68-5A84-4550-95C9-BB49F4699BFF",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "20B0349316C71D8A97AE25B116B2A8A89074BDC1" : "LabSound\/",
+    "6C2CEA2AEF9BA8C49331593B13E696BBDC9A5284" : "Landru\/",
+    "991AC7A109D7387E2A1E4152930E5E7F422F36E0" : "LabText\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "Landru",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Landru.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/meshula\/LabSound",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "20B0349316C71D8A97AE25B116B2A8A89074BDC1"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/meshula\/Landru.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "6C2CEA2AEF9BA8C49331593B13E696BBDC9A5284"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/meshula\/LabText",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "991AC7A109D7387E2A1E4152930E5E7F422F36E0"
+    }
+  ]
+}

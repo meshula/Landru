@@ -16,5 +16,5 @@
 *.hmap
 *.xcuserstate
 
-obj/
-Landru.xcodeproj/xcuserdata/
+build/
+xcuserdata/
