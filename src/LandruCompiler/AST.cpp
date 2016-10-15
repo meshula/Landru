@@ -179,7 +179,7 @@ namespace Landru
 				printf("%s<%f, %f> ", tabStr, floatVal1, floatVal2);
 				break;
 				
-			case kTokenType:
+			case kTokenGetVariable:
 				printf("%s%s ", tabStr, str2.c_str());
 				break;
 				

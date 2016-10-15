@@ -21,7 +21,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "LabJson/bson.h"
 
 namespace Json { class Value; }
 
@@ -51,6 +50,8 @@ namespace Landru {
 		
 		std::vector<unsigned int>	program;
 		
+        std::string machineName;
+        
 		// key is name, value is type
 		std::map<std::string, std::string>	varType;
 		std::map<std::string, int>			varIndex;
@@ -62,20 +63,19 @@ namespace Landru {
         
         std::vector<int> localVariableState;
         
-        struct LocalParameter {
-            LocalParameter() {}
-            LocalParameter(const LocalParameter& rhs) : name(rhs.name), type(rhs.type) {}
-            LocalParameter(const char* name, const char* type) : name(name), type(type) {}
+        struct LocalVariable {
+            LocalVariable() {}
+            LocalVariable(const LocalVariable& rhs) : name(rhs.name), type(rhs.type) {}
+            LocalVariable(const char* name, const char* type) : name(name), type(type) {}
             std::string name;
             std::string type;
         };
         
-        std::vector<LocalParameter> localParameters;
+        std::vector<LocalVariable> localVariables;
         std::vector<int> clauseStack;
 
         CompilationContext* context;
 
-        void addLocalParam(const char* name, const char* type);
         void subStateEnd();
         void popStore();
         void popLocal();
@@ -83,7 +83,21 @@ namespace Landru {
         int  gotoAddr();
         void gotoAddr(int addr);
         void _patchGoto(int patch);
-        void localParamPop();
+
+        int programSize();
+        int stateIndex(const char* s);
+        std::unique_ptr<Exemplar> createExemplar();
+        void callFactory();
+        int stringIndex(const char* s);
+
+        void pushIntOne();
+        void pushIntZero();
+        void createTempString();
+        void getGlobalVar();
+        int  requireIndex(const char* name);
+        void pushSharedVarIndex(const char* varName);
+        int instanceVarIndex(const char* varName);
+        int localVariableIndex(const char* name);
 
 	public:
         std::vector<std::shared_ptr<Exemplar>> exemplars;
@@ -91,46 +105,41 @@ namespace Landru {
 		Assembler(CompilationContext* context);
 		virtual ~Assembler();
         
-        int programSize();
-        int stateIndex(const char* s);
-        std::unique_ptr<Exemplar> createExemplar();
-        virtual void callFactory();
-        
         virtual void startAssembling() override;
         virtual void finalizeAssembling() override;
-		virtual int stringIndex(const char* s) override;
-        virtual int instanceVarIndex(const char* varName) override;
-		
-		virtual void callFunction(const char* fnName) override;
-        virtual void getRequire(int i) override;
-		virtual void pushStringConstant(const char* str) override;
+
+        virtual void callFunction(const char* fnName) override;
         virtual void storeToVar(const char* varName) override;
-		virtual void pushGlobalVarIndex(const char* varName) override;
-		virtual void pushSharedVarIndex(const char* varName) override;
-		virtual void pushConstant(int i) override;
-		virtual void pushFloatConstant(float v) override;
-        virtual void createTempString() override;
-		virtual void rangedRandom() override;
-		virtual void pushIntOne() override;
-        virtual void pushIntZero() override;
-		virtual void stateEnd() override;
+
+        virtual void pushConstant(int i) override;
+        virtual void pushFloatConstant(float v) override;
+        virtual void pushGlobalVar(const char* varName) override;
+        virtual void pushInstanceVar(const char* varName) override;
+        virtual void pushLocalVar(const char* varName) override;
+        virtual void pushRangedRandom(float r1, float r2) override;
+        virtual void pushRequire(const char* name) override;
+        virtual void pushSharedVar(const char* varName) override;
+        virtual void pushStringConstant(const char* str) override;
+
         virtual void paramsStart() override;
         virtual void paramsEnd() override;
-        virtual void getGlobalVar() override;
-		virtual void getSharedVar() override;
-		virtual void getSelfVar(int) override;
-        virtual void getLocalParam(int) override;
         virtual void beginForEach(const char* name, const char* type) override;
         virtual void endForEach() override;
+        
         virtual void beginOn() override;
-        virtual void endOn() override;
+        virtual void beginOnStatements() override;
+        virtual void endOnStatements() override;
         
         virtual void beginConditionalClause() override;
         virtual void beginContraConditionalClause() override;
         virtual void endConditionalClause() override;
+
+        // machines
+        virtual void beginMachine(const char* name) override;
+        virtual void endMachine() override;
+        virtual void launchMachine() override;
         
 		virtual void gotoState(const char* stateName) override;
-		virtual void launchMachine() override;
 		virtual void ifEq() override;
 		virtual void ifLte0() override;
 		virtual void ifGte0() override;
@@ -145,25 +154,25 @@ namespace Landru {
         virtual void opDivide() override;
         virtual void opNegate() override;
         virtual void opModulus() override;
+        virtual void opGreaterThan() override;
+        virtual void opLessThan() override;
         
-		virtual void _addState(const char* name) override;
-		virtual void _addVariable(const char* name, const char* type, bool shared) override;
+		virtual void beginState(const char* name) override;
+        virtual void endState() override;
+		virtual void addSharedVariable(const char* name, const char* type) override;
+        virtual void addInstanceVariable(const char* name, const char* type) override;
 		
         virtual void disassemble(const std::string& machineName, FILE* f) override;
 
-        virtual bool isRequire(const char* name) override;
-        virtual int  requireIndex(const char* name) override;
-        virtual bool isGlobalVariable(const char* name) override;
-        virtual bool isLocalParam(const char* name) override;
-        virtual int  localParamIndex(const char* name) override;
+        virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson> b) override;
+
+        virtual void addRequire(const char* name, const char* module) override;
         
         virtual void beginLocalVariableScope() override;
         virtual void addLocalVariable(const char* name, const char* type) override;
         virtual void endLocalVariableScope() override;
         
         virtual void dotChain() override;
-
-        virtual bool isSharedVariable(const char* name) override;
 	};
 	
 	

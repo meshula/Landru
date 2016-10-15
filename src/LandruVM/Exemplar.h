@@ -27,6 +27,8 @@ namespace Landru
         int				varIndex(const char* varName);
         int				sharedVarIndex(const char* varName);
         int				stateIndex(const char* stateName);
+        int             stringIndex(const char* str);
+        
 		const char*		name() const { return nameStr; }
 
 		const char*		nameStr;				///< Pointer to 0th string, convenience

@@ -14,74 +14,101 @@
 
 #include "LandruAssembler/AssemblerBase.h"
 
+namespace Lab {
+    class Bson;
+}
+
 namespace Landru {
     
+    class Library;
+    class MachineDefinition;
+    
     class ActorAssembler : public AssemblerBase {
+        class Context;
+        std::unique_ptr<Context> _context;
     public:
-        virtual void callFunction(const char* fnName) {}
-        virtual void pushStringConstant(const char* str) {}
-        virtual void storeToVar(const char* name) {}
-        virtual void pushGlobalVarIndex(const char* varName) {}
-        virtual void pushSharedVarIndex(const char* varName) {}
-        virtual void pushConstant(int) {}
-        virtual void pushFloatConstant(float) {}
-        virtual void rangedRandom() {}
-        virtual void createTempString() {}
-        virtual void pushIntOne() {}
-        virtual void pushIntZero() {}
-        virtual void stateEnd() {}
-        virtual void paramsStart() {}
-        virtual void paramsEnd() {}
-        virtual void getGlobalVar() {}
-        virtual void getSharedVar() {}
-        virtual void getSelfVar(int) {}
-        virtual void getLocalParam(int) {} // int is an index into the surrounding stack frame
-        virtual void beginForEach(const char* name, const char* type) override {}
-        virtual void endForEach() override {}
-        virtual void getRequire(int i) {}
-        virtual void gotoState(const char* stateName) {}
-        virtual void launchMachine() {}
-        virtual void ifEq() {}
-        virtual void ifLte0() {}
-        virtual void ifGte0() {}
-        virtual void ifLt0() {}
-        virtual void ifGt0() {}
-        virtual void ifEq0() {}
-        virtual void ifNotEq0() {}
+        ActorAssembler();
+        virtual ~ActorAssembler();
         
-        virtual void opAdd() {}
-        virtual void opSubtract() {}
-        virtual void opMultiply() {}
-        virtual void opDivide() {}
-        virtual void opNegate() {}
-        virtual void opModulus() {}
+        Library& library() const;
+ 
+        const std::map<std::string, std::shared_ptr<Lab::Bson>>& assembledGlobalVariables() const;
+        const std::map<std::string, std::shared_ptr<MachineDefinition>>& assembledMachineDefinitions() const;
         
-        // variables
-        virtual void _addVariable(const char* name, const char* type, bool shared) {}
-        virtual bool isGlobalVariable(const char* name) { return false; }
-        virtual bool isSharedVariable(const char* name) { return false; }
-        virtual int instanceVarIndex(const char* varName) { return 0; }
+        virtual void startAssembling() override {}
+        virtual void finalizeAssembling() override {}
+
+        virtual void callFunction(const char* fnName) override;
+        virtual void storeToVar(const char* varName) override;
         
-        // requires
-        virtual bool isRequire(const char* name) { return false; }
-        virtual int  requireIndex(const char* name) { return 0; }
-        
-        // states
-        virtual void _addState(const char* name) {}
-        
-        // housekeeping
-        virtual void finalizeAssembling() {}
-        virtual void startAssembling() {}
-        
-        virtual int  stringIndex(const char*) { return 0; }
-        virtual void disassemble(const std::string& machineName, FILE* f) {}
+        virtual void pushConstant(int) override;
+        virtual void pushFloatConstant(float) override;
+        virtual void pushGlobalVar(const char* varName) override;
+        virtual void pushInstanceVar(const char* varName) override;
+        virtual void pushLocalVar(const char* varName) override;
+        virtual void pushRangedRandom(float r1, float r2) override;
+        virtual void pushRequire(const char* name) override;
+        virtual void pushSharedVar(const char* varName) override;
+        virtual void pushStringConstant(const char* str) override;
         
         // local parameters
-        virtual bool isLocalParam(const char* name) { return false; }
-        virtual int  localParamIndex(const char* name) { return 0; }
-        virtual void addLocalVariable(const char* name, const char* type) override {}
+        virtual void paramsStart() override;
+        virtual void paramsEnd() override;
         
-        virtual void dotChain() {}
+        virtual void beginForEach(const char* name, const char* type) override;
+        virtual void endForEach() override;
+        
+        virtual void beginOn() override;
+        virtual void beginOnStatements() override;
+        virtual void endOnStatements() override;
+        
+        virtual void beginConditionalClause() override;
+        virtual void beginContraConditionalClause() override;
+        virtual void endConditionalClause() override;
+        
+        virtual void gotoState(const char* stateName) override;
+        virtual void launchMachine() override;
+        virtual void ifEq() override;
+        virtual void ifLte0() override;
+        virtual void ifGte0() override;
+        virtual void ifLt0() override;
+        virtual void ifGt0() override;
+        virtual void ifEq0() override;
+        virtual void ifNotEq0() override;
+        
+        virtual void opAdd() override;
+        virtual void opSubtract() override;
+        virtual void opMultiply() override;
+        virtual void opDivide() override;
+        virtual void opNegate() override;
+        virtual void opModulus() override;
+        virtual void opGreaterThan() override;
+        virtual void opLessThan() override;
+        
+        // variables
+        virtual void addSharedVariable(const char* name, const char* type) override;
+        virtual void addInstanceVariable(const char* name, const char* type) override;
+        
+        virtual void beginLocalVariableScope() override;
+        virtual void addLocalVariable(const char* name, const char* type) override;
+        virtual void endLocalVariableScope() override;
+        
+        // requires
+        virtual void addRequire(const char* name, const char* module) override;
+        virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) override;
+        
+        // machines
+        virtual void beginMachine(const char* name) override;
+        virtual void endMachine() override;
+        
+        // states
+        virtual void beginState(const char* name) override;
+        virtual void endState() override;
+        
+        virtual void disassemble(const std::string& machineName, FILE* f) override {}
+        
+        // dot chain means let the runtime know that the next function will be invoked on the stack top object
+        virtual void dotChain() override {}
     };
     
     

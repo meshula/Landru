@@ -72,7 +72,8 @@ namespace Landru
 		memcpy(stringArray, m->stringArray, sizeof(int) * stringArrayLength);
 		stringData = (char*) malloc(stringDataLength);
 		memcpy((void*)stringData, m->stringData, stringDataLength);
-		nameStr = stringData;
+        int nameIndex = stringIndex(m->nameStr);
+        nameStr = nameIndex != -1 ? &stringData[stringArray[nameIndex]] : nullptr;
 
 		varCount = m->varCount;
 		varNameIndex = (int*) malloc(sizeof(int) * varCount);
@@ -109,6 +110,16 @@ namespace Landru
 		}
 	}
 	
+    int Exemplar::stringIndex(const char *str) {
+        for (int i = 0; i < stringArrayLength; ++i) {
+            const char* test = &stringData[stringArray[i]];
+            if (!strcmp(str, test))
+                return i;
+        }
+        
+        return -1;
+    }
+    
 	int Exemplar::varIndex(const char* varName)
 	{
 		int retval = -1;

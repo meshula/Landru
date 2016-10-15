@@ -317,7 +317,7 @@ bool getSemiColon(CurrPtr& curr, EndPtr end)
 /*
  lLocalBlock
  :
- DECLARE COLON
+ LOCAL COLON
  landruVar+
  SEMICOLON
  -> ^(LOCAL landruVar+)
@@ -583,15 +583,6 @@ void parseGoto(CurrPtr& curr, EndPtr end) {
 	;	
  */
 
-// note: this should actually be:
-/*
- lAssignment
-	:   lVariable EQ lValue
-	-> ^(TokenAssign lVariable lValue)
-	;	
- */
-// but I haven't got lValue ground through Antlr yet
-
 void parseAssignment(CurrPtr& curr, EndPtr end) {
 	char buff[256];
 	getNameSpacedDeclarator(curr, end, buff);
@@ -713,7 +704,6 @@ void parseFor(CurrPtr& curr, EndPtr end) {
 		curr = tsGetNameSpacedTokenAlphaNumeric(curr, end, '.', &tokenStr, &length);
 		strncpy(name, tokenStr, length);
 		name[length] = '\0';
-		what = kTokenParameters;
 	}
 	else {
         lcRaiseError("Expected a placeholder variable name", "parseFor", 0);
@@ -757,8 +747,7 @@ void parseFor(CurrPtr& curr, EndPtr end) {
 	;
  */
 
-void parseOn(CurrPtr& curr, EndPtr end)
-{
+void parseOn(CurrPtr& curr, EndPtr end) {
 	getToken(curr, end); // consume on
 	
 	char name[256];
@@ -807,22 +796,21 @@ void parseOn(CurrPtr& curr, EndPtr end)
  functions can be chained with '.' ie foo().bar().baz()
  */
 
-void parseFunction(CurrPtr& curr, EndPtr end, TokenId token)
-{
+void parseFunction(CurrPtr& curr, EndPtr end, TokenId token) {
 	char buff[256];
-	getNameSpacedDeclarator(curr, end, buff);
+	getNameSpacedDeclarator(curr, end, buff);   // get function name
 	
 	ASTNode* pop = currNode;
 	currNode = new ASTNode(token, buff);
 	pop->addChild(currNode);
-	parseParamList(curr, end);
-    
-    // chained functions assume that the previous function left something on the stack
-    // so pop out before parsing chain
-	currNode = pop;
+
+    parseParamList(curr, end);
+    currNode = pop;
     
     more(curr, end);
     if (peekChar(curr, end) == '.') {
+        // chained functions assume that the previous function left something on the stack
+        // which can have a function invoked on it.
         ++curr;
         currNode->addChild(new ASTNode(kTokenDotChain, buff));
         parseFunction(curr, end, kTokenFunction);
@@ -837,11 +825,10 @@ void parseFunction(CurrPtr& curr, EndPtr end, TokenId token)
  -> ^(TokenParams lParam*) ;
  */
 
-void parseParamList(CurrPtr& curr, EndPtr end)
-{
+void parseParamList(CurrPtr& curr, EndPtr end) {
 	// if parsing a function, then an opening paren must have been encountered
 	if (peekChar(curr, end) != '(') {
-		lcRaiseError("Missing open parenthesis", curr, 32);
+		lcRaiseError("Expecting a parameter list, no opening parenthesis found", curr, 32);
 		return;
 	}
 	
@@ -898,10 +885,14 @@ void parseParamList(CurrPtr& curr, EndPtr end)
             currNode->addChild(new ASTNode(kTokenOpNegate));
         else if (s == "%")
             currNode->addChild(new ASTNode(kTokenOpModulus));
+        else if (s == ">")
+            currNode->addChild(new ASTNode(kTokenOpGreaterThan));
+        else if (s == "<")
+            currNode->addChild(new ASTNode(kTokenOpLessThan));
         //else if (s == "=")
         //    pushAssign();
         else
-            currNode->addChild(new ASTNode(kTokenType, strstart));
+            currNode->addChild(new ASTNode(kTokenGetVariable, strstart));
     }
     if (!nodeStack.empty() || !paramNode)
         lcRaiseError("Unmatched parenthesis in expression", curr, 32);
@@ -948,7 +939,7 @@ void parseParam(CurrPtr& curr, EndPtr end) {
 		currNode = pop;
 	}
 	else
-		currNode->addChild(new ASTNode(kTokenType, buff));
+		currNode->addChild(new ASTNode(kTokenGetVariable, buff));
     
 	more(curr, end);
 }
@@ -971,15 +962,18 @@ void parseParam(CurrPtr& curr, EndPtr end) {
 
 bool peekIsLiteral(CurrPtr& curr, EndPtr end) {
 	char c = peekChar(curr, end);
-	if (c == '"' || tsIsNumeric(c) || c == '#' || c == '-' || c == '<')
+	if (c == '"' || tsIsNumeric(c) || c == '#' || c == '<')
 		return true;
+    
+    CurrPtr c2 = curr + 1;
+    if (c == '-' && tsIsNumeric(peekChar(c2, end)))
+        return true;
 	
 	TokenId token = peekToken(curr, end);
 	return token == kTokenFalse || token == kTokenTrue;
 }
 
-int literalLength(CurrPtr& curr, EndPtr end)
-{
+int literalLength(CurrPtr& curr, EndPtr end) {
 	char const* tokenStr;
 	uint32_t length;
 	char c = peekChar(curr, end);
@@ -990,18 +984,15 @@ int literalLength(CurrPtr& curr, EndPtr end)
     
     const char* start = curr;
 	
-	if (gotString)
-	{
+	if (gotString) {
 		// parsing a string
 		curr = tsGetString(curr, end, true, &tokenStr, &length);
 	}
-	else if (numeric)
-	{
+	else if (numeric) {
 		float floatVal;
 		curr = tsGetFloat(curr, end, &floatVal);
 	}
-	else if (rangedRandom)
-	{
+	else if (rangedRandom) {
 		float floatVal;
 		getChar(curr, end); // consume '<'
 		more(curr, end);
@@ -1017,8 +1008,7 @@ int literalLength(CurrPtr& curr, EndPtr end)
 			lcRaiseError("Syntax Error", curr, 32);
 		getChar(curr, end); // consume '>'
 	}
-	else if (hex)
-	{
+	else if (hex) {
 		unsigned int hexVal = 0;
 		getChar(curr, end); // consume '#'
 		curr = tsGetHex(curr, end, &hexVal);
@@ -1176,15 +1166,14 @@ public:
 //  |     |
 //  name  library
 
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::string, Json::Value*> >* jsonVars)
-{
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
     char name[256];
     char require[256];
     getDeclarator(curr, end, name);
     
     CurrPtr t = curr;
     if (!getToken(kTokenEq, curr, end)) {
-        lcRaiseError("Missing = after global declaration", curr, 32);
+        lcRaiseError("Missing = after global declaration. Eg: \nio = require(\"io\")\n", curr, 32);
     }
     
     ASTNode* globVar = new ASTNode(kTokenGlobalVariable, name);
@@ -1239,18 +1228,16 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
 
 /*
  landruBlock
- : lDeclareBlock | lParamBlock | lArrayBlock | lStateBlock ;
+ : lDeclareBlock | lLocalBlock | lStateBlock ;
  */
 
-void parseLandruBlock(CurrPtr& curr, EndPtr end)
-{
+void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 	TokenId token = peekToken(curr, end);
-	switch (token)
-	{
-		case kTokenDeclare:		parseDeclare(curr, end);                    break;
-        case kTokenLocal:       parseLocals(curr, end);                     break;
-		case kTokenState:		parseState(curr, end);                      break;
-		default:				lcRaiseError("Unknown token", curr, 32);    break;
+	switch (token) {
+		case kTokenDeclare:  parseDeclare(curr, end);                    break;
+        case kTokenLocal:    parseLocals(curr, end);                     break;
+		case kTokenState:    parseState(curr, end);                      break;
+		default:             lcRaiseError("Only declare, local, or state valid here. Found", curr, 32);    break;
 	}
 }
 
@@ -1263,8 +1250,7 @@ void parseLandruBlock(CurrPtr& curr, EndPtr end)
  -> ^(MACHINE declarator landruBlock+) ;
  */
 
-void parseMachine(CurrPtr& curr, EndPtr end)
-{
+void parseMachine(CurrPtr& curr, EndPtr end) {
 	TokenId token = getToken(curr, end);
 	if (token != kTokenMachine) {
 		lcRaiseError("Expected 'machine'", curr, 32);
@@ -1316,11 +1302,9 @@ void landruParseProgram(void* rootNode,
 	char const*const end = buff + len;
 	char const* curr = buff;
 	
-	while (more(curr, end))
-	{
+	while (more(curr, end)) {
 		TokenId token = peekToken(curr, end);
-		switch (token)
-		{
+		switch (token) {
 			case kTokenMachine:
 				parseMachine(curr, end);
 				break;

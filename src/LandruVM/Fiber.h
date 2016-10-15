@@ -47,22 +47,18 @@ namespace Landru
     //
 
 
-    class Fiber : public VarObj
-	{
+    class Fiber : public VarObj {
 	public:
 
         Fiber(const char* name)
         : VarObj(name, &functions)
-        , mce(0)
-        {
-        }
+        , mce(0) {}
 		
 		virtual ~Fiber();
 
         VAROBJ_FACTORY(fiber, Fiber)
 
-        enum RunEndCondition
-        {
+        enum RunEndCondition {
             kStateEnd,
             kSubStateEnd,
         };
@@ -74,15 +70,13 @@ namespace Landru
         const char* ExemplarName() const { return mce ? mce->exemplar->nameStr : 0; }
         int EntryPoint() const { return mce ? mce->exemplar->stateTable[mce->exemplar->stateIndex("main")] : -1; }
 
-		virtual std::weak_ptr<VarObj> GetVar(int index)
-		{
+		virtual std::weak_ptr<VarObj> GetVar(int index) {
 			if (_vars)
                 return _vars->get(index);
             return std::weak_ptr<VarObj>();
 		}
 
-        virtual std::weak_ptr<VarObj> GetSharedVar(int index)
-        {
+        virtual std::weak_ptr<VarObj> GetSharedVar(int index) {
             if (_sharedVars)
                 return _sharedVars->get(index);
             return std::weak_ptr<VarObj>();

@@ -122,7 +122,7 @@ bool shunting_yard(CurrPtr& strpos, EndPtr strend, std::vector<std::string>& out
             else
                 outposVec.push_back(s); // otherwise, it's a variable, push it on the output queue
             --strpos; // anticipate the increment
-            expectOperator = false;
+            expectOperator = true; // an operator should follow a variable or function
         }
         // If the token is a function argument separator (e.g., a comma):
         else if(c == ',')   {
@@ -241,7 +241,7 @@ bool shunting_yard(CurrPtr& strpos, EndPtr strend, std::vector<std::string>& out
             --strpos;   // because an increment follows
         }
         else  {
-            printf("Unknown token %c\n", c);
+            printf("Unknown token: %c found in expression\n", c);
             return false; // Unknown token
         }
         ++strpos;

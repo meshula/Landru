@@ -4,8 +4,8 @@
 
 #include "LandruStd.h"
 
+#include "LandruVM/Fiber.h"
 #include "ColorVarObj.h"
-#include "Fiber.h"
 #include "FileVarObj.h"
 #include "IntVarObj.h"
 #include "IoVarObj.h"
