@@ -15,6 +15,10 @@
 using namespace std;
 using Lab::Bson;
 
+#ifdef _MSC_VER
+# define itoa _itoa
+#endif
+
 /*
  The Assembler knows the actual details of machine code, and string and variable indexing
  */
@@ -373,13 +377,12 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                     ASSEMBLER_TRACE(kTokenDataElement);
                     ASTConstIter i = rootNode->children.begin();
                     if ((*i)->token == kTokenDataIntLiteral) {
-                        int val;
-                        atoi((*i)->str2.c_str());
+                        int val = atoi((*i)->str2.c_str());
                         bson_append_int(b, rootNode->str2.c_str(), val);
                     }
                     else if ((*i)->token == kTokenDataFloatLiteral)
                     {
-                        float val = atof(rootNode->str2.c_str());
+                        float val = (float) atof(rootNode->str2.c_str());
                         bson_append_double(b, rootNode->str2.c_str(), val);
                     }
                     else if ((*i)->token == kTokenDataNullLiteral) {
@@ -396,7 +399,7 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                 case kTokenDataFloatLiteral:
                 {
                     ASSEMBLER_TRACE(kTokenDataFloatLiteral);
-                    float val = atof(rootNode->str2.c_str());
+                    float val = (float) atof(rootNode->str2.c_str());
                     bson_append_double(b, rootNode->str2.c_str(), val);
                     break;
                 }

@@ -26,7 +26,8 @@ namespace Landru {
     public:
     };
 
-    typedef tuple< float, float, shared_ptr<Fiber>, std::vector<Instruction>, int> TimeoutTuple;
+	typedef vector<Instruction> __VectorInstruction;
+    typedef tuple< float, float, shared_ptr<Fiber>, __VectorInstruction, int> TimeoutTuple;
     enum class TimeOutTupleNames {
         Time = 0, DeltaTime, Fiber, Instructions, Recurrence
     };
@@ -38,7 +39,7 @@ namespace Landru {
         }
     };
     
-    typedef vector<tuple< shared_ptr<Fiber>, std::vector<Instruction> >> MessageQueue;
+    typedef vector<tuple< shared_ptr<Fiber>, __VectorInstruction >> MessageQueue;
     
     class VMContext::Detail {
     public:
@@ -187,7 +188,7 @@ namespace Landru {
             if (fiberIt == _detail->fibers.end()) {
                 VM_RAISE("Runtime error, unknown machine");
             }
-            _detail->timeoutQueue.emplace(make_tuple(_detail->now + delay, delay, fiberIt->second, instr, recurrences));
+            _detail->timeoutQueue.emplace(make_tuple((float)_detail->now + delay, delay, fiberIt->second, instr, recurrences));
         }
     }
     

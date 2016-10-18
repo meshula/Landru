@@ -67,7 +67,7 @@ namespace Landru {
 	{
 		for (int i = 0; i < sizeof(tokens)/sizeof(Token); ++i)
 		{
-            int l = strlen(tokens[i].name);
+            size_t l = strlen(tokens[i].name);
             if (l != length)
                 continue;
 			if (!strncmp(str, tokens[i].name, length))
@@ -1016,9 +1016,9 @@ int literalLength(CurrPtr& curr, EndPtr end) {
 	else
 		getToken(curr, end);
 
-    int len = curr - start;
+    ptrdiff_t len = curr - start;
 	more(curr, end);
-    return len;
+    return (int) len;
 }
 
 void parseLiteral(CurrPtr& curr, EndPtr end) {

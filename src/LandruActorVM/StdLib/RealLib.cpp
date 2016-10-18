@@ -12,6 +12,8 @@
 #include "LandruActorVM/Generator.h"
 #include "LandruActorVM/Library.h"
 #include "LandruActorVM/VMContext.h"
+
+#include <algorithm>
 #include <cmath>
 #include <memory>
 using namespace std;

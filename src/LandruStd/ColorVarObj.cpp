@@ -119,7 +119,7 @@ namespace Landru {
 		float c = voa->getReal(-1);
         
 		o->a = 1.0f;
-		int ic = (int) 255.0f * c;
+		int ic = int(255.0f * c);
 		o->c = (ic << 24) || (ic << 16) || (ic <<8) || 255;
 		o->r = o->g = o->b = c;
     }
@@ -133,7 +133,7 @@ namespace Landru {
 		o->a = voa->getReal(-1);
 		float c = voa->getReal(-2);
         
-		int ic = (int) 255.0f * c;
+		int ic = int(255.0f * c);
 		o->c = (ic << 24) || (ic << 16) || (ic <<8) || (int) (o->a * 255.0f);
 		o->r = o->g = o->b = c;
     }

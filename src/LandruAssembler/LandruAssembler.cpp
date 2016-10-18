@@ -111,10 +111,10 @@ namespace Landru {
         // search from most recently pushed because of scoping, eg in this case
         // for x in range(): for y in range(): local real x ...... ; ;
         // the innermost x should be found within the y loop, and the outermost in the x loop
-        int m = localVariables.size() - 1;
+        int m = (int) localVariables.size() - 1;
         for (int i = m; i >= 0; --i)
             if (!strcmp(name, localVariables[i].name.c_str()))
-                return m - i;
+                return int(m - i);
         return -1;
     }
     
@@ -192,7 +192,7 @@ namespace Landru {
 
     void Assembler::callFunction(const char* fnName)
     {
-        char* dot = strchr(fnName, '.');
+        char const*const dot = strchr(fnName, '.');
         if (dot) {
             vector<string> parts = TextScanner::Split(string(fnName), string("."));
             int index = 0;
@@ -763,7 +763,7 @@ namespace Landru {
         // calculate space required to hold all the strings
         int stringTableLength = 0;
         for (int i = 0; i < e->stringArrayLength; ++i) {
-            stringTableLength += stringTable[i].length() + 1;
+            stringTableLength += (int) stringTable[i].length() + 1;
         }
         e->stringDataLength = stringTableLength;
         
@@ -775,7 +775,7 @@ namespace Landru {
         for (size_t i = 0; i < stringTable.size(); ++i) {
             strcpy(curr, stringTable[i].c_str());
             e->stringArray[i] = currOff;
-            currOff += strlen(stringTable[i].c_str()) + 1;
+            currOff += (int) strlen(stringTable[i].c_str()) + 1;
             curr = const_cast<char*>(&e->stringData[currOff]);
         }
         

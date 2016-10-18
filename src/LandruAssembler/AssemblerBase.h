@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>

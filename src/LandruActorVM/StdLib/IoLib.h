@@ -7,7 +7,7 @@
 //
 
 #pragma once
-#include "LandruLibForward.h"
+#include "LandruActorVM/LandruLibForward.h"
 
 namespace Landru {
     namespace Std {

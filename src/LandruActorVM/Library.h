@@ -22,7 +22,7 @@ namespace Wires {
 namespace Landru {
     
     class Fiber;
-    class FnContext;
+    struct FnContext;
     class VMContext;
     typedef std::function<void(FnContext&)> ActorFn;
     

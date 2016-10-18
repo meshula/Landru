@@ -22,12 +22,12 @@ namespace Landru
     
     static unsigned int _dictStringCopyHTHashFunction(const void *key)
     {
-        return dictGenHashFunction((const unsigned char*) key, strlen((const char*) key));
+        return (unsigned int) dictGenHashFunction((const unsigned char*) key, (int) strlen((const char*) key));
     }
     
     static void *_dictStringDup(void *privdata, const void *key)
     {
-        int len = strlen((const char*) key);
+        size_t len = strlen((const char*) key);
         char *copy = (char*) malloc(len+1);
         DICT_NOTUSED(privdata);
         

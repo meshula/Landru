@@ -7,8 +7,53 @@
 //
 
 #include "LandruActorVM/Fiber.h"
-#include <unistd.h>
-#include <uuid/uuid.h>
+
+#ifdef PLATFORM_WINDOWS
+#define WINDOWS_LEAN_AND_MEAN
+#include <Windows.h>
+
+uint32_t getpid() {
+	return GetCurrentProcessId();
+}
+
+void uuid_generate_time(unsigned char* buff) {
+	// temp lame id generator
+	static uint32_t i = 0;
+	uint32_t * p = reinterpret_cast<uint32_t*>(buff);
+	*p++ = 0;
+	*p++ = 0;
+	*p++ = 0;
+	*p = i++;
+}
+
+void uuid_clear(unsigned char* buff) {
+	// temp lame id generator
+	uint32_t * p = reinterpret_cast<uint32_t*>(buff);
+	*p++ = 0;
+	*p++ = 0;
+	*p++ = 0;
+	*p++ = 0;
+}
+
+void uuid_copy(unsigned char* dst, unsigned char const* src) {
+	uint32_t * d = reinterpret_cast<uint32_t *>(dst);
+	uint32_t const* s = reinterpret_cast<uint32_t const*>(src);
+	*d++ = *s++;
+	*d++ = *s++;
+	*d++ = *s++;
+	*d++ = *s++;
+}
+
+int uuid_compare(unsigned char const*const ptra, unsigned char const* ptrb) {
+	uint32_t const* a = reinterpret_cast<uint32_t const*>(ptra);
+	uint32_t const* b = reinterpret_cast<uint32_t const*>(ptrb);
+	return (a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3]) ? 0 : 1;
+}
+
+#else
+# include <unistd.h>
+# include <uuid/uuid.h>
+#endif
 
 using namespace std;
 

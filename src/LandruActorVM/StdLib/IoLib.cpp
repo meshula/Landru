@@ -41,7 +41,7 @@ namespace Landru {
                     cout << f;
                 }
                 else if (p->type() == typeid(int)) {
-                    int i = dynamic_cast<Wires::Data<float>*>(p.get())->value();
+                    int i = (int) dynamic_cast<Wires::Data<float>*>(p.get())->value();
                     cout << i;
                 }
             }

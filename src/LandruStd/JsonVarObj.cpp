@@ -80,7 +80,7 @@ namespace Landru
                 v = i;
             }
             else if (v.type() == Json::realValue) {
-                float i = atof(strValue->getCstr());
+                float i = (float) atof(strValue->getCstr());
                 v = i;
             }
             else

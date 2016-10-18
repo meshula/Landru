@@ -111,7 +111,7 @@ namespace Landru {
             // search from most recently pushed because of scoping, eg in this case
             // for x in range(): for y in range(): local real x ...... ; ;
             // the innermost x should be found within the y loop, and the outermost in the x loop
-            int m = localVariables.size() - 1;
+            int m = (int) localVariables.size() - 1;
             for (int i = m; i >= 0; --i)
                 if (!strcmp(name, localVariables[i].first.c_str()))
                     return i;
@@ -694,7 +694,8 @@ namespace Landru {
         sprintf(buff, "%f", f);
         string str("push float constant: ");
         str += buff;
-        _context->currInstr.back()->emplace_back(Instruction([f, buff](FnContext& run) {
+		string s(str);
+        _context->currInstr.back()->emplace_back(Instruction([f, s](FnContext& run) {
             run.self->stack.back().emplace_back(make_shared<Wires::Data<float>>(f));
         }, str.c_str()));
     }
