@@ -17,9 +17,19 @@ time  = require("time")
 io    = require("io")
 ```
 
+**Landru** has a number of standard libraries, including
+ - io -- input and output
+ - time -- time related utilities
+ - int -- integer math
+ - real -- real number math
+
+There are some optional libraries as well, such as
+ - audio
+
 The fundamental execution unit is a *machine*. When machines are
 encountered in a Landru file, they are compiled. There is one special
-machine, named *main*.
+machine, named *main*. It's special because it is executed automatically as
+soon as the whole file is compiled.
 
 ```
 machine main:
