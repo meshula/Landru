@@ -456,7 +456,7 @@ void AssemblerBase::assemble(ASTNode* root) {
         }
     }
     
-    if (true) {
+    if (false) {
         FILE* f = fopen("/Users/dp/lasm.txt", "at");
         disassemble(root->str2, f);
         fflush(f);

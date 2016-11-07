@@ -18,7 +18,8 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
     OptionParser op("landruc");
     bool json = false;
     op.AddTrueOption("j", "json", json, "Output AST as Json");
