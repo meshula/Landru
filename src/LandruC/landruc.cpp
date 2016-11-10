@@ -41,6 +41,10 @@ int main(int argc, char** argv)
         std::cout << "Compiling " << path << std::endl;
         
         FILE* f = fopen(path.c_str(), "rb");
+		if (!f) {
+			std::cout << path << " not found" << std::endl;
+			exit(1);
+		}
         if (f) {
             fseek(f, 0, SEEK_END);
             size_t len = ftell(f);
@@ -89,7 +93,10 @@ int main(int argc, char** argv)
                     if (vmContext.undeferredMessagesPending()) {
                         continue;
                     }
-                    else if (vmContext.deferredMessagesPending()) {
+					else if (!vmContext.launchQueue.empty()) {
+						continue;
+					}
+					else if (vmContext.deferredMessagesPending()) {
                         std::this_thread::sleep_for(std::chrono::microseconds(2000));
                     }
                     else

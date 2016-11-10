@@ -1,5 +1,5 @@
 
-**Landru** is an actor oriented **Forth** dialect.
+**Landru** is a reactive state machine oriented **Forth** dialect.
 
 **Forth** is executed line by line as source is interpreted. **Landru** is compiled.
 
@@ -41,8 +41,8 @@ As in **Forth**, **Landru** language structures are declared, then surrounded
 with a colon and semicolon. Here, *machine main* is pretty trivial.
 
 Machines are made up of declared persistent state, and states. There is one
-special state, named *main*. When a machine is started, declared state is
-instantiated, and then *main* automatically runs.
+special state, named *main*. When a machine is started, the machine's state
+variables are instantiated, and then *main* automatically runs.
 
 ```
 machine main:
@@ -78,6 +78,7 @@ A *machine* can launch another *machine*.
 ```
 machine pong:
   state main: io.print("pong") ;;
+
 machine ping:
   state main: io.print("ping")
               launch("pong")   ;;
