@@ -11,6 +11,7 @@
 #include "IntLib.h"
 #include "IoLib.h"
 #include "RealLib.h"
+#include "StringLib.h"
 #include "TimeLib.h"
 
 namespace Landru {

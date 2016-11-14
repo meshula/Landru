@@ -39,29 +39,29 @@ namespace Landru {
         return false;
     }
 
-    
+
 void AssemblerBase::assembleNode(ASTNode* root) {
     switch (root->token) {
         case kTokenProgram:
             ASSEMBLER_TRACE(kTokenProgram);
             assembleStatements(root); // parameters
             break;
-            
+
         case kTokenMachine:
             ASSEMBLER_TRACE(kTokenMachine);
             assembleMachine(root);
             break;
-            
+
         case kTokenLaunch:
             ASSEMBLER_TRACE(kTokenLaunch);
             assembleStatements(root); // parameters
             launchMachine();
             break;
-            
-        case kTokenLocal:
+
+        case kTokenLocalVariable:
             // this was handled in assembleStatements
             break;
-            
+
         case kTokenIf: {
             // children: qualifier, statements, [else, statements]
             ASSEMBLER_TRACE(kTokenIf);
@@ -87,7 +87,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             endConditionalClause();
             break;
         }
-            
+
         case kTokenEq: ASSEMBLER_TRACE(kTokenEq); assembleStatements(root); ifEq(); break;
         case kTokenLte0: ASSEMBLER_TRACE(kTokenLte0); assembleStatements(root); ifLte0(); break;
         case kTokenGte0: ASSEMBLER_TRACE(kTokenGte0); assembleStatements(root); ifGte0(); break;
@@ -95,7 +95,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
         case kTokenGt0: ASSEMBLER_TRACE(kTokenGt0); assembleStatements(root); ifGt0(); break;
         case kTokenEq0: ASSEMBLER_TRACE(kTokenEq0); assembleStatements(root); ifEq0(); break;
         case kTokenNotEq0: ASSEMBLER_TRACE(kTokenNotEq0); assembleStatements(root); ifNotEq0(); break;
-            
+
         case kTokenParameters:
             ASSEMBLER_TRACE(kTokenParameters);
             paramsStart();
@@ -109,7 +109,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
                 assembleNode(*i);
             callFunction(root->str2.c_str());
             break;
-                        
+
         case kTokenDotChain:
             ASSEMBLER_TRACE(kTokenDotChain);
             dotChain();
@@ -119,17 +119,17 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             ASSEMBLER_TRACE(kTokenIntLiteral);
             pushConstant(root->intVal);
             break;
-            
+
         case kTokenFloatLiteral:
             ASSEMBLER_TRACE(kTokenFloatLiteral);
             pushFloatConstant(root->floatVal1);
             break;
-            
+
         case kTokenRangedLiteral:
             ASSEMBLER_TRACE(kTokenRangedLiteral);
             pushRangedRandom(root->floatVal1, root->floatVal2);
             break;
-            
+
         case kTokenStringLiteral:
             ASSEMBLER_TRACE(kTokenStringLiteral);
             pushStringConstant(root->str2.c_str());
@@ -139,7 +139,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             ASSEMBLER_TRACE(kTokenTrue);
             pushConstant(1);
             break;
-            
+
         case kTokenFalse:
             ASSEMBLER_TRACE(kTokenFalse);
             pushConstant(0);
@@ -169,13 +169,13 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             }
             break;
         }
-            
+
         case kTokenAssignment:
             ASSEMBLER_TRACE(kTokenAssignment);
             assembleStatements(root); //function(new)
             storeToVar(root->str2.c_str());
             break;
-            
+
         case kTokenGoto:
             ASSEMBLER_TRACE(kTokenGoto);
             gotoState(root->str2.c_str());
@@ -185,7 +185,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             ASSEMBLER_TRACE(kTokenFor);
             ASTConstIter j = root->children.begin();
             assembleNode(*j++); // the function that returns a range iterator
-            
+
             const char* type = root->str1.c_str(); // type
             const char* name = root->str2.c_str(); // name
             locals.push_back(vector<pair<string, string>>());
@@ -196,7 +196,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             locals.pop_back();
             break;
         }
-            
+
         case kTokenOn: {
             ASSEMBLER_TRACE(kTokenOn);
             beginOn();
@@ -207,7 +207,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             endOnStatements();
             break;
         }
-            
+
         case kTokenOpAdd: ASSEMBLER_TRACE(kTokenOpAdd); opAdd(); break;
         case kTokenOpSubtract: ASSEMBLER_TRACE(kTokenOpSubtract); opSubtract(); break;
         case kTokenOpMultiply: ASSEMBLER_TRACE(kTokenOpMultiply); opMultiply(); break;
@@ -216,7 +216,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
         case kTokenOpModulus: ASSEMBLER_TRACE(kTokenOpModulus); opModulus(); break;
         case kTokenOpGreaterThan: ASSEMBLER_TRACE(kTokenOpGreaterThan); opGreaterThan(); break;
         case kTokenOpLessThan: ASSEMBLER_TRACE(kTokenOpLessThan); opLessThan(); break;
-            
+
         default:
             lcRaiseError("Compile Error: unknown node encountered\n", 0, 0);
             break;
@@ -227,18 +227,27 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
     beginLocalVariableScope();
 
     locals.push_back(vector<pair<string, string>>());
-    
+
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenLocal) {
+        if ((*i)->token == kTokenLocalVariable) {
             for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
-                if (!(*j)->str1.length())
+                if (!(*j)->str1.length()) // unnamed variable? how did that happen??
                     continue;
 
                 const char* type = (*j)->str1.c_str(); // type
                 const char* name = (*j)->str2.c_str(); // name
                 addLocalVariable(name, type);
                 locals.back().push_back(pair<string,string>(name, type));
-            }
+
+                if ((*j)->children.size()) {
+					ASTConstIter k = (*j)->children.begin();
+					if ((*k)->token == kTokenEq) {
+						// An assignment is part of the local variable declaration
+						assembleNode(*k);
+						storeToVar(name);
+					}
+				}
+			}
         }
     }
 
@@ -246,18 +255,18 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
         assembleNode(*i);
 
     locals.pop_back();
-    
+
     endLocalVariableScope();
 }
 
 void AssemblerBase::assembleState(ASTNode* root) {
     beginState(root->str2.c_str());   // this will update the program index
-    
+
     if (root->token != kTokenState) {
         lcRaiseError("Compile Error: node is not a state\n", 0, 0);
         return;
     }
-    
+
     bool once = true;
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if (once == false) {
@@ -265,7 +274,7 @@ void AssemblerBase::assembleState(ASTNode* root) {
             return;
         }
         once = false;
-        
+
         assembleStatements(*i);
     }
     endState();
@@ -286,42 +295,42 @@ void AssemblerBase::assembleDeclarations(ASTNode* root) {
 
 void AssemblerBase::assembleMachine(ASTNode* root) {
     beginMachine(root->str2.c_str());
-    
+
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
         if ((*i)->token == kTokenDeclare)
             assembleDeclarations(*i);
-    
+
     // compile main state first, then all other states
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if ((*i)->token == kTokenDeclare)
             continue;
-        
+
         if ((*i)->str2 != "main")
             continue;
-        
+
         assembleState(*i);
         break;
     }
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if ((*i)->token == kTokenDeclare)
             continue;
-        
+
         if ((*i)->str2 == "main")
             continue;
-        
+
         assembleState(*i);
     }
     endMachine();
 }
-    
+
     class BsonCompiler {
     public:
         // temp for bson parsing
         std::vector<int> bsonArrayNesting;
         int bsonCurrArrayIndex;
-        
+
         BsonCompiler() : bsonCurrArrayIndex(0) {}
-        
+
         shared_ptr<Bson> compileBson(Landru::ASTNode* rootNode) {
             bsonArrayNesting.clear();
             bsonCurrArrayIndex = 0;
@@ -331,19 +340,19 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
             bson_print(b->b);
             return b;
         }
-        
+
         void compileBsonData(Landru::ASTNode* rootNode, bson* b)
         {
             using namespace Landru;
             for (ASTConstIter i = rootNode->children.begin(); i != rootNode->children.end(); ++i)
                 compileBsonDataElement(*i, b);
         }
-        
+
         void compileBsonDataElement(Landru::ASTNode* rootNode, bson* b)
         {
             using namespace Landru;
             switch(rootNode->token) {
-                    
+
                 case kTokenDataObject:
                 {
                     ASSEMBLER_TRACE(kTokenDataObject);
@@ -360,7 +369,7 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                         compileBsonData(rootNode, b); // recurse
                     break;
                 }
-                    
+
                 case kTokenDataArray:
                 {
                     ASSEMBLER_TRACE(kTokenDataArray);
@@ -371,7 +380,7 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                     bsonArrayNesting.pop_back();
                     break;
                 }
-                    
+
                 case kTokenDataElement:
                 {
                     ASSEMBLER_TRACE(kTokenDataElement);
@@ -395,7 +404,7 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                     }
                     break;
                 }
-                    
+
                 case kTokenDataFloatLiteral:
                 {
                     ASSEMBLER_TRACE(kTokenDataFloatLiteral);
@@ -403,7 +412,7 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                     bson_append_double(b, rootNode->str2.c_str(), val);
                     break;
                 }
-                    
+
                 case kTokenDataIntLiteral:
                 {
                     ASSEMBLER_TRACE(kTokenDataIntLiteral);
@@ -411,32 +420,32 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
                     bson_append_int(b, rootNode->str2.c_str(), val);
                     break;
                 }
-                    
+
                 case kTokenDataNullLiteral:
                 {
                     ASSEMBLER_TRACE(kTokenDataNullLiteral);
                     bson_append_null(b, rootNode->str2.c_str());
                     break;
                 }
-                    
+
                 case kTokenDataStringLiteral:
                 {
                     ASSEMBLER_TRACE(kTokenDataStringLiteral);
                     bson_append_string(b, rootNode->str2.c_str(), rootNode->str1.c_str());
                     break;
                 }
-                    
+
                 default:
                     break;
             }
         }
-        
+
     };
 
 void AssemblerBase::assemble(ASTNode* root) {
     //landruPrintRawAST(rootNode);
     //landruPrintAST(root);
-    
+
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
         if ((*i)->token == kTokenGlobalVariable) {
             ASTConstIter kind = (*i)->children.begin();
@@ -455,7 +464,7 @@ void AssemblerBase::assemble(ASTNode* root) {
             finalizeAssembling(); // the assembler needs to record its results in finalize
         }
     }
-    
+
     if (false) {
         FILE* f = fopen("/Users/dp/lasm.txt", "at");
         disassemble(root->str2, f);

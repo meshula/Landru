@@ -2,6 +2,7 @@
 #include "OptionParser.h"
 
 #include "LandruCompiler/LandruCompiler.h"
+#include "LandruCompiler/lcRaiseError.h"
 #include "LandruAssembler/LandruAssembler.h"
 #include "LandruAssembler/LandruActorAssembler.h"
 #include "LandruActorVM/Fiber.h"
@@ -18,7 +19,7 @@
 
 using namespace std;
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     OptionParser op("landruc");
     bool json = false;
@@ -39,7 +40,7 @@ int main(int argc, char** argv)
             exit(1);
         }
         std::cout << "Compiling " << path << std::endl;
-        
+
         FILE* f = fopen(path.c_str(), "rb");
 		if (!f) {
 			std::cout << path << " not found" << std::endl;
@@ -53,15 +54,16 @@ int main(int argc, char** argv)
             fread(text, 1, len, f);
             text[len] = '\0';
             fclose(f);
-        
+
             void* rootNode = landruCreateRootNode();
             std::vector<std::pair<std::string, Json::Value*> > jsonVars;
             landruParseProgram(rootNode, &jsonVars, text, len);
 
+			bool success = !lcCurrentError();
+
             Landru::ActorAssembler laa;
             Landru::Std::populateLibrary(laa.library());
             //Landru::Audio::LabSoundLib::registerLib(laa.library());
-            bool success = true;
             try {
                 laa.assemble((Landru::ASTNode*) rootNode);
             }
@@ -71,7 +73,7 @@ int main(int argc, char** argv)
             }
 
             delete [] text;
-            
+
             if (json)
                 landruToJson(rootNode);
             if (printAst)
@@ -89,7 +91,13 @@ int main(int argc, char** argv)
                 do {
                     chrono::high_resolution_clock::time_point now = chrono::high_resolution_clock::now();
                     chrono::duration<double> time_span = chrono::duration_cast<chrono::seconds>(now.time_since_epoch());
-                    vmContext.update(time_span.count());
+					try {
+						vmContext.update(time_span.count());
+					}
+					catch (...) {
+						std::cerr << "Exception caught, exiting" << std::endl;
+						break;
+					}
                     if (vmContext.undeferredMessagesPending()) {
                         continue;
                     }

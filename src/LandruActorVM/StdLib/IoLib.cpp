@@ -19,11 +19,11 @@ using namespace std;
 
 namespace Landru {
     namespace Std {
-        
-        
+
+
         //-----------
         // Io Libary \__________________________________________
-        
+
         void IoLib::registerLib(Library& l) {
             auto u = unique_ptr<Library::Vtable>(new Library::Vtable("io"));
             u->registerFn("2.0", "print", "...", "", print);
@@ -34,6 +34,9 @@ namespace Landru {
             for (auto p : params) {
                 if (p->type() == typeid(string)) {
                     string s = dynamic_cast<Wires::Data<string>*>(p.get())->value();
+					size_t i;
+                    while ((i = s.find("\\n")) != string::npos)
+                        s.replace(i, 2, 1, '\n');
                     cout << s;
                 }
                 else if (p->type() == typeid(float)) {
@@ -41,7 +44,7 @@ namespace Landru {
                     cout << f;
                 }
                 else if (p->type() == typeid(int)) {
-                    int i = (int) dynamic_cast<Wires::Data<float>*>(p.get())->value();
+                    int i = (int) dynamic_cast<Wires::Data<int>*>(p.get())->value();
                     cout << i;
                 }
             }
@@ -49,7 +52,7 @@ namespace Landru {
             for (int i = 0; i < pop; ++i)
                 run.self->popVar();
         }
-        
-        
+
+
     } // Std
 } // Landru

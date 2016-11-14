@@ -303,8 +303,29 @@ namespace Landru
 		if (tabs > maxTabs)
 			tabs = maxTabs;
 		const char* tabStr = tabChars + maxTabs - tabs;
-		
-		printf("%s%s: %s\n", tabStr, tokenName(token), str2.c_str());
+
+		switch (token) {
+		case kTokenStringLiteral:
+			printf("%s%s: %s\n", tabStr, tokenName(token), str2.c_str());
+			break;
+
+		case kTokenIntLiteral:
+			printf("%s%s: %d\n", tabStr, tokenName(token), intVal);
+			break;
+
+		case kTokenFloatLiteral:
+			printf("%s%s: %f\n", tabStr, tokenName(token), floatVal1);
+			break;
+
+		case kTokenRangedLiteral:
+			printf("%s%s: <%f, %f>\n", tabStr, tokenName(token), floatVal1, floatVal2);
+			break;
+
+		default:
+			printf("%s%s: %s\n", tabStr, tokenName(token), str2.c_str());
+			break;
+		}
+
 		for (ASTConstIter i = children.begin(); i != children.end(); ++i) {
 			(*i)->dump(tabs+1);
 		}

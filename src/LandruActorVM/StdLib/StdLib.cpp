@@ -22,6 +22,7 @@ void populateLibrary(Library& l) {
     IntLib::registerLib(l);
     IoLib::registerLib(l);
     RealLib::registerLib(l);
+	StringLib::registerLib(l);
     TimeLib::registerLib(l);
 }
 
