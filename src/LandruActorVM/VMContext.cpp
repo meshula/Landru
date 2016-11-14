@@ -104,7 +104,8 @@ namespace Landru {
                 _detail->messageQueue[f->id()] = vector<tuple< shared_ptr<Fiber>, std::vector<Instruction> >>();   //// @TODO emplace queues only when needed at first access
                 try {
                     FnContext fn(this, f.get(), nullptr, nullptr);
-                    f->gotoState(fn, "main");
+					f->gotoState(fn, "__auto__", false);
+                    f->gotoState(fn, "main", true);
                 }
                 catch(const std::exception& e) {
                     cerr << e.what() << endl;

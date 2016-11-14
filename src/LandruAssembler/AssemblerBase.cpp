@@ -152,7 +152,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             if (isLocalVar(name)) {
                 pushLocalVar(name);
             }
-            else if (selfVars.find(name) != selfVars.end()) {
+            else if (selfVarNames.find(name) != selfVarNames.end()) {
                 pushInstanceVar(name);
             }
             else if (sharedVars.find(name) != sharedVars.end()) {
@@ -240,14 +240,14 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
                 locals.back().push_back(pair<string,string>(name, type));
 
                 if ((*j)->children.size()) {
-					ASTConstIter k = (*j)->children.begin();
-					if ((*k)->token == kTokenEq) {
-						// An assignment is part of the local variable declaration
-						assembleNode(*k);
-						storeToVar(name);
-					}
-				}
-			}
+                    ASTConstIter k = (*j)->children.begin();
+                    if ((*k)->token == kTokenEq) {
+                        // An assignment is part of the local variable declaration
+                        assembleNode(*k);
+                        storeToVar(name);
+                    }
+                }
+            }
         }
     }
 
@@ -268,37 +268,44 @@ void AssemblerBase::assembleState(ASTNode* root) {
     }
 
     bool once = true;
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if (once == false) {
+	for (auto i : root->children) {
+		if (once == false) {
             lcRaiseError("Compile Error: should only be one statements node under a state node\n", 0, 0);
             return;
         }
         once = false;
 
-        assembleStatements(*i);
+        assembleStatements(i);
     }
     endState();
 }
 
 void AssemblerBase::assembleDeclarations(ASTNode* root) {
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenSharedVariable) {
-            addSharedVariable((*i)->str2.c_str(), (*i)->str1.c_str());
-            sharedVars[(*i)->str2.c_str()] = (*i)->str1.c_str();
+	for (auto i : root->children) {
+		if (i->token == kTokenSharedVariable) {
+            addSharedVariable(i->str2.c_str(), i->str1.c_str());
+            sharedVars[i->str2] = i->str1.c_str();
         }
         else {
-            addInstanceVariable((*i)->str2.c_str(), (*i)->str1.c_str());
-            selfVars[(*i)->str2.c_str()] = (*i)->str1.c_str();
+            addInstanceVariable(i->str2.c_str(), i->str1.c_str());
+            selfVarNames.insert(i->str2);
         }
     }
+
+	beginState("__auto__");
+	for (auto i : root->children) {
+		assembleStatements(i);
+	}
+	endState();
 }
 
 void AssemblerBase::assembleMachine(ASTNode* root) {
     beginMachine(root->str2.c_str());
 
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
-        if ((*i)->token == kTokenDeclare)
-            assembleDeclarations(*i);
+    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) 
+		if ((*i)->token == kTokenDeclare) {
+			assembleDeclarations(*i);
+		}
 
     // compile main state first, then all other states
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {

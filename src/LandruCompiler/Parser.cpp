@@ -430,7 +430,7 @@ void parseLandruVar(CurrPtr& curr, EndPtr end)
 	if (token == kTokenEq) {
 		getToken(curr, end); // consume assignment operator
 		ASTNode * pop = currNode;
-		currNode = new ASTNode(kTokenAssignment, "");
+		currNode = new ASTNode(kTokenAssignment, name);
 		variableNode->addChild(currNode);
 		parseLiteral(curr, end); // and put the assigned value in the tree
 		currNode = pop;

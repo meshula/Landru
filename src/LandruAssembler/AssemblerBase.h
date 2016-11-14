@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -131,7 +132,7 @@ namespace Landru {
 
         std::vector<std::string> states;
         std::map<std::string, std::string> requires;
-        std::map<std::string, std::string> selfVars;
+        std::set<std::string> selfVarNames;
         std::map<std::string, std::string>	sharedVars;
         std::map<std::string, std::shared_ptr<Lab::Bson>> globals;
         std::vector<std::vector<std::pair<std::string, std::string>>> locals; // stack of local variable scopes

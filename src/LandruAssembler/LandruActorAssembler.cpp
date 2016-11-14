@@ -885,7 +885,7 @@ namespace Landru {
     void ActorAssembler::gotoState(const char *stateName) {
         string s(stateName);
         _context->currInstr.back()->emplace_back(Instruction([s](FnContext& run) {
-            run.self->gotoState(run, s.c_str());
+            run.self->gotoState(run, s.c_str(), true);
         }, "gotoState"));
     }
 

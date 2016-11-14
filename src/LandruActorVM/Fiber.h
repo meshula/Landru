@@ -58,10 +58,13 @@ namespace Landru {
 
         const Id& id() const { return _id; }
 
-        void gotoState(FnContext& run, const char* name) {
+        void gotoState(FnContext& run, const char* name, bool raiseIfStateNotFound) {
             auto mainState = machineDefinition->states.find(name);
-            if (mainState == machineDefinition->states.end())
-                VM_RAISE("main not found on machine");
+			if (mainState == machineDefinition->states.end()) {
+				if (raiseIfStateNotFound)
+					VM_RAISE("main not found on machine");
+				return;
+			}
 
             run.run(mainState->second->instructions);
         }
