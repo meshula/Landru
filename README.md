@@ -185,6 +185,7 @@ machine requireVar:
 If the module test is known to have a value *d* in it, a machine can access it
 using dotted scope syntax.
 
+```
 declare:
   float e = 3 ;
 
