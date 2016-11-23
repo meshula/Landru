@@ -189,7 +189,14 @@ namespace Landru
 				(*i)->print(tabs+1);
 				++i;
 				break;
-				
+
+			case kTokenInitialAssignment:
+				printf("%sinitialAssignment %s = ", tabStr, str2.c_str());
+				/// @TODO, assignment should have a parameter list under it
+				(*i)->print(tabs + 1);
+				++i;
+				break;
+
 			case kTokenSharedVariable:
 				printf("%sshared %s %s\n", 
 					   tabStr, 

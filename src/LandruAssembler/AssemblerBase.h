@@ -40,15 +40,16 @@ namespace Landru {
             std::string s;
         };
         #define AB_RAISE(text) do { stringstream s; s << text; throw Exception(s); } while (0)
-        
+
 		AssemblerBase() {}
         virtual ~AssemblerBase();
-        
+
         virtual void startAssembling() = 0;
         virtual void finalizeAssembling() = 0;
 
         virtual void callFunction(const char* fnName) = 0;
         virtual void storeToVar(const char* varName) = 0;
+    	virtual void initializeSharedVarIfNecessary(const char * varName) = 0;
 
         virtual void pushConstant(int) = 0;
         virtual void pushFloatConstant(float) = 0;
@@ -59,7 +60,7 @@ namespace Landru {
         virtual void pushRequire(const char* name) = 0;
         virtual void pushSharedVar(const char* varName) = 0;
         virtual void pushStringConstant(const char* str) = 0;
-        
+
         // local parameters
         virtual void paramsStart() = 0;
         virtual void paramsEnd() = 0;
@@ -69,11 +70,11 @@ namespace Landru {
         virtual void beginOn() = 0;
         virtual void beginOnStatements() = 0;
         virtual void endOnStatements() = 0;
-        
+
         virtual void beginConditionalClause() = 0;
         virtual void beginContraConditionalClause() = 0;
         virtual void endConditionalClause() = 0;
-        
+
         virtual void gotoState(const char* stateName) = 0;
 		virtual void launchMachine() = 0;
         virtual void ifEq() = 0;
@@ -83,7 +84,7 @@ namespace Landru {
 		virtual void ifGt0() = 0;
 		virtual void ifEq0() = 0;
 		virtual void ifNotEq0() = 0;
-        
+
         virtual void opAdd() = 0;
         virtual void opSubtract() = 0;
         virtual void opMultiply() = 0;
@@ -92,11 +93,11 @@ namespace Landru {
         virtual void opModulus() = 0;
         virtual void opGreaterThan() = 0;
         virtual void opLessThan() = 0;
-		
+
 		// variables
 		virtual void addSharedVariable(const char* name, const char* type) = 0;
         virtual void addInstanceVariable(const char* name, const char* type) = 0;
-        
+
         virtual void beginLocalVariableScope() = 0;
         virtual void addLocalVariable(const char* name, const char* type) = 0;
         virtual void endLocalVariableScope() = 0;
@@ -108,26 +109,26 @@ namespace Landru {
         // machines
         virtual void beginMachine(const char* name) = 0;
         virtual void endMachine() = 0;
-        
+
 		// states
 		virtual void beginState(const char* name) = 0;
         virtual void endState() = 0;
-		
+
         virtual void disassemble(const std::string& machineName, FILE* f) = 0;
 
         // dot chain means let the runtime know that the next function will be invoked on the stack top object
         virtual void dotChain() = 0;
-        
+
         // assembler
         void assemble(ASTNode* root);
-        
+
     protected:
         void assembleMachine(ASTNode* root);
         void assembleDeclarations(ASTNode* root);
         void assembleState(ASTNode* root);
         void assembleStatements(ASTNode* root);
         void assembleNode(ASTNode* root);
-        
+
         bool isLocalVar(const char* name) const;
 
         std::vector<std::string> states;
@@ -135,7 +136,7 @@ namespace Landru {
         std::set<std::string> selfVarNames;
         std::map<std::string, std::string>	sharedVars;
         std::map<std::string, std::shared_ptr<Lab::Bson>> globals;
-        std::vector<std::vector<std::pair<std::string, std::string>>> locals; // stack of local variable scopes
+        std::vector<std::vector<std::pair<std::string, std::string>>> scopedVariables; // stack of local variable scopes
 	};
 
 } // Landru

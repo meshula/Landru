@@ -17,7 +17,7 @@ namespace Landru {
     }
 
     Property::Property(VMContext& vm, const std::string& name, const std::string& type) \
-    : name(name), type(type) {
+    : name(name), type(type), assignCount(0) {
         create(vm); }
     
     Property::Property() {}
@@ -29,6 +29,7 @@ namespace Landru {
                 return false;
         }
         *data = *td;
+		++assignCount;
         return true;
     }
 

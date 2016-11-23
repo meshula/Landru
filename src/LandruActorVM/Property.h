@@ -38,6 +38,7 @@ namespace Landru {
         std::string type;
         Visibility visibility;
         std::shared_ptr<Wires::TypedData> data;
+		int assignCount = 0;
     };
     
 }

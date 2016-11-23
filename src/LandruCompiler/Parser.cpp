@@ -20,7 +20,7 @@ using namespace Landru;
 
 void parseAssignment(CurrPtr& curr, EndPtr end);
 void parseLandruBlock(CurrPtr&, EndPtr);
-void parseLandruVar(CurrPtr&, EndPtr);
+void parseLandruVarDeclaration(CurrPtr&, EndPtr);
 void parseElse(CurrPtr& curr, EndPtr end);
 void parseFor(CurrPtr& curr, EndPtr end);
 void parseGlobalVarDecls(CurrPtr& curr, EndPtr end);
@@ -37,7 +37,7 @@ void parseMachine(CurrPtr& curr, EndPtr end);
 void parseOn(CurrPtr& curr, EndPtr end);
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId);
 bool peekIsLiteral(CurrPtr& curr, EndPtr end);
-void parseLiteral(CurrPtr& curr, EndPtr end);
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode * currNode, TokenId conversionType);
 
 
 namespace Landru {
@@ -343,7 +343,7 @@ void parseLocals(CurrPtr& curr, EndPtr end) {
 			++curr;
 			break;
 		}
-		parseLandruVar(curr, end);
+		parseLandruVarDeclaration(curr, end);
 	}
 
 	currNode = pop;
@@ -383,7 +383,7 @@ void parseDeclare(CurrPtr& curr, EndPtr end)
 			break;
 		}
 
-		parseLandruVar(curr, end);
+		parseLandruVarDeclaration(curr, end);
 	}
 
 	currNode = pop;
@@ -404,7 +404,7 @@ void parseDeclare(CurrPtr& curr, EndPtr end)
 	 ;
  */
 
-void parseLandruVar(CurrPtr& curr, EndPtr end)
+void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end)
 {
 	bool sharedToken = peekToken(curr, end) == kTokenShared;
 	if (sharedToken)
@@ -415,6 +415,8 @@ void parseLandruVar(CurrPtr& curr, EndPtr end)
 
     if (!strlen(varType))
         lcRaiseError("Expected variable type, found:", curr, 32);
+
+	TokenId declaredType = peekToken(varType, varType+sizeof(varType));
 
 	char name[256];
 	getDeclarator(curr, end, name);
@@ -430,9 +432,12 @@ void parseLandruVar(CurrPtr& curr, EndPtr end)
 	if (token == kTokenEq) {
 		getToken(curr, end); // consume assignment operator
 		ASTNode * pop = currNode;
-		currNode = new ASTNode(kTokenAssignment, name);
+		if (sharedToken)
+			currNode = new ASTNode(kTokenInitialAssignment, name);
+		else
+			currNode = new ASTNode(kTokenAssignment, name);
 		variableNode->addChild(currNode);
-		parseLiteral(curr, end); // and put the assigned value in the tree
+		parseLiteral(curr, end, currNode, declaredType); // and put the assigned value in the tree
 		currNode = pop;
 	}
 }
@@ -883,7 +888,7 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
             currNode->addChild(functionNode);
         }
         else if (peekIsLiteral(strstart, strend))
-            parseLiteral(strstart, strend);
+            parseLiteral(strstart, strend, currNode, kTokenNullLiteral);
         else if (s == "*")
             currNode->addChild(new ASTNode(kTokenOpMultiply));
         else if (s == "+")
@@ -931,7 +936,7 @@ void parseParam(CurrPtr& curr, EndPtr end) {
 		return;
 
 	if (peekIsLiteral(curr, end)) {
-		parseLiteral(curr, end);
+		parseLiteral(curr, end, currNode, kTokenNullLiteral);
 		return;
 	}
 
@@ -1033,7 +1038,8 @@ int literalLength(CurrPtr& curr, EndPtr end) {
 }
 
 // parse a literal and add it to the current node
-void parseLiteral(CurrPtr& curr, EndPtr end) {
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode* currNode, TokenId conversionType)
+{
 	char buff[256];
 	char const* tokenStr;
 	uint32_t length;
@@ -1053,7 +1059,10 @@ void parseLiteral(CurrPtr& curr, EndPtr end) {
 	else if (numeric) {
 		float floatVal;
 		curr = tsGetFloat(curr, end, &floatVal);
-		currNode->addChild(new ASTNode(kTokenFloatLiteral, floatVal));
+		if (conversionType == kTokenIntLiteral)
+			currNode->addChild(new ASTNode(kTokenIntLiteral, (int)floatVal));
+		else
+			currNode->addChild(new ASTNode(kTokenFloatLiteral, floatVal));
 	}
 	else if (rangedRandom) {
 		float floatVal;

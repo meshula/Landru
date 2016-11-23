@@ -39,30 +39,30 @@ EXTERNC void landruAssembleProgramToRuntime(void* rootNode, void* runtime, std::
 namespace Landru {
     class CompilationContext;
 	class Exemplar;
-    
+
 	class Assembler : public AssemblerBase {
 		std::map<std::string, int>	stateAddrMap;
 		std::map<std::string, int>	stateOrdinalMap;
 		int maxStateOrd;
-		
+
 		std::map<std::string, int>	stringOrdinalMap;
 		int maxStringOrd;
-		
+
 		std::vector<unsigned int>	program;
-		
+
         std::string machineName;
-        
+
 		// key is name, value is type
 		std::map<std::string, std::string>	varType;
 		std::map<std::string, int>			varIndex;
 		int maxVarIndex;
-        
+
 		std::map<std::string, std::string>	sharedVarType;
 		std::map<std::string, int>			sharedVarIndex;
 		int maxSharedVarIndex;
-        
+
         std::vector<int> localVariableState;
-        
+
         struct LocalVariable {
             LocalVariable() {}
             LocalVariable(const LocalVariable& rhs) : name(rhs.name), type(rhs.type) {}
@@ -70,7 +70,7 @@ namespace Landru {
             std::string name;
             std::string type;
         };
-        
+
         std::vector<LocalVariable> localVariables;
         std::vector<int> clauseStack;
 
@@ -101,15 +101,16 @@ namespace Landru {
 
 	public:
         std::vector<std::shared_ptr<Exemplar>> exemplars;
-        
+
 		Assembler(CompilationContext* context);
 		virtual ~Assembler();
-        
+
         virtual void startAssembling() override;
         virtual void finalizeAssembling() override;
 
         virtual void callFunction(const char* fnName) override;
         virtual void storeToVar(const char* varName) override;
+    	virtual void initializeSharedVarIfNecessary(const char * varName) override;
 
         virtual void pushConstant(int i) override;
         virtual void pushFloatConstant(float v) override;
@@ -125,11 +126,11 @@ namespace Landru {
         virtual void paramsEnd() override;
         virtual void beginForEach(const char* name, const char* type) override;
         virtual void endForEach() override;
-        
+
         virtual void beginOn() override;
         virtual void beginOnStatements() override;
         virtual void endOnStatements() override;
-        
+
         virtual void beginConditionalClause() override;
         virtual void beginContraConditionalClause() override;
         virtual void endConditionalClause() override;
@@ -138,7 +139,7 @@ namespace Landru {
         virtual void beginMachine(const char* name) override;
         virtual void endMachine() override;
         virtual void launchMachine() override;
-        
+
 		virtual void gotoState(const char* stateName) override;
 		virtual void ifEq() override;
 		virtual void ifLte0() override;
@@ -147,7 +148,7 @@ namespace Landru {
 		virtual void ifGt0() override;
 		virtual void ifEq0() override;
 		virtual void ifNotEq0() override;
-        
+
         virtual void opAdd() override;
         virtual void opSubtract() override;
         virtual void opMultiply() override;
@@ -156,27 +157,27 @@ namespace Landru {
         virtual void opModulus() override;
         virtual void opGreaterThan() override;
         virtual void opLessThan() override;
-        
+
 		virtual void beginState(const char* name) override;
         virtual void endState() override;
 		virtual void addSharedVariable(const char* name, const char* type) override;
         virtual void addInstanceVariable(const char* name, const char* type) override;
-		
+
         virtual void disassemble(const std::string& machineName, FILE* f) override;
 
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson> b) override;
 
         virtual void addRequire(const char* name, const char* module) override;
-        
+
         virtual void beginLocalVariableScope() override;
         virtual void addLocalVariable(const char* name, const char* type) override;
         virtual void endLocalVariableScope() override;
-        
+
         virtual void dotChain() override;
 	};
-	
-	
-	
+
+
+
 } // Landru
 
 

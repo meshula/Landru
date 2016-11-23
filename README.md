@@ -129,7 +129,76 @@ machine pingpong:
   state main: goto ping ;;
 ```
 
-Now, the *pingpong machine* will change state every half a second. Notice that
+This *pingpong machine* will change state every half a second. Notice that
 the *on* statement takes the form of *on condition* followed by the things to do
 enclosed in **Forth**'s typical colon semicolon scoping syntax.
+
+variables
+---------
+
+Variables have a hierarchy of scopes.
+
+Local variables are declared within a scope, and don't persist beyond it.
+
+```
+machine localVar:
+  state main:
+    float a = 3
+    io.print("a is ", a);;
+```
+
+The variable *a* won't be avalable outside of the state, and will be initialized
+to 3 every time the state is initialized.
+
+```
+machine instanceVar:
+  declare: float b = 3;
+  state main:
+    io.print("b is ", b);;
+```
+
+When a machine of type *instanceVar* is launched, it will have its own copy of *b*,
+initialized to 3. If a state modifies b, the new value is seen by any other states
+within that instatiated machine, but not by other machines of the same time.
+
+```
+machine sharedInstanceVar:
+  declare: shared float c = 3;
+  state main:
+    io.print("c is ", c) ;;
+```
+
+When the first machine of type *sharedInstanceVar* is instantiated, *c* will be
+have the value of 3. If *c* is modified, all other instances of *sharedInstanceVar*
+will see that new value. When new instances are created, they will share the
+already existing *c*. If all copies of *sharedInstanceVar* exit, *c* will also
+disappear, meaning the next *sharedINstanceVar* object will reinitialize *c* with
+the value 3.
+
+```
+require("test")
+machine requireVar:
+  state main:
+    io.print("test.d is ", d) ;;
+```
+
+If the module test is known to have a value *d* in it, a machine can access it
+using dotted scope syntax.
+
+declare:
+  float e = 3 ;
+
+machine globalVar:
+  state main:
+    io.print("global e is ", e) ;;
+```
+
+Variables declared in the global scope persist until all launched machines have
+exited and the script stops running.
+
+Scoping rules are that the most local scope has precedence. So a local variable
+is preferred to machine variable (shared or instance), is preferred to a required
+module's variable or a global variable. If for some reason namespacing caused a
+global variable to have the same name as a module's variable, the module
+variable hides the global variable.
 

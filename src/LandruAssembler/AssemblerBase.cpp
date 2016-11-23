@@ -32,7 +32,7 @@ namespace Landru {
     }
 
     bool AssemblerBase::isLocalVar(const char* name) const {
-        for (auto scope : locals)
+        for (auto scope : scopedVariables)
             for (auto var : scope)
                 if (!strcmp(name, var.first.c_str()))
                     return true;
@@ -176,6 +176,12 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             storeToVar(root->str2.c_str());
             break;
 
+		case kTokenInitialAssignment:
+			ASSEMBLER_TRACE(kTokenInitialAssignment);
+			assembleStatements(root); //function(new)
+			initializeSharedVarIfNecessary(root->str2.c_str());
+			break;
+
         case kTokenGoto:
             ASSEMBLER_TRACE(kTokenGoto);
             gotoState(root->str2.c_str());
@@ -188,12 +194,12 @@ void AssemblerBase::assembleNode(ASTNode* root) {
 
             const char* type = root->str1.c_str(); // type
             const char* name = root->str2.c_str(); // name
-            locals.push_back(vector<pair<string, string>>());
-            locals.back().push_back(pair<string,string>(name, type));
+            scopedVariables.push_back(vector<pair<string, string>>());
+            scopedVariables.back().push_back(pair<string,string>(name, type));
             beginForEach(name, type);
             assembleStatements(*j); // statements
             endForEach();
-            locals.pop_back();
+            scopedVariables.pop_back();
             break;
         }
 
@@ -226,35 +232,63 @@ void AssemblerBase::assembleNode(ASTNode* root) {
 void AssemblerBase::assembleStatements(ASTNode* root) {
     beginLocalVariableScope();
 
-    locals.push_back(vector<pair<string, string>>());
+    scopedVariables.push_back(vector<pair<string, string>>());
 
+	/*
+	this loop should be
+
+	for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
+		assembleNode(*i);
+
+	and assemble node should have all the smarts for variable handling. 
+	&&&
+	*/
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenLocalVariable) {
-            for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
-                if (!(*j)->str1.length()) // unnamed variable? how did that happen??
-                    continue;
+		if ((*i)->token == kTokenLocalVariable) {
+			for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
+				if (!(*j)->str1.length()) // unnamed variable? how did that happen??
+					continue;
 
-                const char* type = (*j)->str1.c_str(); // type
-                const char* name = (*j)->str2.c_str(); // name
-                addLocalVariable(name, type);
-                locals.back().push_back(pair<string,string>(name, type));
+				const char* type = (*j)->str1.c_str(); // type
+				const char* name = (*j)->str2.c_str(); // name
+				addLocalVariable(name, type);
+				scopedVariables.back().push_back(pair<string, string>(name, type));
 
-                if ((*j)->children.size()) {
-                    ASTConstIter k = (*j)->children.begin();
-                    if ((*k)->token == kTokenEq) {
-                        // An assignment is part of the local variable declaration
-                        assembleNode(*k);
-                        storeToVar(name);
-                    }
-                }
-            }
-        }
-    }
+				if ((*j)->children.size()) {
+					ASTConstIter k = (*j)->children.begin();
+					if ((*k)->token == kTokenEq) {
+						// An assignment is part of the local variable declaration
+						assembleNode(*k);
+						storeToVar(name);
+					}
+				}
+			}
+		}
+		else if ((*i)->token == kTokenSharedVariable) {
+			for (ASTConstIter j = (*i)->children.begin(); j != (*i)->children.end(); ++j) {
+				if (!(*j)->str1.length()) // unnamed variable? how did that happen??
+					continue;
 
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
-        assembleNode(*i);
+				const char* type = (*j)->str1.c_str(); // type
+				const char* name = (*j)->str2.c_str(); // name
+				addSharedVariable(name, type);
+				scopedVariables.back().push_back(pair<string, string>(name, type));
 
-    locals.pop_back();
+				if ((*j)->children.size()) {
+					ASTConstIter k = (*j)->children.begin();
+					if ((*k)->token == kTokenEq) {
+						// An assignment is part of the local variable declaration
+						assembleNode(*k);
+						initializeSharedVarIfNecessary(name);
+					}
+				}
+			}
+		}
+		else
+			assembleNode(*i);
+	}
+
+    scopedVariables.pop_back();
 
     endLocalVariableScope();
 }
@@ -302,7 +336,7 @@ void AssemblerBase::assembleDeclarations(ASTNode* root) {
 void AssemblerBase::assembleMachine(ASTNode* root) {
     beginMachine(root->str2.c_str());
 
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) 
+    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
 		if ((*i)->token == kTokenDeclare) {
 			assembleDeclarations(*i);
 		}

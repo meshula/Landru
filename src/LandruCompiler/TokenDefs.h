@@ -38,6 +38,7 @@ TOKEN_DECL(OpenBracket,     "["         )
 // AST tokens
 TOKEN_DECL(Program,			"program"		  )
 TOKEN_DECL(Assignment,		"assignment"	  )
+TOKEN_DECL(InitialAssignment, "initialAssignment" )
 TOKEN_DECL(Function,        "function"		  )
 TOKEN_DECL(DotChain,        "dotChain"        ) // example dot chain: foo().bar()
 TOKEN_DECL(GlobalVariable,  "globalVariable"  )
@@ -57,12 +58,12 @@ TOKEN_DECL(OpGreaterThan,   "opGreaterThan" )
 TOKEN_DECL(OpLessThan,      "opLessThan"    )
 
 // Literals
-TOKEN_DECL(FloatLiteral,    "floatLiteral"	)
-TOKEN_DECL(IntLiteral,      "intLiteral"    )
+TOKEN_DECL(FloatLiteral,    "float"	)
+TOKEN_DECL(IntLiteral,      "int"    )
 TOKEN_DECL(RangedLiteral,	"rangedLiteral"	)
 TOKEN_DECL(SharedVariable,	"sharedVariable")
-TOKEN_DECL(StringLiteral,	"stringLiteral"	)
-TOKEN_DECL(NullLiteral,     "nullLiteral"   )
+TOKEN_DECL(StringLiteral,	"string"	)
+TOKEN_DECL(NullLiteral,     "null"   )
 
 // Data tokens
 TOKEN_DECL(StaticData,        "staticData"        )
