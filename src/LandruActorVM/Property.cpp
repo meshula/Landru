@@ -28,7 +28,7 @@ namespace Landru {
             if (!data || td->type() != data->type())
                 return false;
         }
-        *data = *td;
+        data = td;
 		++assignCount;
         return true;
     }

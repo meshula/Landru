@@ -20,7 +20,7 @@ namespace Landru {
     namespace Std {
         
         //-------------
-        // Real Libary \__________________________________________
+        // Time Libary \__________________________________________
         void TimeLib::registerLib(Library& l) {
             auto u = unique_ptr<Library::Vtable>(new Library::Vtable("time"));
             u->registerFn("2.0", "after", "ff", "f", after);
