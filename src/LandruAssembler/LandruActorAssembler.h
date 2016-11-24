@@ -13,6 +13,7 @@
 #ifdef __cplusplus
 
 #include "LandruAssembler/AssemblerBase.h"
+#include "LandruActorVM/Property.h"
 
 namespace Lab {
     class Bson;
@@ -32,8 +33,9 @@ namespace Landru {
 
         Library& library() const;
 
-        const std::map<std::string, std::shared_ptr<Lab::Bson>>& assembledGlobalVariables() const;
+        const std::map<std::string, std::shared_ptr<Lab::Bson>>& assembledGlobalBsonVariables() const;
         const std::map<std::string, std::shared_ptr<MachineDefinition>>& assembledMachineDefinitions() const;
+		const std::map<std::string, std::shared_ptr<Landru::Property>>& ActorAssembler::assembledGlobalVariables() const;
 
         virtual void startAssembling() override {}
         virtual void finalizeAssembling() override {}
@@ -44,7 +46,8 @@ namespace Landru {
 
         virtual void pushConstant(int) override;
         virtual void pushFloatConstant(float) override;
-        virtual void pushGlobalVar(const char* varName) override;
+		virtual void pushGlobalVar(const char* varName) override;
+		virtual void pushGlobalBsonVar(const char* varName) override;
         virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
         virtual void pushRangedRandom(float r1, float r2) override;
@@ -97,6 +100,9 @@ namespace Landru {
         // requires
         virtual void addRequire(const char* name, const char* module) override;
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) override;
+		virtual void addGlobalString(const char* name, const char* value) override;
+		virtual void addGlobalInt(const char* name, int value) override;
+		virtual void addGlobalFloat(const char* name, float value) override;
 
         // machines
         virtual void beginMachine(const char* name) override;

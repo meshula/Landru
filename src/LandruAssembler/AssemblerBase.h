@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#include "LandruActorVM/Property.h"
+
 namespace Lab {
     class Bson;
 }
@@ -53,7 +55,8 @@ namespace Landru {
 
         virtual void pushConstant(int) = 0;
         virtual void pushFloatConstant(float) = 0;
-        virtual void pushGlobalVar(const char* varName) = 0;
+		virtual void pushGlobalVar(const char* varName) = 0;
+		virtual void pushGlobalBsonVar(const char* varName) = 0;
         virtual void pushInstanceVar(const char* varName) = 0;
         virtual void pushLocalVar(const char* varName) = 0;
         virtual void pushRangedRandom(float r1, float r2) = 0;
@@ -102,9 +105,12 @@ namespace Landru {
         virtual void addLocalVariable(const char* name, const char* type) = 0;
         virtual void endLocalVariableScope() = 0;
 
-        // requires
+        // requires and globals
         virtual void addRequire(const char* name, const char* module) = 0;
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) = 0;
+		virtual void addGlobalString(const char* name, const char* value) = 0;
+		virtual void addGlobalInt(const char* name, int value) = 0;
+		virtual void addGlobalFloat(const char* name, float value) = 0;
 
         // machines
         virtual void beginMachine(const char* name) = 0;
@@ -135,7 +141,9 @@ namespace Landru {
         std::map<std::string, std::string> requires;
         std::set<std::string> selfVarNames;
         std::map<std::string, std::string>	sharedVars;
-        std::map<std::string, std::shared_ptr<Lab::Bson>> globals;
+        std::map<std::string, std::shared_ptr<Lab::Bson>> globalBsons;
+		std::map<std::string, std::shared_ptr<Landru::Property>> globals;
+
         std::vector<std::vector<std::pair<std::string, std::string>>> scopedVariables; // stack of local variable scopes
 	};
 

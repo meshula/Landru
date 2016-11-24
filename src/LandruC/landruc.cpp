@@ -84,8 +84,9 @@ int main(int argc, char** argv)
                 vmContext.breakPoint = breakPoint;
                 Landru::Std::populateLibrary(*vmContext.libs.get());
                 //Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());
-                //vmContext.bsonGlobals = laa.assembledGlobalVariables(); @TODO need to wrap Bson with WiredData
+                //vmContext.bsonGlobals = laa.assembledGlobalBsonVariables();
                 vmContext.machineDefinitions = laa.assembledMachineDefinitions();
+				vmContext.globals = laa.assembledGlobalVariables();
                 vmContext.instantiateLibs();
                 vmContext.launchQueue.push_back(Landru::VMContext::LaunchRecord("main", Landru::Fiber::Stack()));
                 do {

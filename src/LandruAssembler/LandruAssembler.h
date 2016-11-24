@@ -115,7 +115,8 @@ namespace Landru {
         virtual void pushConstant(int i) override;
         virtual void pushFloatConstant(float v) override;
         virtual void pushGlobalVar(const char* varName) override;
-        virtual void pushInstanceVar(const char* varName) override;
+		virtual void pushGlobalBsonVar(const char* varName) override;
+		virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
         virtual void pushRangedRandom(float r1, float r2) override;
         virtual void pushRequire(const char* name) override;
@@ -166,6 +167,10 @@ namespace Landru {
         virtual void disassemble(const std::string& machineName, FILE* f) override;
 
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson> b) override;
+		virtual void addGlobalString(const char* name, const char* value) override;
+		virtual void addGlobalInt(const char* name, int value) override;
+		virtual void addGlobalFloat(const char* name, float value) override;
+
 
         virtual void addRequire(const char* name, const char* module) override;
 

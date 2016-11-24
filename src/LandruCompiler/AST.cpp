@@ -333,9 +333,8 @@ namespace Landru
 			break;
 		}
 
-		for (ASTConstIter i = children.begin(); i != children.end(); ++i) {
-			(*i)->dump(tabs+1);
-		}
+		for (auto i : children)
+			i->dump(tabs+1);
 	}
     
     std::string ASTNode::toJson() const

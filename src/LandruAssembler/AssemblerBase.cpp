@@ -5,6 +5,7 @@
 #include "AssemblerBase.h"
 #include "LandruCompiler/AST.h"
 #include "LandruCompiler/lcRaiseError.h"
+#include "LandruCompiler/Parser.h"
 #include "LabJson/LabBson.h"
 #include "LabText/itoa.h"
 #include "LabText/TextScanner.hpp"
@@ -161,9 +162,12 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             else if (requires.find(name) != requires.end()) {
                 pushRequire(name);
             }
-            else if (globals.find(name) != globals.end()) {
-                pushGlobalVar(name);
+            else if (globalBsons.find(name) != globalBsons.end()) {
+                pushGlobalBsonVar(name);
             }
+			else if (globals.find(name) != globals.end()) {
+				pushGlobalVar(name);
+			}
             else {
                 AB_RAISE("Unknown variable named " << root->str2);
             }
@@ -314,17 +318,25 @@ void AssemblerBase::assembleState(ASTNode* root) {
     endState();
 }
 
-void AssemblerBase::assembleDeclarations(ASTNode* root) {
-	for (auto i : root->children) {
-		if (i->token == kTokenSharedVariable) {
-            addSharedVariable(i->str2.c_str(), i->str1.c_str());
-            sharedVars[i->str2] = i->str1.c_str();
-        }
-        else {
-            addInstanceVariable(i->str2.c_str(), i->str1.c_str());
-            selfVarNames.insert(i->str2);
-        }
-    }
+void AssemblerBase::assembleDeclarations(ASTNode* root) 
+{
+	{   // scope all machine-scoped declarations
+		ASTNode declarations(kTokenDeclare);
+
+		// gather all global declarations
+		for (auto i : root->children)
+			if (i->token == kTokenDeclare) {
+				for (auto j : i->children)
+					if (j->token == kTokenSharedVariable) {
+						addSharedVariable(j->str2.c_str(), j->str1.c_str());
+						sharedVars[j->str2] = j->str1.c_str();
+					}
+					else {
+						addInstanceVariable(j->str2.c_str(), j->str1.c_str());
+						selfVarNames.insert(j->str2);
+					}
+				}
+			}
 
 	beginState("__auto__");
 	for (auto i : root->children) {
@@ -333,36 +345,6 @@ void AssemblerBase::assembleDeclarations(ASTNode* root) {
 	endState();
 }
 
-void AssemblerBase::assembleMachine(ASTNode* root) {
-    beginMachine(root->str2.c_str());
-
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
-		if ((*i)->token == kTokenDeclare) {
-			assembleDeclarations(*i);
-		}
-
-    // compile main state first, then all other states
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenDeclare)
-            continue;
-
-        if ((*i)->str2 != "main")
-            continue;
-
-        assembleState(*i);
-        break;
-    }
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenDeclare)
-            continue;
-
-        if ((*i)->str2 == "main")
-            continue;
-
-        assembleState(*i);
-    }
-    endMachine();
-}
 
     class BsonCompiler {
     public:
@@ -482,26 +464,99 @@ void AssemblerBase::assembleMachine(ASTNode* root) {
         }
 
     };
+	
 
-void AssemblerBase::assemble(ASTNode* root) {
+
+	void AssemblerBase::assembleMachine(ASTNode* root)
+	{
+		beginMachine(root->str2.c_str());
+
+		assembleDeclarations(root);
+
+		// compile main state first, then all other states
+		for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
+			if ((*i)->token == kTokenDeclare)
+				continue;
+
+			if ((*i)->str2 != "main")
+				continue;
+
+			assembleState(*i);
+			break;
+		}
+		for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
+			if ((*i)->token == kTokenDeclare)
+				continue;
+
+			if ((*i)->str2 == "main")
+				continue;
+
+			assembleState(*i);
+		}
+		endMachine();
+	}
+
+void AssemblerBase::assemble(ASTNode* root) 
+{
     //landruPrintRawAST(rootNode);
     //landruPrintAST(root);
 
-    for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
-        if ((*i)->token == kTokenGlobalVariable) {
-            ASTConstIter kind = (*i)->children.begin();
-            if ((*kind)->token == kTokenRequire) {
-                requires[(*i)->str2.c_str()] = (*kind)->str2.c_str();
-                addRequire((*i)->str2.c_str(), (*kind)->str2.c_str());
-            }
-            else {
-                BsonCompiler bc;
-                addGlobalBson((*i)->str2.c_str(), bc.compileBson(*kind));
-            }
-        }
-        else if ((*i)->token == kTokenMachine) {
+	{   // scope all machine-scoped declarations
+		std::vector<ASTNode*> declarations;
+
+		for (auto i : root->children) {
+			if (i->token == kTokenGlobalVariable) {
+				if (i->children.size()) {
+					ASTConstIter kind = i->children.begin();
+					if ((*kind)->token == kTokenRequire) {
+						requires[i->str2.c_str()] = (*kind)->str2.c_str();
+						addRequire(i->str2.c_str(), (*kind)->str2.c_str());
+					}
+					else {
+						BsonCompiler bc;
+						addGlobalBson(i->str2.c_str(), bc.compileBson(*kind));
+					}
+				}
+			}
+			else if (i->token == kTokenDeclare) {
+				// gather all global declarations
+				for (auto j : i->children)
+					if (j->token == kTokenLocalVariable)
+						for (auto k : j->children)
+							declarations.push_back(k);
+			}
+		}
+
+		if (declarations.size() > 0) {
+			for (auto i : declarations) {
+				if (i->token == kTokenAssignment) {
+					string name = i->str2;
+					if (i->children.size()) {
+						auto j = *i->children.begin();
+						if (j->token == kTokenStringLiteral) {
+							string val = j->str2;
+							// create string property named(name);
+							addGlobalString(name.c_str(), val.c_str());
+						}
+						else if (j->token == kTokenIntLiteral) {
+							int val = j->intVal;
+							addGlobalInt(name.c_str(), val);
+						}
+						else if (j->token == kTokenFloatLiteral) {
+							float val = j->floatVal1;
+							addGlobalFloat(name.c_str(), val);
+						}
+						// @todo ranges, what else?
+					}
+				}
+			}
+		}
+	}
+
+	for (auto i : root->children) {
+		if (i->token == kTokenMachine) {
             startAssembling();  // reset the assembler so that it is ready to compile something new
-            assembleNode(*i);
+            assembleNode(i);
             finalizeAssembling(); // the assembler needs to record its results in finalize
         }
     }

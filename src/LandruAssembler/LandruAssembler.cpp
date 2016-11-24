@@ -331,12 +331,17 @@ namespace Landru {
         }
     }
 
-    void Assembler::pushGlobalVar(const char* varName)
+    void Assembler::pushGlobalBsonVar(const char* varName)
     {
         // global variables will be fetched at run time by name from main
         pushConstant(stringIndex(varName));
         getGlobalVar();
     }
+
+	void Assembler::pushGlobalVar(const char * varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
 
     void Assembler::pushConstant(int i)
     {
@@ -807,7 +812,18 @@ namespace Landru {
 
 
     void Assembler::addGlobalBson(const char* name, shared_ptr<Lab::Bson> b) {
+		RaiseError(0, "global bson not implemented ", name);
     }
+
+	void Assembler::addGlobalString(const char* name, const char* value) {
+		RaiseError(0, "global string not implemented ", name);
+	}
+	void Assembler::addGlobalInt(const char* name, int value) {
+		RaiseError(0, "global int not implemented ", name);
+	}
+	void Assembler::addGlobalFloat(const char* name, float value) {
+		RaiseError(0, "global float not implemented ", name);
+	}
 
 
 } // Landru

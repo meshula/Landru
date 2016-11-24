@@ -23,7 +23,7 @@ void parseLandruBlock(CurrPtr&, EndPtr);
 void parseLandruVarDeclaration(CurrPtr&, EndPtr);
 void parseElse(CurrPtr& curr, EndPtr end);
 void parseFor(CurrPtr& curr, EndPtr end);
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end);
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseGoto(CurrPtr& curr, EndPtr end);
 void parseStatement(CurrPtr& curr, EndPtr end);
 void parseParamList(CurrPtr& curr, EndPtr end);
@@ -31,13 +31,13 @@ void parseParam(CurrPtr& curr, EndPtr end);
 void parseStatements(CurrPtr&, EndPtr);
 void parseConditional(CurrPtr& curr, EndPtr end);
 void parseState(CurrPtr& curr, EndPtr end);
-void parseDeclare(CurrPtr& curr, EndPtr end);
+void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseLocals(CurrPtr& curr, EndPtr end);
-void parseMachine(CurrPtr& curr, EndPtr end);
+void parseMachine(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseOn(CurrPtr& curr, EndPtr end);
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId);
 bool peekIsLiteral(CurrPtr& curr, EndPtr end);
-void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode * currNode, TokenId conversionType);
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode *& currNode, TokenId conversionType);
 
 
 namespace Landru {
@@ -157,8 +157,8 @@ namespace Landru {
 
         const char* next = tsGetTokenAlphaNumeric(curr, end, &tokenStr, &length);
 
-        if (next == end)
-            return kTokenUnknown;
+//&&& why was this check here?        if (next == end)
+//            return kTokenUnknown;
 
         curr = next;
 
@@ -359,7 +359,7 @@ void parseLocals(CurrPtr& curr, EndPtr end) {
 	 ;
  */
 
-void parseDeclare(CurrPtr& curr, EndPtr end)
+void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	if (getToken(curr, end) != kTokenDeclare)
 	{
@@ -1038,7 +1038,7 @@ int literalLength(CurrPtr& curr, EndPtr end) {
 }
 
 // parse a literal and add it to the current node
-void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode* currNode, TokenId conversionType)
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode*& currNode, TokenId conversionType)
 {
 	char buff[256];
 	char const* tokenStr;
@@ -1181,14 +1181,22 @@ public:
  globalVarDecls
  declarator EQUAL require LPAREN string RPAREN
  -> ^(TokenGlobalVariable declarator string)
+
+or declare: vars ;
  */
 
 // assign-+
 //  |     |
 //  name  library
 
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
-    char name[256];
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
+	bool declareBlock = peekToken(curr, end) == kTokenDeclare;
+	if (declareBlock) {
+		parseDeclare(curr, end, currNode);
+		return;
+	}
+	
+	char name[256];
     char require[256];
     getDeclarator(curr, end, name);
 
@@ -1255,7 +1263,7 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
 void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 	TokenId token = peekToken(curr, end);
 	switch (token) {
-		case kTokenDeclare:  parseDeclare(curr, end);                    break;
+		case kTokenDeclare:  parseDeclare(curr, end, currNode);          break;
         case kTokenLocal:    parseLocals(curr, end);                     break;
 		case kTokenState:    parseState(curr, end);                      break;
 		default:             lcRaiseError("Only declare, local, or state valid here. Found", curr, 32);    break;
@@ -1271,7 +1279,7 @@ void parseLandruBlock(CurrPtr& curr, EndPtr end) {
  -> ^(MACHINE declarator landruBlock+) ;
  */
 
-void parseMachine(CurrPtr& curr, EndPtr end) {
+void parseMachine(CurrPtr& curr, EndPtr end, ASTNode* & currNode) {
 	TokenId token = getToken(curr, end);
 	if (token != kTokenMachine) {
 		lcRaiseError("Expected 'machine'", curr, 32);
@@ -1327,11 +1335,11 @@ void landruParseProgram(void* rootNode,
 		TokenId token = peekToken(curr, end);
 		switch (token) {
 			case kTokenMachine:
-				parseMachine(curr, end);
+				parseMachine(curr, end, currNode);
 				break;
 
 			default:
-                parseGlobalVarDecls(curr, end, jsonVars);
+                parseGlobalVarDecls(curr, end, currNode, jsonVars);
 				break;
 		}
 	}
