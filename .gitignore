@@ -18,3 +18,15 @@
 
 build/
 xcuserdata/
+
+# Visual Studio stuff
+bin/
+obj/
+landruc.vcxproj
+landruc.vcxproj.*
+Landru.sln
+Landru.vcxproj
+Landru.vcxproj.*
+Landru.VC.db
+Landru.VC.VC.opendb
+
