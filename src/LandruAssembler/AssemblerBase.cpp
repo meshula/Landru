@@ -2,6 +2,10 @@
 // Copyright (c) 2011 Nick Porcino, All rights reserved.
 // License is MIT: http://opensource.org/licenses/MIT
 
+
+//#define ASSEMBLER_TRACE(a) printf("Assembler: %s\n", #a)
+#define ASSEMBLER_TRACE(a)
+
 #include "AssemblerBase.h"
 #include "LandruCompiler/AST.h"
 #include "LandruCompiler/lcRaiseError.h"
@@ -9,6 +13,7 @@
 #include "LabJson/LabBson.h"
 #include "LabText/itoa.h"
 #include "LabText/TextScanner.hpp"
+#include "BsonCompiler.h"
 
 #include <string.h>
 #include <map>
@@ -16,16 +21,9 @@
 using namespace std;
 using Lab::Bson;
 
-#ifdef _MSC_VER
-# define itoa _itoa
-#endif
-
 /*
  The Assembler knows the actual details of machine code, and string and variable indexing
  */
-
-//#define ASSEMBLER_TRACE(a) printf("Assembler: %s\n", #a)
-#define ASSEMBLER_TRACE(a)
 
 namespace Landru {
 
@@ -320,152 +318,28 @@ void AssemblerBase::assembleState(ASTNode* root) {
 
 void AssemblerBase::assembleDeclarations(ASTNode* root) 
 {
-	{   // scope all machine-scoped declarations
-		ASTNode declarations(kTokenDeclare);
-
-		// gather all global declarations
-		for (auto i : root->children)
-			if (i->token == kTokenDeclare) {
-				for (auto j : i->children)
-					if (j->token == kTokenSharedVariable) {
-						addSharedVariable(j->str2.c_str(), j->str1.c_str());
-						sharedVars[j->str2] = j->str1.c_str();
-					}
-					else {
-						addInstanceVariable(j->str2.c_str(), j->str1.c_str());
-						selfVarNames.insert(j->str2);
-					}
-				}
-			}
-
-	beginState("__auto__");
+	// gather all global declarations
 	for (auto i : root->children) {
-		assembleStatements(i);
+		if (i->token == kTokenDeclare) {
+			for (auto j : i->children)
+				if (j->token == kTokenSharedVariable) {
+					addSharedVariable(j->str2.c_str(), j->str1.c_str());
+					sharedVars[j->str2] = j->str1.c_str();
+				}
+				else {
+					addInstanceVariable(j->str2.c_str(), j->str1.c_str());
+					selfVarNames.insert(j->str2);
+				}
+		}
+
+		beginState("__auto__");
+		for (auto j : i->children) {
+			assembleStatements(j);
+		}
+		endState();
+		break;			/// @TODO gather into a single list
 	}
-	endState();
 }
-
-
-    class BsonCompiler {
-    public:
-        // temp for bson parsing
-        std::vector<int> bsonArrayNesting;
-        int bsonCurrArrayIndex;
-
-        BsonCompiler() : bsonCurrArrayIndex(0) {}
-
-        shared_ptr<Bson> compileBson(Landru::ASTNode* rootNode) {
-            bsonArrayNesting.clear();
-            bsonCurrArrayIndex = 0;
-            shared_ptr<Bson> b = make_shared<Bson>();
-            compileBsonData(rootNode, b->b);
-            bson_finish(b->b);
-            bson_print(b->b);
-            return b;
-        }
-
-        void compileBsonData(Landru::ASTNode* rootNode, bson* b)
-        {
-            using namespace Landru;
-            for (ASTConstIter i = rootNode->children.begin(); i != rootNode->children.end(); ++i)
-                compileBsonDataElement(*i, b);
-        }
-
-        void compileBsonDataElement(Landru::ASTNode* rootNode, bson* b)
-        {
-            using namespace Landru;
-            switch(rootNode->token) {
-
-                case kTokenDataObject:
-                {
-                    ASSEMBLER_TRACE(kTokenDataObject);
-                    if (bsonArrayNesting.size() > 0) {
-                        char indexStr[16];
-                        itoa(bsonCurrArrayIndex, indexStr, 10);
-                        //printf("----> %s\n", indexStr);
-                        bson_append_start_object(b, indexStr);
-                        compileBsonData(rootNode, b); // recurse
-                        bson_append_finish_object(b);
-                        ++bsonCurrArrayIndex;
-                    }
-                    else
-                        compileBsonData(rootNode, b); // recurse
-                    break;
-                }
-
-                case kTokenDataArray:
-                {
-                    ASSEMBLER_TRACE(kTokenDataArray);
-                    bsonArrayNesting.push_back(bsonCurrArrayIndex);
-                    bsonCurrArrayIndex = 0;
-                    compileBsonData(rootNode, b); // recurse
-                    bsonCurrArrayIndex = bsonArrayNesting.back();
-                    bsonArrayNesting.pop_back();
-                    break;
-                }
-
-                case kTokenDataElement:
-                {
-                    ASSEMBLER_TRACE(kTokenDataElement);
-                    ASTConstIter i = rootNode->children.begin();
-                    if ((*i)->token == kTokenDataIntLiteral) {
-                        int val = atoi((*i)->str2.c_str());
-                        bson_append_int(b, rootNode->str2.c_str(), val);
-                    }
-                    else if ((*i)->token == kTokenDataFloatLiteral)
-                    {
-                        float val = (float) atof(rootNode->str2.c_str());
-                        bson_append_double(b, rootNode->str2.c_str(), val);
-                    }
-                    else if ((*i)->token == kTokenDataNullLiteral) {
-                        bson_append_null(b, rootNode->str2.c_str());
-                    }
-                    else {
-                        bson_append_start_object(b, rootNode->str2.c_str());
-                        compileBsonData(rootNode, b); // recurse
-                        bson_append_finish_object(b);
-                    }
-                    break;
-                }
-
-                case kTokenDataFloatLiteral:
-                {
-                    ASSEMBLER_TRACE(kTokenDataFloatLiteral);
-                    float val = (float) atof(rootNode->str2.c_str());
-                    bson_append_double(b, rootNode->str2.c_str(), val);
-                    break;
-                }
-
-                case kTokenDataIntLiteral:
-                {
-                    ASSEMBLER_TRACE(kTokenDataIntLiteral);
-                    int val = atoi(rootNode->str2.c_str());
-                    bson_append_int(b, rootNode->str2.c_str(), val);
-                    break;
-                }
-
-                case kTokenDataNullLiteral:
-                {
-                    ASSEMBLER_TRACE(kTokenDataNullLiteral);
-                    bson_append_null(b, rootNode->str2.c_str());
-                    break;
-                }
-
-                case kTokenDataStringLiteral:
-                {
-                    ASSEMBLER_TRACE(kTokenDataStringLiteral);
-                    bson_append_string(b, rootNode->str2.c_str(), rootNode->str1.c_str());
-                    break;
-                }
-
-                default:
-                    break;
-            }
-        }
-
-    };
-	
-
 
 	void AssemblerBase::assembleMachine(ASTNode* root)
 	{
