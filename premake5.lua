@@ -55,7 +55,13 @@ project "landruc"
 
     files { "src/LandruC/**.h", "src/LandruC/**.cpp" }
 
-    libdirs { "../LabText/bin/%{cfg.buildcfg}",
-              "../LabJson/bin/%{cfg.buildcfg}" }
+    libdirs { "../LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+              "../LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}" }
 
     links { "Landru", "LabJson", "LabText" }
+
+project "LandruGL"
+    kind "SharedLib"
+    language "C++"
+    includedirs { "extras/LandruGL" }
+    files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
