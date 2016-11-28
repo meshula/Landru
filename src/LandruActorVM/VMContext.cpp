@@ -22,49 +22,97 @@ using namespace std;
 
 namespace Landru {
 
-    class TimeOut {
+    class OnEventEvaluator::Detail
+    {
     public:
+        shared_ptr<Fiber> fiber;
+        vector<Instruction> instructions;
     };
 
-	typedef vector<Instruction> __VectorInstruction;
-    typedef tuple< float, float, shared_ptr<Fiber>, __VectorInstruction, int> TimeoutTuple;
-    enum class TimeOutTupleNames {
-        Time = 0, DeltaTime, Fiber, Instructions, Recurrence
-    };
+    OnEventEvaluator::OnEventEvaluator()
+    : _detail(new Detail())
+    {}
+
+    OnEventEvaluator::OnEventEvaluator(std::shared_ptr<Fiber> f, std::vector<Instruction>& vi)
+    : _detail(new Detail())
+    {
+        _detail->fiber = f;
+        _detail->instructions = vi;
+    }
+
+    OnEventEvaluator::~OnEventEvaluator()
+    {
+        delete _detail;
+    }
+
+
+
+	class TimeoutTuple : public OnEventEvaluator
+	{
+	public:
+		TimeoutTuple(TimeoutTuple && rhs) 
+			: OnEventEvaluator(std::move(rhs))
+			, timeout(rhs.timeout)
+			, delay(rhs.delay)
+			, recurrence(rhs.recurrence)
+		{}
+
+		TimeoutTuple(float timeout, float delay, std::shared_ptr<Fiber> fiberPtr, vector<Instruction> & statements, int recurrence)
+			: OnEventEvaluator(fiberPtr, statements)
+			, timeout(timeout)
+			, delay(delay)
+			, recurrence(recurrence)
+		{}
+
+		TimeoutTuple& operator=(TimeoutTuple && rhs)
+		{
+			_detail = rhs._detail;
+			timeout = rhs.timeout;
+			delay = rhs.delay;
+			recurrence = rhs.recurrence;
+			return *this;
+		}
+
+		float timeout;
+		float delay;
+		int recurrence;
+	};
 
     class CompareTimeout {
     public:
         bool operator()(const TimeoutTuple& t1, const TimeoutTuple& t2) {
-            return get<0>(t2) < get<0>(t1);
+			return t2.timeout < t1.timeout;
         }
     };
-    
-    typedef vector<tuple< shared_ptr<Fiber>, __VectorInstruction >> MessageQueue;
-    
+
+
+
+    typedef vector<OnEventEvaluator> MessageQueue;
+
     class VMContext::Detail {
     public:
         Detail() : now(0) {}
-        
+
         double now;
-        
+
         map<Id, shared_ptr<Fiber>> fibers;
-        
+
         set<Id> pendingMessages;
         map<Id, MessageQueue> messageQueue;
 
         priority_queue<TimeoutTuple, deque<TimeoutTuple>, CompareTimeout> timeoutQueue;
     };
-    
+
     VMContext::VMContext()
     : _detail(new Detail())
     , libs(new Library("std"))
     , activateMeta(false)
     , breakPoint(~0) {
     }
-    
+
     VMContext::~VMContext() {
     }
-    
+
     std::shared_ptr<Wires::TypedData> VMContext::getLibraryInstanceData(const std::string& name) {
         if (libs->name == name) {
             return libs->libraryInstanceData;
@@ -89,10 +137,11 @@ namespace Landru {
             if (requires.find(r.first) == requires.end())
                 requires[r.first] = new Property(*this, r.first, r.second);
     }
-    
-    void VMContext::update(double now) {
+
+    void VMContext::update(double now)
+    {
         _detail->now = now;
-        
+
         // launch all machines that were requested
         while (!launchQueue.empty()) {
             auto rec = launchQueue.front();
@@ -101,7 +150,7 @@ namespace Landru {
             if (m != machineDefinitions.end()) {
                 std::shared_ptr<Landru::Fiber> f = std::make_shared<Landru::Fiber>(m->second, *this);
                 _detail->fibers[f->id()] = f;
-                _detail->messageQueue[f->id()] = vector<tuple< shared_ptr<Fiber>, std::vector<Instruction> >>();   //// @TODO emplace queues only when needed at first access
+                _detail->messageQueue[f->id()] = vector<OnEventEvaluator>();   //// @TODO emplace queues only when needed at first access
                 try {
                     FnContext fn(this, f.get(), nullptr, nullptr);
 					f->gotoState(fn, "__auto__", false);
@@ -118,20 +167,21 @@ namespace Landru {
                 VM_RAISE("machine " << rec.first << " not found to launch");
             }
         }
-        
+
         // check all timeouts and allow them to fire if they've expired
         while (!_detail->timeoutQueue.empty()) {
             auto& testMe = _detail->timeoutQueue.top();
-            if (get<0>(testMe) > now) {
+            if (testMe.timeout > now) {
                 break;
             }
-            auto i = _detail->timeoutQueue.top();
+			TimeoutTuple i = std::move(const_cast<TimeoutTuple&>(_detail->timeoutQueue.top()));
             _detail->timeoutQueue.pop();
-            float t = get<0>(i);
+
+            float t = i.timeout;
             if (t <= now) {
-                shared_ptr<Fiber> fiberPtr = get<2>(i);
+                shared_ptr<Fiber> fiberPtr = i._detail->fiber;
                 Fiber *fiber = fiberPtr.get();
-                auto& statements = get<3>(i);
+                auto& statements = i._detail->instructions;
                 FnContext fn = {this, fiber, nullptr, nullptr};
                 if (activateMeta)
                     for (auto& s : statements) {
@@ -143,23 +193,23 @@ namespace Landru {
                         s.first(fn);
                     }
 
-                int recurrence = get<4>(i);
+                int recurrence = i.recurrence;
                 if (recurrence > 1 || recurrence < 0) {
                     int newRecurrence = recurrence > 1 ? recurrence - 1 : -1;
-                    float delay = get<1>(i);
-                    _detail->timeoutQueue.emplace(make_tuple(t + delay, delay, fiberPtr, statements, newRecurrence));
+                    float delay = i.delay;
+                    _detail->timeoutQueue.emplace(TimeoutTuple(t + delay, delay, fiberPtr, statements, newRecurrence));
                 }
             }
         }
-        
+
         // finally, send all messages that are pending
         for (auto i : _detail->pendingMessages) {
             map<Id, MessageQueue>::iterator qIt = _detail->messageQueue.find(i);
             if (qIt == _detail->messageQueue.end())
                 continue;
             MessageQueue& q = qIt->second;
-            for (auto j : q) {
-                
+            for (auto & j : q) {
+
             }
             q.clear();
         }
@@ -168,7 +218,8 @@ namespace Landru {
 
     void VMContext::onTimeout(float delay, int recurrences,
                               const Landru::Fiber &f,
-                              std::vector<Instruction> instr) {
+                              std::vector<Instruction> instr)
+    {
         if (delay <= TIME_QUANTA) {
             auto messageQueue = _detail->messageQueue.find(f.id());
             if (messageQueue == _detail->messageQueue.end()) {
@@ -181,7 +232,7 @@ namespace Landru {
             }
             auto fiber = fiberIt->second;
             for (int i = 0; i < recurrences; ++i)
-                messageQueue->second.emplace_back(make_tuple(fiber, instr));
+                messageQueue->second.emplace_back(OnEventEvaluator(fiber, instr));
             _detail->pendingMessages.insert(f.id());
         }
         else {
@@ -189,8 +240,8 @@ namespace Landru {
             if (fiberIt == _detail->fibers.end()) {
                 VM_RAISE("Runtime error, unknown machine");
             }
-            _detail->timeoutQueue.emplace(make_tuple((float)_detail->now + delay, delay, fiberIt->second, instr, recurrences));
+            _detail->timeoutQueue.emplace(TimeoutTuple((float)_detail->now + delay, delay, fiberIt->second, instr, recurrences));
         }
     }
-    
-}
+
+} // Landru

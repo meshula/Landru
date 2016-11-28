@@ -18,6 +18,11 @@
 
 build/
 xcuserdata/
+thirdparty/build
+thirdparty/include
+thirdparty/lib
+thirdparty/src
+thirdparty/bin
 
 # Visual Studio stuff
 bin/
@@ -29,3 +34,5 @@ Landru.vcxproj
 Landru.vcxproj.*
 Landru.VC.db
 Landru.VC.VC.opendb
+LandruGL.vcxproj
+LandruGL.vcxproj.*

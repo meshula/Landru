@@ -22,30 +22,57 @@ namespace Landru {
     class MachineDefinition;
     class Fiber;
     class Property;
-    
-    class VMContext {
+    class VMContext;
+
+    class OnEventEvaluator
+    {
+	protected:
+        class Detail;
+        Detail* _detail;
+        friend class VMContext;
+        OnEventEvaluator(std::shared_ptr<Fiber>, std::vector<Instruction>&);
+
+    public:
+        OnEventEvaluator();
+        ~OnEventEvaluator();
+
+        OnEventEvaluator(OnEventEvaluator&& rhs) : _detail(rhs._detail) {}
+		OnEventEvaluator & operator=(OnEventEvaluator & rhs)
+		{
+			_detail = rhs._detail;
+			return *this;
+		}
+
+        void run();
+    };
+
+    class VMContext
+    {
         class Detail;
         std::unique_ptr<Detail> _detail;
-        
+
     public:
         VMContext();
         ~VMContext();
-        
+
         const float TIME_QUANTA = 1.e-4f;
-        
+
         void instantiateLibs();
         void update(double now);
-        
+
+        OnEventEvaluator registerOnEvent(const Fiber& self, std::vector<Instruction> instr);
+
         void onTimeout(float delay, int recurrences, const Fiber& self,
                        std::vector<Instruction> instr);
-        
+
         bool deferredMessagesPending() const;
         bool undeferredMessagesPending() const;
-        
+
         std::shared_ptr<Wires::TypedData> getLibraryInstanceData(const std::string& name);
-        
+
         typedef std::pair<std::string,
                           std::vector<std::shared_ptr<Wires::TypedData>>> LaunchRecord;
+
         std::deque<LaunchRecord> launchQueue;
         std::unique_ptr<Library> libs;
         std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
@@ -57,5 +84,5 @@ namespace Landru {
         bool activateMeta;
         uint32_t breakPoint;
     };
-    
+
 }

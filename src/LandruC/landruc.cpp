@@ -89,6 +89,7 @@ int main(int argc, char** argv)
 				vmContext.globals = laa.assembledGlobalVariables();
                 vmContext.instantiateLibs();
                 vmContext.launchQueue.push_back(Landru::VMContext::LaunchRecord("main", Landru::Fiber::Stack()));
+
                 do {
                     chrono::high_resolution_clock::time_point now = chrono::high_resolution_clock::now();
                     chrono::duration<double> time_span = chrono::duration_cast<chrono::seconds>(now.time_since_epoch());

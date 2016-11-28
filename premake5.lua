@@ -63,5 +63,7 @@ project "landruc"
 project "LandruGL"
     kind "SharedLib"
     language "C++"
-    includedirs { "extras/LandruGL" }
+    includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }
     files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
+    libdirs { "thirdparty/lib" }
+    links { "glfw3" }

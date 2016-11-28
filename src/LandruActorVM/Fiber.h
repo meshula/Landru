@@ -21,12 +21,14 @@
 
 namespace Landru {
 
-    struct InvalidId {
+    struct InvalidId
+    {
         constexpr InvalidId() {}
     };
 
     // Id class inspired by libcaf's node_id
-    class Id : caf::detail::comparable<Id>, caf::detail::comparable<Id, InvalidId> {
+    class Id : caf::detail::comparable<Id>, caf::detail::comparable<Id, InvalidId>
+    {
         uint32_t _pid;
         unsigned char _uuid[16];
 
@@ -49,7 +51,8 @@ namespace Landru {
         int compare(const InvalidId&) const;
     };
 
-    class Fiber {
+    class Fiber
+    {
         Id _id;
 
     public:
@@ -61,8 +64,9 @@ namespace Landru {
         void gotoState(FnContext& run, const char* name, bool raiseIfStateNotFound) {
             auto mainState = machineDefinition->states.find(name);
 			if (mainState == machineDefinition->states.end()) {
-				if (raiseIfStateNotFound)
+				if (raiseIfStateNotFound) {
 					VM_RAISE("main not found on machine");
+                }
 				return;
 			}
 
@@ -71,8 +75,9 @@ namespace Landru {
 
         template <typename T>
         T top() {
-            if (stack.empty() || stack.back().empty())
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back().back();
             if (data->type() != typeid(T))
                 return 0;
@@ -81,18 +86,21 @@ namespace Landru {
         }
 
         std::shared_ptr<Wires::TypedData> topVar() const {
-            if (stack.empty() || stack.back().empty())
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             return stack.back().back();
         }
 
         template <typename T>
         T pop() {
-            if (stack.empty() || stack.back().empty())
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back().back();
-            if (!data)
+            if (!data) {
                 VM_RAISE("nullptr on stack (variable not found?)");
+            }
             if (data->type() == typeid(T)) {
                 Wires::Data<T>* val = reinterpret_cast<Wires::Data<T>*>(data.get());
                 T result = val->value();
@@ -100,16 +108,18 @@ namespace Landru {
                 return result;
             }
             Wires::Data<T>* val = dynamic_cast<Wires::Data<T>*>(data.get());
-            if (!val)
+            if (!val) {
                 VM_RAISE("Wrong type on stack to pop");
+            }
             T result= val->value();
             stack.back().pop_back();
             return result;
         }
 
         std::shared_ptr<Wires::TypedData> popVar() {
-            if (stack.empty() || stack.back().empty())
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData> result = stack.back().back();
             stack.back().pop_back();
             return result;
@@ -117,11 +127,13 @@ namespace Landru {
 
         template <typename T>
         T back(int i) {
-            if (stack.empty())
+            if (stack.empty()) {
                 VM_RAISE("stack underflow");
+            }
             int sz = (int) stack.back().size();
-            if (sz + i < 0)
+            if (sz + i < 0) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back()[sz + i];
             if (data->type() != typeid(T))
                 return T(0);
