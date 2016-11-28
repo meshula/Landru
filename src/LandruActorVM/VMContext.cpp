@@ -42,7 +42,8 @@ namespace Landru {
 
     OnEventEvaluator::~OnEventEvaluator()
     {
-        delete _detail;
+		if (_detail)
+	        delete _detail;
     }
 
 
@@ -55,7 +56,9 @@ namespace Landru {
 			, timeout(rhs.timeout)
 			, delay(rhs.delay)
 			, recurrence(rhs.recurrence)
-		{}
+		{
+			rhs._detail = nullptr;
+		}
 
 		TimeoutTuple(float timeout, float delay, std::shared_ptr<Fiber> fiberPtr, vector<Instruction> & statements, int recurrence)
 			: OnEventEvaluator(fiberPtr, statements)
@@ -70,6 +73,7 @@ namespace Landru {
 			timeout = rhs.timeout;
 			delay = rhs.delay;
 			recurrence = rhs.recurrence;
+			rhs._detail = nullptr;
 			return *this;
 		}
 
