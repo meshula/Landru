@@ -18,11 +18,12 @@ filter "system:linux"
 
 filter "system:windows"
     system "windows"
-    defines { "PLATFORM_WINDOWS", "_CRT_SECURE_NO_WARNINGS" }
+    defines {  "PLATFORM_WINDOWS", "_CRT_SECURE_NO_WARNINGS" }
+    characterset ("MBCS")
 
 filter "system:macosx"
     system "macosx"
-    defines { "PLATFORM_DARWIN" }
+    defines {  "PLATFORM_DARWIN" }
 
 filter {}
 
@@ -51,16 +52,16 @@ project "landruc"
     kind "ConsoleApp"
     language "C++"
 
-    includedirs { "src", "../LabText/src", "../LabJson/src" }
+    includedirs { "include", "src" }
 
-    files { "src/LandruC/**.h", "src/LandruC/**.cpp" }
+    files { "include/Landru/**.h", "src/LandruC/**.h", "src/LandruC/**.cpp" }
 
     libdirs { "../LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
               "../LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}" }
 
     links { "Landru", "LabJson", "LabText" }
 
-project "LandruGL"
+project "landru_gl"
     kind "SharedLib"
     language "C++"
     includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }

@@ -5,6 +5,9 @@
 #include <mutex>
 #include <GLFW/glfw3.h>
 
+#define LANDRUGL_EXPORTS
+#include "api.h"
+
 using namespace std;
 using namespace Landru;
 
@@ -71,7 +74,11 @@ namespace {
 
 } // anon
 
-extern "C" void LandruGL_init(void* vl)
+
+
+extern "C"
+LANDRUGL_API
+void landru_gl_init(void* vl)
 {
     initGL();
 
@@ -89,7 +96,9 @@ extern "C" void LandruGL_init(void* vl)
     });
 }
 
-extern "C" void LandruGL_update(double now)
+extern "C"
+LANDRUGL_API
+void landru_gl_update(double now)
 {
     bool cullWindows = false;
     do {
@@ -120,12 +129,16 @@ extern "C" void LandruGL_update(double now)
     glfwPollEvents();
 }
 
-extern "C" void LandruGL_finish(void * vl)
+extern "C"
+LANDRUGL_API
+void landru_gl_finish(void * vl)
 {
     Landru::Library * lib = reinterpret_cast<Landru::Library*>(vl);
 }
 
-extern "C" void LandruGL_fiberExpiring(Fiber* f)
+extern "C"
+LANDRUGL_API
+void landru_gl_fiberExpiring(Fiber* f)
 {
 //    called when Fibers are destroyed so that pending items like onWindowsClosed can be removed
 }
