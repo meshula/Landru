@@ -119,7 +119,9 @@ namespace Landru {
 		virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
         virtual void pushRangedRandom(float r1, float r2) override;
+#ifdef HAVE_VMCONTEXT_REQUIRES
         virtual void pushRequire(const char* name) override;
+#endif
         virtual void pushSharedVar(const char* varName) override;
         virtual void pushStringConstant(const char* str) override;
 
@@ -173,6 +175,7 @@ namespace Landru {
 
 
         virtual void addRequire(const char* name, const char* module) override;
+		virtual std::vector<std::string> requires() override { return std::vector<std::string>();  }
 
         virtual void beginLocalVariableScope() override;
         virtual void addLocalVariable(const char* name, const char* type) override;

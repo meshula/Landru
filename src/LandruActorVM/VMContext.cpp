@@ -51,7 +51,7 @@ namespace Landru {
 	class TimeoutTuple : public OnEventEvaluator
 	{
 	public:
-		TimeoutTuple(TimeoutTuple && rhs) 
+		TimeoutTuple(TimeoutTuple && rhs)
 			: OnEventEvaluator(std::move(rhs))
 			, timeout(rhs.timeout)
 			, delay(rhs.delay)
@@ -107,9 +107,9 @@ namespace Landru {
         priority_queue<TimeoutTuple, deque<TimeoutTuple>, CompareTimeout> timeoutQueue;
     };
 
-    VMContext::VMContext()
+    VMContext::VMContext(Library* l)
     : _detail(new Detail())
-    , libs(new Library("std"))
+    , libs(l)
     , activateMeta(false)
     , breakPoint(~0) {
     }
@@ -136,10 +136,13 @@ namespace Landru {
         return !_detail->pendingMessages.empty();
     }
 
-    void VMContext::instantiateLibs() {
+    void VMContext::instantiateLibs()
+    {
+#ifdef HAVE_VMCONTEXT_REQUIRES
         for (auto r : requireDefinitions)
             if (requires.find(r.first) == requires.end())
                 requires[r.first] = new Property(*this, r.first, r.second);
+#endif
     }
 
     void VMContext::update(double now)
@@ -147,7 +150,8 @@ namespace Landru {
         _detail->now = now;
 
         // launch all machines that were requested
-        while (!launchQueue.empty()) {
+        while (!launchQueue.empty()) 
+		{
             auto rec = launchQueue.front();
             launchQueue.pop_front();
             auto m = machineDefinitions.find(rec.first);

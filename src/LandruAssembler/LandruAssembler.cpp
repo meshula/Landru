@@ -264,10 +264,12 @@ namespace Landru {
         program.push_back(Instructions::iDotChain); // the instruction just pops the stack
     }
 
+#ifdef HAVE_VMCONTEXT_REQUIRES
     void Assembler::pushRequire(const char* name) {
         int index = requireIndex(name) << 16;
         program.push_back(index | Instructions::iGetRequire);
     }
+#endif
 
     void Assembler::pushStringConstant(const char* str)
     {

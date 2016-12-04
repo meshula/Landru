@@ -17,7 +17,8 @@ namespace Landru {
 
     uint32_t Meta::globalAddr = 0;
         
-    void Meta::exec(FnContext& run) const {
+    void Meta::exec(FnContext& run) const 
+	{
         std::cout << addr << ": " << str << std::endl;
         if (run.vm->breakPoint == addr) {
             std::cout << "Break hit" << std::endl;

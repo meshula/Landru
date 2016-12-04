@@ -10,7 +10,9 @@
 #include "VMContext.h"
 #include <LabText/TextScanner.hpp>
 
-namespace Landru {
+namespace Landru 
+{
+
     std::function<std::shared_ptr<Wires::TypedData>(VMContext& vm)> Library::findFactory(const char* name) {
         std::vector<std::string> nameParts = TextScanner::Split(name, ".");
         if (nameParts.size() == 1) {

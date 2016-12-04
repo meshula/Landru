@@ -48,8 +48,8 @@ namespace Landru {
                     cout << i;
                 }
             }
-            int pop = params.size();
-            for (int i = 0; i < pop; ++i)
+            size_t pop = params.size();
+            for (size_t i = 0; i < pop; ++i)
                 run.self->popVar();
         }
 

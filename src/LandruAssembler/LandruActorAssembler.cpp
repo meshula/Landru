@@ -49,7 +49,7 @@ namespace Landru {
 
 		// current state of assembly
 		//
-		Library libs;
+		Library* libs = nullptr;
 		map<string, string> requireAliases;
 		shared_ptr<MachineDefinition> currMachineDefinition;
 		vector<State*> currState;
@@ -71,7 +71,7 @@ namespace Landru {
 		vector<int> localVariableState;
 		//
 
-		Context() : libs("std"), currMachineDefinition(nullptr) {}
+		Context(Library* l) : libs(l) {}
 		~Context() {}
 
 		void beginMachine(const char* name) {
@@ -120,10 +120,10 @@ namespace Landru {
 
 	};
 
-	ActorAssembler::ActorAssembler() : _context(new Context()) {}
+	ActorAssembler::ActorAssembler(Library* l) : _context(new Context(l)) {}
 	ActorAssembler::~ActorAssembler() {}
 
-	Library& ActorAssembler::library() const {
+	Library* ActorAssembler::library() const {
 		return _context->libs;
 	}
 
@@ -496,11 +496,21 @@ namespace Landru {
 	}
 
 
-	void ActorAssembler::addRequire(const char* name, const char* module) {
+	void ActorAssembler::addRequire(const char* name, const char* module)
+	{
 		_context->requireAliases[name] = module;
 	}
 
-	void ActorAssembler::callFunction(const char *fnName) {
+	std::vector<std::string> ActorAssembler::requires()
+	{
+		std::vector<std::string> r;
+		for (auto i : _context->requireAliases)
+			r.push_back(i.second);
+		return r;
+	}
+
+	void ActorAssembler::callFunction(const char *fnName)
+	{
 		string f(fnName);
 		vector<string> parts = TextScanner::Split(f, string("."));
 		if (parts.size() == 0)
@@ -524,10 +534,11 @@ namespace Landru {
 			}
 			AB_RAISE("Unknown identifier " << parts[index] << " while parsing " << fnName);
 		}
+
 		// finally got to a function to call
 		switch (callOn) {
 		case CallOn::callOnSelf: {
-			Library::Vtable const*const lib = _context->libs.findVtable("fiber");
+			Library::Vtable const*const lib = _context->libs->findVtable("fiber");
 			if (!lib) {
 				AB_RAISE("No library named fiber exists");
 			}
@@ -553,14 +564,14 @@ namespace Landru {
 
 			Library::Vtable const* lib = nullptr;
 			if (parts.size() == 1) {
-				lib = _context->libs.findVtable(parts[0].c_str());
+				lib = _context->libs->findVtable(parts[0].c_str());
 				if (!lib)
 					AB_RAISE("No std library named " << parts[0] << " exists");
 			}
 			else if (parts.size() == 2) {
-				lib = _context->libs.findVtable(parts[0].c_str());
+				lib = _context->libs->findVtable(parts[0].c_str());
 				if (!lib)
-					for (auto& i : _context->libs.libraries) {
+					for (auto& i : _context->libs->libraries) {
 						if (i.name == parts[0]) {
 							lib = i.findVtable(parts[0].c_str());
 							if (!lib)
@@ -596,7 +607,7 @@ namespace Landru {
 
 			if (typeParts.size() == 0) {
 				// type must be a std type
-				Library::Vtable const*const lib = _context->libs.findVtable(typeParts[0].c_str());
+				Library::Vtable const*const lib = _context->libs->findVtable(typeParts[0].c_str());
 				if (!lib) {
 					AB_RAISE("No std library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
 				}
@@ -608,7 +619,7 @@ namespace Landru {
 			}
 			else {
 				bool found = false;
-				for (auto& i : _context->libs.libraries) {
+				for (auto& i : _context->libs->libraries) {
 					if (i.name == typeParts[0]) {
 						// found the right library, find the vtable on the library, eg audio.buffer
 						Library::Vtable const*const lib = i.findVtable(typeParts[1].c_str());
@@ -769,16 +780,18 @@ namespace Landru {
         }, "pushRangedRandom"));
     }
 
+#ifdef HAVE_VMCONTEXT_REQUIRES
     void ActorAssembler::pushRequire(const char* name) {
         string nameStr(name);
-        if (requires.find(nameStr) == requires.end())
+        if (_requires.find(nameStr) == _requires.end())
             AB_RAISE("Library " << nameStr << " not found");
 
         _context->currInstr.back()->emplace_back(Instruction([nameStr](FnContext& run) {
-            auto r = run.vm->requires.find(nameStr);
+            auto r = run.vm->_requires.find(nameStr);
             run.self->stack.back().emplace_back(r->second->data);
         }, "pushRequire " + nameStr));
     }
+#endif
 
     void ActorAssembler::pushInstanceVar(const char* name) {
         string str(name);

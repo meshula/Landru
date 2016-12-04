@@ -28,10 +28,10 @@ namespace Landru {
         class Context;
         std::unique_ptr<Context> _context;
     public:
-        ActorAssembler();
+        ActorAssembler(Library*);
         virtual ~ActorAssembler();
 
-        Library& library() const;
+        Library* library() const;
 
         const std::map<std::string, std::shared_ptr<Lab::Bson>>& assembledGlobalBsonVariables() const;
         const std::map<std::string, std::shared_ptr<MachineDefinition>>& assembledMachineDefinitions() const;
@@ -51,7 +51,9 @@ namespace Landru {
         virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
         virtual void pushRangedRandom(float r1, float r2) override;
+#ifdef HAVE_VMCONTEXT_REQUIRES
         virtual void pushRequire(const char* name) override;
+#endif
         virtual void pushSharedVar(const char* varName) override;
         virtual void pushStringConstant(const char* str) override;
 
@@ -103,6 +105,8 @@ namespace Landru {
 		virtual void addGlobalString(const char* name, const char* value) override;
 		virtual void addGlobalInt(const char* name, int value) override;
 		virtual void addGlobalFloat(const char* name, float value) override;
+
+		virtual std::vector<std::string> requires() override;
 
         // machines
         virtual void beginMachine(const char* name) override;

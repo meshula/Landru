@@ -60,8 +60,10 @@ namespace Landru {
         virtual void pushInstanceVar(const char* varName) = 0;
         virtual void pushLocalVar(const char* varName) = 0;
         virtual void pushRangedRandom(float r1, float r2) = 0;
+#ifdef HAVE_VMCONTEXT_REQUIRES
         virtual void pushRequire(const char* name) = 0;
-        virtual void pushSharedVar(const char* varName) = 0;
+#endif
+		virtual void pushSharedVar(const char* varName) = 0;
         virtual void pushStringConstant(const char* str) = 0;
 
         // local parameters
@@ -112,6 +114,11 @@ namespace Landru {
 		virtual void addGlobalInt(const char* name, int value) = 0;
 		virtual void addGlobalFloat(const char* name, float value) = 0;
 
+        virtual std::vector<std::string> requires() = 0;
+
+        // parses the requires from the root node and returns the names
+        std::vector<std::string> requires2(ASTNode*);
+
         // machines
         virtual void beginMachine(const char* name) = 0;
         virtual void endMachine() = 0;
@@ -138,7 +145,7 @@ namespace Landru {
         bool isLocalVar(const char* name) const;
 
         std::vector<std::string> states;
-        std::map<std::string, std::string> requires;
+        std::map<std::string, std::string> _requires;
         std::set<std::string> selfVarNames;
         std::map<std::string, std::string>	sharedVars;
         std::map<std::string, std::shared_ptr<Lab::Bson>> globalBsons;

@@ -36,14 +36,16 @@ namespace Landru {
         OnEventEvaluator();
         ~OnEventEvaluator();
 
-        OnEventEvaluator(OnEventEvaluator&& rhs) : _detail(rhs._detail) {}
-		OnEventEvaluator & operator=(OnEventEvaluator & rhs)
+        OnEventEvaluator(OnEventEvaluator&& rhs) : _detail(rhs._detail)
+		{
+			rhs._detail = nullptr;
+		}
+		OnEventEvaluator & operator=(OnEventEvaluator && rhs)
 		{
 			_detail = rhs._detail;
+			rhs._detail = nullptr;
 			return *this;
 		}
-
-        void run();
     };
 
     class VMContext
@@ -52,7 +54,7 @@ namespace Landru {
         std::unique_ptr<Detail> _detail;
 
     public:
-        VMContext();
+        VMContext(Library*);
         ~VMContext();
 
         const float TIME_QUANTA = 1.e-4f;
@@ -74,11 +76,13 @@ namespace Landru {
                           std::vector<std::shared_ptr<Wires::TypedData>>> LaunchRecord;
 
         std::deque<LaunchRecord> launchQueue;
-        std::unique_ptr<Library> libs;
+        Library* libs;
         std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
         std::vector<Fiber*> fibers;
+#ifdef HAVE_VMCONTEXT_REQUIRES
         std::map<std::string, std::string> requireDefinitions;
         std::map<std::string, Property*> requires;
+#endif
         std::map<std::string, std::shared_ptr<Wires::TypedData>> bsonGlobals; // when VM is instantiated make TypedData's around the bson globals
 		std::map<std::string, std::shared_ptr<Landru::Property>> globals;
         bool activateMeta;

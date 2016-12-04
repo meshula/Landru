@@ -157,9 +157,11 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             else if (sharedVars.find(name) != sharedVars.end()) {
                 pushSharedVar(name);
             }
-            else if (requires.find(name) != requires.end()) {
+#ifdef HAVE_VMCONTEXT_REQUIRES
+			else if (_requires.find(name) != _requires.end()) {
                 pushRequire(name);
             }
+#endif
             else if (globalBsons.find(name) != globalBsons.end()) {
                 pushGlobalBsonVar(name);
             }
@@ -231,6 +233,7 @@ void AssemblerBase::assembleNode(ASTNode* root) {
     }
 }
 
+
 void AssemblerBase::assembleStatements(ASTNode* root) {
     beginLocalVariableScope();
 
@@ -242,7 +245,7 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
 	for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i)
 		assembleNode(*i);
 
-	and assemble node should have all the smarts for variable handling. 
+	and assemble node should have all the smarts for variable handling.
 	&&&
 	*/
     for (ASTConstIter i = root->children.begin(); i != root->children.end(); ++i) {
@@ -316,29 +319,37 @@ void AssemblerBase::assembleState(ASTNode* root) {
     endState();
 }
 
-void AssemblerBase::assembleDeclarations(ASTNode* root) 
+void AssemblerBase::assembleDeclarations(ASTNode* root)
 {
+	std::vector<ASTNode*> declares;
+
 	// gather all global declarations
 	for (auto i : root->children) {
 		if (i->token == kTokenDeclare) {
-			for (auto j : i->children)
-				if (j->token == kTokenSharedVariable) {
-					addSharedVariable(j->str2.c_str(), j->str1.c_str());
-					sharedVars[j->str2] = j->str1.c_str();
-				}
-				else {
-					addInstanceVariable(j->str2.c_str(), j->str1.c_str());
-					selfVarNames.insert(j->str2);
-				}
+			declares.push_back(i);
 		}
-
-		beginState("__auto__");
-		for (auto j : i->children) {
-			assembleStatements(j);
-		}
-		endState();
-		break;			/// @TODO gather into a single list
 	}
+
+	if (!declares.size())
+		return;
+
+	for (auto i : declares) {
+		for (auto j : i->children)
+			if (j->token == kTokenSharedVariable) {
+				addSharedVariable(j->str2.c_str(), j->str1.c_str());
+				sharedVars[j->str2] = j->str1.c_str();
+			}
+			else {
+				addInstanceVariable(j->str2.c_str(), j->str1.c_str());
+				selfVarNames.insert(j->str2);
+			}
+	}
+
+	beginState("__auto__");
+	for (auto i : declares)
+		for (auto j : i->children)
+			assembleStatements(j);
+	endState();
 }
 
 	void AssemblerBase::assembleMachine(ASTNode* root)
@@ -370,12 +381,29 @@ void AssemblerBase::assembleDeclarations(ASTNode* root)
 		endMachine();
 	}
 
-void AssemblerBase::assemble(ASTNode* root) 
+
+
+vector<string> AssemblerBase::requires2(ASTNode* root)
+{
+    vector<string> result;
+
+    for (auto i : root->children) {
+        if (i->token == kTokenGlobalVariable && i->children.size()) {
+            ASTConstIter kind = i->children.begin();
+            if ((*kind)->token == kTokenRequire)
+                result.push_back((*kind)->str2);
+        }
+    }
+
+    return result;
+}
+
+void AssemblerBase::assemble(ASTNode* root)
 {
     //landruPrintRawAST(rootNode);
     //landruPrintAST(root);
 
-	{   // scope all machine-scoped declarations
+	{   // gather all machine-scoped declarations
 		std::vector<ASTNode*> declarations;
 
 		for (auto i : root->children) {
@@ -383,7 +411,7 @@ void AssemblerBase::assemble(ASTNode* root)
 				if (i->children.size()) {
 					ASTConstIter kind = i->children.begin();
 					if ((*kind)->token == kTokenRequire) {
-						requires[i->str2.c_str()] = (*kind)->str2.c_str();
+						_requires[i->str2.c_str()] = (*kind)->str2.c_str();
 						addRequire(i->str2.c_str(), (*kind)->str2.c_str());
 					}
 					else {
@@ -401,6 +429,7 @@ void AssemblerBase::assemble(ASTNode* root)
 			}
 		}
 
+        // instantiate the globals
 		if (declarations.size() > 0) {
 			for (auto i : declarations) {
 				if (i->token == kTokenAssignment) {
@@ -427,6 +456,7 @@ void AssemblerBase::assemble(ASTNode* root)
 		}
 	}
 
+    // assemble all the machines
 	for (auto i : root->children) {
 		if (i->token == kTokenMachine) {
             startAssembling();  // reset the assembler so that it is ready to compile something new
