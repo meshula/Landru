@@ -34,5 +34,5 @@ Landru.vcxproj
 Landru.vcxproj.*
 Landru.VC.db
 Landru.VC.VC.opendb
-LandruGL.vcxproj
-LandruGL.vcxproj.*
+landru_gl.vcxproj
+landru_gl.vcxproj.*
