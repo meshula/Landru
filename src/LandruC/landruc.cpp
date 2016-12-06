@@ -125,6 +125,7 @@ void loadLibrary(Landru::Library & lib, const std::string & s, Landru::VMContext
                 req.finish = (LandruRequire::FinishFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_finish").c_str());
                 req.fiberExpiring = (LandruRequire::FiberExpiringFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_fiberExpiring").c_str());
 				req.clearContinuations = (LandruRequire::ClearContinuationsFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_clearContinuations").c_str());
+				req.pendingContinuations = (LandruRequire::PendingContinuationsFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_pendingContinuations").c_str());
 				vm->plugins.push_back(req);
             }
         }

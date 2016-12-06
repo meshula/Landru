@@ -34,6 +34,7 @@ namespace Landru {
 		typedef void(*FinishFn)(Landru::Library*);
 		typedef void(*FiberExpiringFn)(Landru::Fiber*);
 		typedef void(*ClearContinuationsFn)(Landru::Fiber*, int level);
+		typedef bool(*PendingContinuationsFn)(Landru::Fiber*);
 
 		explicit LandruRequire() {}
 		explicit LandruRequire(const LandruRequire & rh)
@@ -50,6 +51,7 @@ namespace Landru {
 			finish = rh.finish;
 			fiberExpiring = rh.fiberExpiring;
 			clearContinuations = rh.clearContinuations;
+			pendingContinuations = rh.pendingContinuations;
 			return *this;
 		}
 
@@ -60,6 +62,7 @@ namespace Landru {
 		FinishFn finish = nullptr;
 		FiberExpiringFn fiberExpiring = nullptr;
 		ClearContinuationsFn clearContinuations = nullptr;
+		PendingContinuationsFn pendingContinuations = nullptr;
 	};
 
 

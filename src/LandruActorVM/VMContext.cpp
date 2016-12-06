@@ -131,11 +131,23 @@ namespace Landru {
 
     bool VMContext::deferredMessagesPending() const 
 	{
-        return !_detail->timeoutQueue.empty();
+		if (!_detail->timeoutQueue.empty())
+			return true;
+
+		for (auto & p : plugins)
+			if (p.pendingContinuations && p.pendingContinuations(nullptr))
+				return true;
+
+		return false;
     }
     bool VMContext::undeferredMessagesPending() const 
 	{
-        return !_detail->pendingMessages.empty();
+		if (!_detail->pendingMessages.empty())
+			return true;
+
+		// ask plugins for their opinion
+
+		return false;
     }
 
 	void VMContext::clearContinuations(Fiber* f, int level)
