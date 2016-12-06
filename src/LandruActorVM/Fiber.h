@@ -54,6 +54,8 @@ namespace Landru {
     class Fiber
     {
         Id _id;
+		int scopeLevel = 1;	// In the future, 0 will mean continuations at machine scope, specified outside of a state
+							// higher levels will indicate within hierarchies of states
 
     public:
         Fiber(std::shared_ptr<MachineDefinition> m, VMContext& vm);
@@ -71,11 +73,13 @@ namespace Landru {
 				return;
 			}
 
+			run.clearContinuations(this, scopeLevel);
             run.run(mainState->second->instructions);
         }
 
         template <typename T>
-        T top() {
+        T top() 
+		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
             }
@@ -86,7 +90,8 @@ namespace Landru {
             return val->value();
         }
 
-        std::shared_ptr<Wires::TypedData> topVar() const {
+        std::shared_ptr<Wires::TypedData> topVar() const 
+		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
             }
@@ -94,7 +99,8 @@ namespace Landru {
         }
 
         template <typename T>
-        T pop() {
+        T pop() 
+		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
             }

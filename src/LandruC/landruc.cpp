@@ -107,43 +107,9 @@ namespace {
     }
 }
 
-class LandruRequire
+void loadLibrary(Landru::Library & lib, const std::string & s, Landru::VMContext* vm)
 {
-public:
-    typedef void (* InitFn)(Landru::Library*);
-    typedef void (* UpdateFn)(double);
-    typedef void (* FinishFn)(Landru::Library*);
-    typedef void (* FiberExpiringFn)(Landru::Fiber*);
-
-	explicit LandruRequire() {}
-	explicit LandruRequire(const LandruRequire & rh)
-	{
-		*this = rh;
-	}
-
-	LandruRequire & operator=(const LandruRequire & rh)
-	{
-		name = rh.name;
-		plugin = rh.plugin;
-		init = rh.init;
-		update = rh.update;
-		finish = rh.finish;
-		fiberExpiring = rh.fiberExpiring;
-		return *this;
-	}
-
-	string name;
-	void* plugin = nullptr;
-    InitFn init = nullptr;
-    UpdateFn update = nullptr;
-    FinishFn finish = nullptr;
-    FiberExpiringFn fiberExpiring = nullptr;
-};
-
-std::vector<LandruRequire> plugins;
-
-void loadLibrary(Landru::Library & lib, const std::string & s)
-{
+	using Landru::LandruRequire;
     static set<string> loadedLibraries;
     if (loadedLibraries.find(s) == loadedLibraries.end()) {
         if (s.length()) {
@@ -158,7 +124,8 @@ void loadLibrary(Landru::Library & lib, const std::string & s)
                 req.update = (LandruRequire::UpdateFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_update").c_str());
                 req.finish = (LandruRequire::FinishFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_finish").c_str());
                 req.fiberExpiring = (LandruRequire::FiberExpiringFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_fiberExpiring").c_str());
-				plugins.push_back(req);
+				req.clearContinuations = (LandruRequire::ClearContinuationsFn) ArchLibraryGetSymbol(req.plugin, (req.name + "_clearContinuations").c_str());
+				vm->plugins.push_back(req);
             }
         }
     }
@@ -211,14 +178,16 @@ int main(int argc, char** argv)
             Landru::Std::populateLibrary(library);
 			//Landru::Audio::LabSoundLib::registerLib(library());
 
+			Landru::VMContext vmContext(&library);
+
 			try {
 
 				vector<string> requires = laa.requires2((Landru::ASTNode*) rootNode);
 				for (auto r : requires) {
-					loadLibrary(library, r);
+					loadLibrary(library, r, &vmContext);
 				}
 
-				for (auto & r : plugins) {
+				for (auto & r : vmContext.plugins) {
 					if (r.init)
 						r.init(&library);
 				}
@@ -239,7 +208,6 @@ int main(int argc, char** argv)
 
             if (run && success)
 			{
-                Landru::VMContext vmContext(&library);
                 vmContext.activateMeta = verbose;
                 vmContext.breakPoint = breakPoint;
 

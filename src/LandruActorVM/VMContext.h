@@ -24,6 +24,46 @@ namespace Landru {
     class Property;
     class VMContext;
 
+
+
+	class LandruRequire
+	{
+	public:
+		typedef void(*InitFn)(Landru::Library*);
+		typedef void(*UpdateFn)(double);
+		typedef void(*FinishFn)(Landru::Library*);
+		typedef void(*FiberExpiringFn)(Landru::Fiber*);
+		typedef void(*ClearContinuationsFn)(Landru::Fiber*, int level);
+
+		explicit LandruRequire() {}
+		explicit LandruRequire(const LandruRequire & rh)
+		{
+			*this = rh;
+		}
+
+		LandruRequire & operator=(const LandruRequire & rh)
+		{
+			name = rh.name;
+			plugin = rh.plugin;
+			init = rh.init;
+			update = rh.update;
+			finish = rh.finish;
+			fiberExpiring = rh.fiberExpiring;
+			clearContinuations = rh.clearContinuations;
+			return *this;
+		}
+
+		std::string name;
+		void* plugin = nullptr;
+		InitFn init = nullptr;
+		UpdateFn update = nullptr;
+		FinishFn finish = nullptr;
+		FiberExpiringFn fiberExpiring = nullptr;
+		ClearContinuationsFn clearContinuations = nullptr;
+	};
+
+
+
     class OnEventEvaluator
     {
 	protected:
@@ -70,6 +110,8 @@ namespace Landru {
         bool deferredMessagesPending() const;
         bool undeferredMessagesPending() const;
 
+		void clearContinuations(Fiber* f, int level);
+
         std::shared_ptr<Wires::TypedData> getLibraryInstanceData(const std::string& name);
 
         typedef std::pair<std::string,
@@ -79,6 +121,8 @@ namespace Landru {
         Library* libs;
         std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
         std::vector<Fiber*> fibers;
+		std::vector<LandruRequire> plugins;
+
 #ifdef HAVE_VMCONTEXT_REQUIRES
         std::map<std::string, std::string> requireDefinitions;
         std::map<std::string, Property*> requires;

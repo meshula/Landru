@@ -104,7 +104,7 @@ namespace Landru {
         set<Id> pendingMessages;
         map<Id, MessageQueue> messageQueue;
 
-        priority_queue<TimeoutTuple, deque<TimeoutTuple>, CompareTimeout> timeoutQueue;
+		multiset<TimeoutTuple, CompareTimeout> timeoutQueue;
     };
 
     VMContext::VMContext(Library* l)
@@ -129,12 +129,45 @@ namespace Landru {
         return std::shared_ptr<Wires::TypedData>();
     }
 
-    bool VMContext::deferredMessagesPending() const {
+    bool VMContext::deferredMessagesPending() const 
+	{
         return !_detail->timeoutQueue.empty();
     }
-    bool VMContext::undeferredMessagesPending() const {
+    bool VMContext::undeferredMessagesPending() const 
+	{
         return !_detail->pendingMessages.empty();
     }
+
+	void VMContext::clearContinuations(Fiber* f, int level)
+	{
+		/// @TODO deal with level
+		for (set<Id>::iterator i = _detail->pendingMessages.begin(); i != _detail->pendingMessages.end(); ++i) {
+			if (*i == f->id()) {
+				i = _detail->pendingMessages.erase(i);
+				if (i == _detail->pendingMessages.end())
+					break;
+			}
+		}
+		for (map<Id, MessageQueue>::iterator i = _detail->messageQueue.begin(); i != _detail->messageQueue.end(); ++i) {
+			if (i->first == f->id()) {
+				i = _detail->messageQueue.erase(i);
+				if (i == _detail->messageQueue.end())
+					break;
+			}
+		}
+		for (multiset<TimeoutTuple, CompareTimeout>::iterator i = _detail->timeoutQueue.begin(); i != _detail->timeoutQueue.end(); ++i) {
+			if ((*i)._detail->fiber.get() == f) {
+				i = _detail->timeoutQueue.erase(i);
+				if (i == _detail->timeoutQueue.end())
+					break;
+			}
+		}
+
+		for (auto & p : plugins) {
+			if (p.clearContinuations)
+				p.clearContinuations(f, level);
+		}
+	}
 
     void VMContext::instantiateLibs()
     {
@@ -178,12 +211,20 @@ namespace Landru {
 
         // check all timeouts and allow them to fire if they've expired
         while (!_detail->timeoutQueue.empty()) {
-            auto& testMe = _detail->timeoutQueue.top();
-            if (testMe.timeout > now) {
-                break;
-            }
-			TimeoutTuple i = std::move(const_cast<TimeoutTuple&>(_detail->timeoutQueue.top()));
-            _detail->timeoutQueue.pop();
+			auto curr = _detail->timeoutQueue.begin();
+			if (curr->timeout > now)
+				break;
+
+//			auto& testMe = _detail->timeoutQueue.top();
+//            if (testMe.timeout > now) {
+//                break;
+//            }
+
+			TimeoutTuple i = std::move(const_cast<TimeoutTuple&>(*curr));
+			_detail->timeoutQueue.erase(curr);
+
+//			TimeoutTuple i = std::move(const_cast<TimeoutTuple&>(_detail->timeoutQueue.top()));
+//            _detail->timeoutQueue.pop();
 
             float t = i.timeout;
             if (t <= now) {
@@ -210,7 +251,7 @@ namespace Landru {
             }
         }
 
-        // finally, send all messages that are pending
+        // finally, send all pending messages
         for (auto i : _detail->pendingMessages) {
             map<Id, MessageQueue>::iterator qIt = _detail->messageQueue.find(i);
             if (qIt == _detail->messageQueue.end())

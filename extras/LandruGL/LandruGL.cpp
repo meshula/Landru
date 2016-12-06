@@ -142,3 +142,10 @@ void landru_gl_fiberExpiring(Fiber* f)
 {
 //    called when Fibers are destroyed so that pending items like onWindowsClosed can be removed
 }
+
+extern "C"
+LANDRUGL_API
+void landru_gl_clearContinuations(Fiber* f, int level)
+{
+	// called when continuations must be cleared, for example before executing a goto statement
+}
