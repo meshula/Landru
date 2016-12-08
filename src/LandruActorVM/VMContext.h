@@ -24,13 +24,11 @@ namespace Landru {
     class Property;
     class VMContext;
 
-
-
 	class LandruRequire
 	{
 	public:
 		typedef void(*InitFn)(Landru::Library*);
-		typedef void(*UpdateFn)(double);
+		typedef void(*UpdateFn)(double, Landru::VMContext*);
 		typedef void(*FinishFn)(Landru::Library*);
 		typedef void(*FiberExpiringFn)(Landru::Fiber*);
 		typedef void(*ClearContinuationsFn)(Landru::Fiber*, int level);
@@ -70,8 +68,14 @@ namespace Landru {
     class OnEventEvaluator
     {
 	protected:
-        class Detail;
+		class Detail
+		{
+		public:
+			std::shared_ptr<Fiber> fiber;
+			std::vector<Instruction> instructions;
+		};
         Detail* _detail;
+
         friend class VMContext;
         OnEventEvaluator(std::shared_ptr<Fiber>, std::vector<Instruction>&);
 
@@ -89,6 +93,9 @@ namespace Landru {
 			rhs._detail = nullptr;
 			return *this;
 		}
+
+		std::vector<Instruction>& instructions() { return _detail->instructions;  }
+		Fiber* fiber() { return _detail->fiber.get(); }
     };
 
     class VMContext

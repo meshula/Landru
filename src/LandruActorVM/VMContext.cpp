@@ -22,13 +22,6 @@ using namespace std;
 
 namespace Landru {
 
-    class OnEventEvaluator::Detail
-    {
-    public:
-        shared_ptr<Fiber> fiber;
-        vector<Instruction> instructions;
-    };
-
     OnEventEvaluator::OnEventEvaluator()
     : _detail(new Detail())
     {}
@@ -129,7 +122,7 @@ namespace Landru {
         return std::shared_ptr<Wires::TypedData>();
     }
 
-    bool VMContext::deferredMessagesPending() const 
+    bool VMContext::deferredMessagesPending() const
 	{
 		if (!_detail->timeoutQueue.empty())
 			return true;
@@ -140,7 +133,7 @@ namespace Landru {
 
 		return false;
     }
-    bool VMContext::undeferredMessagesPending() const 
+    bool VMContext::undeferredMessagesPending() const
 	{
 		if (!_detail->pendingMessages.empty())
 			return true;
@@ -195,7 +188,7 @@ namespace Landru {
         _detail->now = now;
 
         // launch all machines that were requested
-        while (!launchQueue.empty()) 
+        while (!launchQueue.empty())
 		{
             auto rec = launchQueue.front();
             launchQueue.pop_front();
