@@ -13,8 +13,16 @@ using namespace Landru;
 
 namespace {
 
+    struct OnWindowClosed : public OnEventEvaluator
+    {
+		explicit OnWindowClosed(GLFWwindow* w)
+			: window(w) {}
+
+        GLFWwindow* window;
+    };
+
     std::vector<GLFWwindow*> sgWindows;
-    std::vector<GLFWwindow*> sgOnWindowClosed;
+    std::vector<OnWindowClosed> sgOnWindowClosed;
 
     void error_callback(int error, const char* description)
     {
@@ -65,11 +73,12 @@ namespace {
 
     void windowClosed(FnContext& run)
     {
+        vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
         GLFWwindow* window = run.self->pop<GLFWwindow*>();
+        run.self->popVar(); // drop the instr
 
         //record a few things like Fiber, and emplace_back them so that callback can work
-		sgOnWindowClosed.emplace_back(window);
-
+		sgOnWindowClosed.emplace_back(OnWindowClosed(window));
     }
 
 } // anon
@@ -94,20 +103,26 @@ void landru_gl_init(void* vl)
     {
         return std::make_shared<Wires::Data<GLContext>>();
     });
+
+    lib->registerFactory("gl.window", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+    {
+        return std::make_shared<Wires::Data<GLFWwindow*>>();
+    });
 }
 
 extern "C"
 LANDRUGL_API
-void landru_gl_update(double now)
+void landru_gl_update(double now, VMContext* vm)
 {
     bool cullWindows = false;
     do {
         for (auto i = sgWindows.begin(); i != sgWindows.end(); ++i) {
             if (glfwWindowShouldClose(*i)) {
-
                 for (auto j = sgOnWindowClosed.begin(); j != sgOnWindowClosed.end(); ++j) {
-					if (*j == *i) {
-						//callback();
+					if (j->window == *i) {
+						FnContext fn(vm, j->fiber(), nullptr, nullptr);
+						auto & instr = j->instructions();
+						fn.run(instr);
 					}
 
                     j = sgOnWindowClosed.erase(j);
@@ -131,7 +146,7 @@ void landru_gl_update(double now)
 
 extern "C"
 LANDRUGL_API
-void landru_gl_finish(void * vl)
+void landru_gl_finish(void* vl)
 {
     Landru::Library * lib = reinterpret_cast<Landru::Library*>(vl);
 }
@@ -148,4 +163,22 @@ LANDRUGL_API
 void landru_gl_clearContinuations(Fiber* f, int level)
 {
 	// called when continuations must be cleared, for example before executing a goto statement
+    if (!f)
+        sgOnWindowClosed.clear();
+    else {
+        for (std::vector<OnWindowClosed>::iterator i = sgOnWindowClosed.begin(); i != sgOnWindowClosed.end(); ++i) {
+            if (i->fiber() == f) {
+                i = sgOnWindowClosed.erase(i);
+                if (i == sgOnWindowClosed.end())
+                    break;
+            }
+        }
+    }
+}
+
+extern "C"
+LANDRUGL_API
+bool landru_gl_pendingContinuations(Fiber * f)
+{
+    return sgOnWindowClosed.size() > 0;
 }

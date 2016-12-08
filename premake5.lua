@@ -66,5 +66,5 @@ project "landru_gl"
     language "C++"
     includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }
     files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
-    libdirs { "thirdparty/lib" }
-    links { "glfw3" }
+    libdirs { "../LabText/bin/%{cfg.platform}/%{cfg.buildcfg}", "thirdparty/lib" }
+    links { "glfw3", "Landru", "LabText" }
