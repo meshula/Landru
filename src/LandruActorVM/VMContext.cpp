@@ -214,6 +214,11 @@ namespace Landru {
             }
         }
 
+		for (auto & p : plugins) {
+			if (p.update)
+				p.update(now, this);
+		}
+
         // check all timeouts and allow them to fire if they've expired
         while (!_detail->timeoutQueue.empty()) {
 			auto curr = _detail->timeoutQueue.begin();

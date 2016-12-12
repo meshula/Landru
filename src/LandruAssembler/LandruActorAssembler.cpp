@@ -389,22 +389,26 @@ namespace Landru {
 		_context->currInstr.emplace_back(&_context->currConditional.back()->conditionalInstructions);
 	}
 
-	void ActorAssembler::endForEach() {
+	void ActorAssembler::endForEach() 
+	{
 		shared_ptr<Context::Conditional> conditional = _context->currConditional.back();
 		_context->currConditional.pop_back();
 		_context->currInstr.pop_back();
-		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) 
+		{
 			auto genVarPtr = run.self->popVar();
 			auto generatorVar = reinterpret_cast<Wires::Data<shared_ptr<Generator>>*>(genVarPtr.get());
 			auto generator = generatorVar->value();
 
 			auto factory = run.vm->libs->findFactory(generator->typeName());
 			auto local = factory(*run.vm);
-			run.self->locals.emplace_back(local);
-			auto var = run.self->locals.back().get();
+			auto var = run.self->push_local(std::string("gen"), std::string(generator->typeName()), local);
+//			run.self->locals.emplace_back(local);
+//			auto var = run.self->locals.back().get();
 
-			for (generator->begin(); !generator->done(); generator->next()) {
-				generator->generate(var);
+			for (generator->begin(); !generator->done(); generator->next()) 
+			{
+				generator->generate(var.get());
 				if (run.vm->activateMeta) {
 					for (auto& i : conditional->conditionalInstructions) {
 						i.second.exec(run);
@@ -417,7 +421,8 @@ namespace Landru {
 				generator->finalize(run);
 			}
 
-			run.self->locals.pop_back();    // discard the local variable
+			run.self->pop_local(); // discard the local variable
+			//run.self->locals.pop_back();    // discard the local variable
 
 		}, "endForEach"));
 		_context->localVariables.pop_back();
@@ -475,10 +480,11 @@ namespace Landru {
 		string nStr(name);
 		string tStr(type);
 		_context->localVariables.emplace_back(make_pair(name, type));
-		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run) {
+		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run) 
+		{
 			auto factory = run.vm->libs->findFactory(tStr.c_str());
 			auto local = factory(*run.vm);
-			run.self->locals.emplace_back(local);
+			run.self->push_local(nStr, tStr, local);
 		}, "addLocalVariable"));
 	}
 
@@ -662,17 +668,21 @@ namespace Landru {
 
 		// prefer the local scope
 		int localIndex = _context->localVariableIndex(name);
-		if (localIndex >= 0) {
-			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run) {
+		if (localIndex >= 0) 
+		{
+			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run) 
+			{
 				auto data = run.self->popVar();
-				run.self->locals[localIndex]->copy(data.get());
+				run.self->locals[localIndex]->assign(data, true);
 			}, str.c_str()));
 		}
-		else if (_context->currMachineDefinition->properties.find(parts) != _context->currMachineDefinition->properties.end()) {
-			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run) {
+		else if (_context->currMachineDefinition->properties.find(parts) != _context->currMachineDefinition->properties.end()) 
+		{
+			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run) 
+			{
 				auto prop = run.self->properties.find(parts); // already checked at compile time
 				auto data = run.self->popVar();
-				prop->second->data->copy(data.get());
+				prop->second->copy(data, true);
 			}, str.c_str()));
 		}
 		else {
@@ -798,7 +808,8 @@ namespace Landru {
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
             AB_RAISE("Instance variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) 
+		{
             auto i = run.self->properties.find(str);
             run.self->stack.back().emplace_back(i->second->data);
         }, "pushInstanceVar"));
@@ -809,7 +820,7 @@ namespace Landru {
         if (var < 0)
             AB_RAISE("Unknown local variable " << varName << " on machine" << _context->currMachineDefinition->name);
         _context->currInstr.back()->emplace_back(Instruction([var](FnContext& run) {
-            run.self->stack.back().emplace_back(run.self->locals[var]);
+            run.self->stack.back().emplace_back(run.self->locals[var]->data);
         }, "pushLocalVar"));
     }
 

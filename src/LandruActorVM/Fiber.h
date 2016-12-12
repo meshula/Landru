@@ -53,7 +53,8 @@ namespace Landru {
 
     class Fiber
     {
-        Id _id;
+		VMContext & vm;
+		Id _id;
 		int scopeLevel = 1;	// In the future, 0 will mean continuations at machine scope, specified outside of a state
 							// higher levels will indicate within hierarchies of states
 
@@ -63,7 +64,7 @@ namespace Landru {
 
         const Id& id() const { return _id; }
 
-        void gotoState(FnContext& run, const char* name, bool raiseIfStateNotFound) 
+        void gotoState(FnContext& run, const char* name, bool raiseIfStateNotFound)
 		{
             auto mainState = machineDefinition->states.find(name);
 			if (mainState == machineDefinition->states.end()) {
@@ -78,7 +79,7 @@ namespace Landru {
         }
 
         template <typename T>
-        T top() 
+        T top()
 		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
@@ -90,7 +91,7 @@ namespace Landru {
             return val->value();
         }
 
-        std::shared_ptr<Wires::TypedData> topVar() const 
+        std::shared_ptr<Wires::TypedData> topVar() const
 		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
@@ -99,7 +100,7 @@ namespace Landru {
         }
 
         template <typename T>
-        T pop() 
+        T pop()
 		{
             if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
@@ -157,9 +158,23 @@ namespace Landru {
             stack.back().push_back(v);
         }
 
+		std::shared_ptr<Wires::TypedData> push_local(const std::string & name, const std::string & type, 
+												     std::shared_ptr<Wires::TypedData> v) 
+		{
+			locals.push_back(std::move(std::make_shared<Property>(name, type, v)));
+			return (*locals.rbegin())->data;
+		}
+
+		void pop_local() {
+			locals.pop_back();
+		}
+
         std::shared_ptr<MachineDefinition> machineDefinition;
-        std::map<std::string, Property*> properties;
-        std::vector<std::shared_ptr<Wires::TypedData>> locals;
+
+        std::map<std::string, std::shared_ptr<Property>> properties;
+
+		// vector, because local scopes push back their local variables, and pop them on exit
+		std::vector<std::shared_ptr<Property>> locals;
 
         typedef std::vector<std::shared_ptr<Wires::TypedData>> Stack;
         std::vector<Stack> stack;

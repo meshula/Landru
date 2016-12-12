@@ -74,11 +74,13 @@ namespace {
     void windowClosed(FnContext& run)
     {
         vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
-        GLFWwindow* window = run.self->pop<GLFWwindow*>();
+        Wires::Data<GLFWwindow*> window = run.self->pop<GLFWwindow*>();
         run.self->popVar(); // drop the instr
 
         //record a few things like Fiber, and emplace_back them so that callback can work
-		sgOnWindowClosed.emplace_back(OnWindowClosed(window));
+		GLFWwindow * w = window.value();
+		if (w)
+			sgOnWindowClosed.emplace_back(OnWindowClosed(window.value()));
     }
 
 } // anon
@@ -90,24 +92,25 @@ LANDRUGL_API
 void landru_gl_init(void* vl)
 {
     initGL();
-
     Landru::Library * lib = reinterpret_cast<Landru::Library*>(vl);
-    auto glVtable = unique_ptr<Library::Vtable>(new Library::Vtable("gl"));
+    Landru::Library gl_lib("gl");
 
+    auto glVtable = unique_ptr<Library::Vtable>(new Library::Vtable("gl"));
     glVtable->registerFn("1.0", "createWindow", "ffs", "o", createWindow);
     glVtable->registerFn("1.0", "windowClosed", "o", "o", windowClosed);
+    gl_lib.registerVtable(move(glVtable));
 
-    lib->registerVtable(move(glVtable));
-
-    lib->registerFactory("gl.context", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+    gl_lib.registerFactory("context", [](VMContext&)->std::shared_ptr<Wires::TypedData>
     {
         return std::make_shared<Wires::Data<GLContext>>();
     });
 
-    lib->registerFactory("gl.window", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+    gl_lib.registerFactory("window", [](VMContext&)->std::shared_ptr<Wires::TypedData>
     {
-        return std::make_shared<Wires::Data<GLFWwindow*>>();
+        return std::make_shared<Wires::Data<GLFWwindow*>>(nullptr);
     });
+
+    lib->libraries.emplace_back(std::move(gl_lib));
 }
 
 extern "C"
@@ -126,6 +129,8 @@ void landru_gl_update(double now, VMContext* vm)
 					}
 
                     j = sgOnWindowClosed.erase(j);
+					if (j == sgOnWindowClosed.end())
+						break;
                 }
 
                 glfwDestroyWindow(*i);

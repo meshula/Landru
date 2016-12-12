@@ -241,6 +241,7 @@ int main(int argc, char** argv)
 						continue;
 					}
 					else if (vmContext.deferredMessagesPending()) {
+
                         std::this_thread::sleep_for(std::chrono::microseconds(2000));
                     }
                     else

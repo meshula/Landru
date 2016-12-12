@@ -59,22 +59,22 @@ using namespace std;
 
 namespace Landru {
 
-    Fiber::Fiber(std::shared_ptr<MachineDefinition> m, VMContext& vm)
-    : machineDefinition(m) {
+	Fiber::Fiber(std::shared_ptr<MachineDefinition> m, VMContext& vm)
+		: machineDefinition(m)
+		, vm(vm)
+	{
         for (auto& p : m->properties) {
-            Property* prop = new Property();
+            shared_ptr<Property> prop = make_shared<Property>();
             prop->name = p.second->name;
             prop->type = p.second->type;
             prop->visibility = p.second->visibility;
             prop->create(vm);
-            properties[p.first] = prop;
+            properties[p.first] = std::move(prop);
         }
         stack.push_back(vector<shared_ptr<Wires::TypedData>>());
     }
     
     Fiber::~Fiber() {
-        for (auto& p : properties)
-            delete p.second;
     }
     
     Id::Id() {

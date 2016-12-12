@@ -16,14 +16,24 @@ namespace Landru {
         data = factory(vm);
     }
 
-    Property::Property(VMContext& vm, const std::string& name, const std::string& type) \
-    : name(name), type(type), assignCount(0) {
-        create(vm); }
+    Property::Property(VMContext& vm, const std::string& name, const std::string& type)
+    : name(name), type(type), assignCount(0) 
+	{
+        create(vm); 
+	}
+
+	Property::Property(const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
+		: name(name), type(type), assignCount(0)
+	{
+		data->copy(d.get());
+	}
+
     
     Property::Property() {}
     Property::~Property() {}
 
-    bool Property::assign(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) {
+    bool Property::assign(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
+	{
         if (mustBeCompatible) {
             if (!data || td->type() != data->type())
                 return false;
@@ -32,5 +42,16 @@ namespace Landru {
 		++assignCount;
         return true;
     }
+
+	bool Property::copy(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
+	{
+		if (mustBeCompatible) {
+			if (!data || td->type() != data->type())
+				return false;
+		}
+		data->copy(td.get());
+		++assignCount;
+		return true;
+	}
 
 }

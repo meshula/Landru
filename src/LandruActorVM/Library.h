@@ -115,6 +115,11 @@ namespace Landru {
             std::map<std::string, Entry> entries;
         };
 
+
+
+/// @TODO there should be one vtable per library, and the nested libraries should own their own vtables
+
+
         void registerVtable(std::unique_ptr<Vtable> vtable) {
             vtables[vtable->name] = move(vtable);
         }
