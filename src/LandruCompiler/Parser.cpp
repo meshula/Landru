@@ -907,7 +907,9 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
             currNode->addChild(new ASTNode(kTokenOpLessThan));
         //else if (s == "=")
         //    pushAssign();
-        else
+        else if (s[0] == '@')
+			currNode->addChild(new ASTNode(kTokenGetVariableReference, strstart+1));
+		else
             currNode->addChild(new ASTNode(kTokenGetVariable, strstart));
     }
     if (!nodeStack.empty() || !paramNode)
@@ -954,6 +956,8 @@ void parseParam(CurrPtr& curr, EndPtr end) {
 		parseParamList(curr, end);
 		currNode = pop;
 	}
+	else if (peekChar(curr, end) == '@')
+		currNode->addChild(new ASTNode(kTokenGetVariableReference, buff+1));
 	else
 		currNode->addChild(new ASTNode(kTokenGetVariable, buff));
 
@@ -1195,7 +1199,7 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::ve
 		parseDeclare(curr, end, currNode);
 		return;
 	}
-	
+
 	char name[256];
     char require[256];
     getDeclarator(curr, end, name);

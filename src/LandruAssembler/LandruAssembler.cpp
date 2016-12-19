@@ -345,6 +345,19 @@ namespace Landru {
 		RaiseError(0, "pushGlobalVar not implemented", varName);
 	}
 
+    void Assembler::pushInstanceVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
+    void Assembler::pushGlobalVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
+    void Assembler::pushSharedVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
+
     void Assembler::pushConstant(int i)
     {
         if (i == 0)

@@ -215,7 +215,11 @@ int main(int argc, char** argv)
                 //Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());
                 //vmContext.bsonGlobals = laa.assembledGlobalBsonVariables();
                 vmContext.machineDefinitions = laa.assembledMachineDefinitions();
-				vmContext.globals = laa.assembledGlobalVariables();
+
+				for (auto i : laa.assembledGlobalVariables()) {
+					vmContext.storeGlobal(i.first, i.second);
+				}
+
                 vmContext.instantiateLibs();
                 vmContext.launchQueue.push_back(Landru::VMContext::LaunchRecord("main", Landru::Fiber::Stack()));
 

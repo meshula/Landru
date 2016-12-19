@@ -45,6 +45,7 @@ TOKEN_DECL(GlobalVariable,  "globalVariable"  )
 TOKEN_DECL(LocalVariable,   "localVariable"   )
 TOKEN_DECL(Parameters,		"parameters"    )
 TOKEN_DECL(GetVariable,     "getVariable"   )
+TOKEN_DECL(GetVariableReference, "getVariableReference")
 TOKEN_DECL(Statements,		"statements"    )
 
 // Operators

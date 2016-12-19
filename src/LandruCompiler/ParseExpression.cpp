@@ -110,12 +110,18 @@ bool shunting_yard(CurrPtr& strpos, EndPtr strend, std::vector<std::string>& out
             // expectOperator is used to force x-3 becomes x 3 - instead of x -3
             // and x+3 becomes x 3 + not x +3
         }
-        // If the token is a function token, then push it onto the stack.
-        else if(is_function(c))   {
+        // If the token is a function token, variable, or variable reference, then push it onto the stack.
+        else if(is_function(c) || c == '@')   {
+			std::string s;
+			if (c == '@')
+				++strpos;
+
             const char* startpos = strpos;
             Landru::getNameSpacedToken(strpos, strend);
-            std::string s;
             s.assign(startpos, strpos - startpos);
+			if (c == '@')
+				s = "@" + s;
+
             strpos = tsSkipCommentsAndWhitespace(strpos, strend);
             if (is_scope_open(*strpos))
                 stackVec.push_back(s+"#");  // if a function push it on the stack

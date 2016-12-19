@@ -13,6 +13,7 @@
 
 #include <deque>
 #include <map>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -133,12 +134,56 @@ namespace Landru {
         std::vector<Fiber*> fibers;
 		std::vector<LandruRequire> plugins;
 
+		typedef size_t LandruIndex;
+		LandruIndex propertyIndex(const std::string & str, LandruIndex parent = 0)
+		{
+			return std::hash<std::string>{}(str) ^ (parent << 1);
+		}
+
+		std::unordered_map<LandruIndex, std::shared_ptr<Landru::Property>> properties;
+
+		// &&& @todo replace str with LandruIndex
+		std::shared_ptr<Landru::Property> findGlobal(const std::string & str)
+		{
+			LandruIndex i = propertyIndex(str, 0);
+			std::unordered_map<LandruIndex, std::shared_ptr<Landru::Property>>::const_iterator j = properties.find(i);
+			if (j != properties.end())
+				return j->second;
+
+			return std::shared_ptr<Landru::Property>();
+		}
+
+		void storeGlobal(const std::string & str, std::shared_ptr<Landru::Property> p)
+		{
+			LandruIndex i = propertyIndex(str, 0);
+			properties[i] = p;
+		}
+
+		// &&& @todo replace str with LandruIndex
+		std::shared_ptr<Landru::Property> findInstance(const Fiber * f, const std::string & str)
+		{
+			LandruIndex i = propertyIndex(str, std::hash<const Fiber *>{}(f));
+			std::unordered_map<LandruIndex, std::shared_ptr<Landru::Property>>::const_iterator j = properties.find(i);
+			if (j != properties.end())
+				return j->second;
+
+			return std::shared_ptr<Landru::Property>();
+	}
+
+		void storeInstance(const Fiber * f, const std::string & str, std::shared_ptr<Landru::Property> p)
+		{
+			LandruIndex i = propertyIndex(str, std::hash<const Fiber *>{}(f));
+			properties[i] = p;
+		}
+
+
+
 #ifdef HAVE_VMCONTEXT_REQUIRES
         std::map<std::string, std::string> requireDefinitions;
         std::map<std::string, Property*> requires;
 #endif
         std::map<std::string, std::shared_ptr<Wires::TypedData>> bsonGlobals; // when VM is instantiated make TypedData's around the bson globals
-		std::map<std::string, std::shared_ptr<Landru::Property>> globals;
+	//	std::map<std::string, std::shared_ptr<Landru::Property>> globals;
         bool activateMeta;
         uint32_t breakPoint;
     };

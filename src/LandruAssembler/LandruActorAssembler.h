@@ -44,17 +44,23 @@ namespace Landru {
         virtual void storeToVar(const char* varName) override;
      	virtual void initializeSharedVarIfNecessary(const char * varName) override;
 
-        virtual void pushConstant(int) override;
-        virtual void pushFloatConstant(float) override;
 		virtual void pushGlobalVar(const char* varName) override;
 		virtual void pushGlobalBsonVar(const char* varName) override;
         virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
-        virtual void pushRangedRandom(float r1, float r2) override;
+        virtual void pushSharedVar(const char* varName) override;
+
+        virtual void pushInstanceVarReference(const char* varName) override;
+        virtual void pushGlobalVarReference(const char* varName) override;
+        virtual void pushSharedVarReference(const char* varName) override;
+
 #ifdef HAVE_VMCONTEXT_REQUIRES
         virtual void pushRequire(const char* name) override;
 #endif
-        virtual void pushSharedVar(const char* varName) override;
+
+        virtual void pushConstant(int) override;
+        virtual void pushFloatConstant(float) override;
+        virtual void pushRangedRandom(float r1, float r2) override;
         virtual void pushStringConstant(const char* str) override;
 
         // local parameters

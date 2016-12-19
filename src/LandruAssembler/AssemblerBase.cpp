@@ -174,6 +174,36 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             break;
         }
 
+		case kTokenGetVariableReference: {
+            ASSEMBLER_TRACE(kTokenGetVariableReference);
+            vector<string> parts = TextScanner::Split(root->str2, '.', false, false);
+            const char* name = parts[0].c_str();
+            if (isLocalVar(name)) {
+                AB_RAISE("Cannot reference local variables. " << root->str2);
+            }
+            else if (selfVarNames.find(name) != selfVarNames.end()) {
+                pushInstanceVarReference(name);
+            }
+            else if (sharedVars.find(name) != sharedVars.end()) {
+                pushSharedVarReference(name);
+            }
+#ifdef HAVE_VMCONTEXT_REQUIRES
+			else if (_requires.find(name) != _requires.end()) {
+                AB_RAISE("Cannot reference requires. " << root->str2);
+            }
+#endif
+            else if (globalBsons.find(name) != globalBsons.end()) {
+                AB_RAISE("Cannot reference global bsons. " << root->str2);
+            }
+			else if (globals.find(name) != globals.end()) {
+                pushGlobalVarReference(name);
+			}
+            else {
+                AB_RAISE("Unknown variable named " << root->str2);
+            }
+            break;
+        }
+
         case kTokenAssignment:
             ASSEMBLER_TRACE(kTokenAssignment);
             assembleStatements(root); //function(new)

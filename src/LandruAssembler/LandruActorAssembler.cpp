@@ -389,12 +389,12 @@ namespace Landru {
 		_context->currInstr.emplace_back(&_context->currConditional.back()->conditionalInstructions);
 	}
 
-	void ActorAssembler::endForEach() 
+	void ActorAssembler::endForEach()
 	{
 		shared_ptr<Context::Conditional> conditional = _context->currConditional.back();
 		_context->currConditional.pop_back();
 		_context->currInstr.pop_back();
-		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) 
+		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)
 		{
 			auto genVarPtr = run.self->popVar();
 			auto generatorVar = reinterpret_cast<Wires::Data<shared_ptr<Generator>>*>(genVarPtr.get());
@@ -406,7 +406,7 @@ namespace Landru {
 //			run.self->locals.emplace_back(local);
 //			auto var = run.self->locals.back().get();
 
-			for (generator->begin(); !generator->done(); generator->next()) 
+			for (generator->begin(); !generator->done(); generator->next())
 			{
 				generator->generate(var.get());
 				if (run.vm->activateMeta) {
@@ -480,7 +480,7 @@ namespace Landru {
 		string nStr(name);
 		string tStr(type);
 		_context->localVariables.emplace_back(make_pair(name, type));
-		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run) 
+		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run)
 		{
 			auto factory = run.vm->libs->findFactory(tStr.c_str());
 			auto local = factory(*run.vm);
@@ -668,17 +668,17 @@ namespace Landru {
 
 		// prefer the local scope
 		int localIndex = _context->localVariableIndex(name);
-		if (localIndex >= 0) 
+		if (localIndex >= 0)
 		{
-			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run) 
+			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run)
 			{
 				auto data = run.self->popVar();
 				run.self->locals[localIndex]->assign(data, true);
 			}, str.c_str()));
 		}
-		else if (_context->currMachineDefinition->properties.find(parts) != _context->currMachineDefinition->properties.end()) 
+		else if (_context->currMachineDefinition->properties.find(parts) != _context->currMachineDefinition->properties.end())
 		{
-			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run) 
+			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)
 			{
 				auto prop = run.self->properties.find(parts); // already checked at compile time
 				auto data = run.self->popVar();
@@ -808,7 +808,7 @@ namespace Landru {
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
             AB_RAISE("Instance variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) 
+        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)
 		{
             auto i = run.self->properties.find(str);
             run.self->stack.back().emplace_back(i->second->data);
@@ -852,9 +852,38 @@ namespace Landru {
 			AB_RAISE("Global variable " << str << " not found");
 
 		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
-			auto i = run.vm->globals.find(str);
-			run.self->stack.back().emplace_back(i->second->data);
+			auto i = run.vm->findGlobal(str);
+			run.self->stack.back().emplace_back(i->data);
 		}, "pushGlobalVar"));
+	}
+
+    void ActorAssembler::pushInstanceVarReference(const char* varName)
+	{
+		string str(varName);
+		if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
+			AB_RAISE("Instance variable " << str << " not found on machine" << _context->currMachineDefinition->name);
+
+		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
+			auto i = run.vm->findInstance(run.self, str);
+			run.self->stack.back().emplace_back(make_shared<Wires::Data<shared_ptr<Property>>>(i));
+		}, "pushInstanceVarReference"));
+	}
+
+    void ActorAssembler::pushGlobalVarReference(const char* varName)
+	{
+		string str(varName);
+		if (globals.find(str) == globals.end())
+			AB_RAISE("Global variable " << str << " not found");
+
+		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
+			auto i = run.vm->findGlobal(str);
+			run.self->stack.back().emplace_back(make_shared<Wires::Data<shared_ptr<Property>>>(i));
+		}, "pushGlobalVarReference"));
+	}
+
+    void ActorAssembler::pushSharedVarReference(const char* varName)
+	{
+		AB_RAISE("pushSharedVarReference not implemented" << varName);
 	}
 
     void ActorAssembler::ifEq() {
