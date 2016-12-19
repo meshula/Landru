@@ -168,15 +168,13 @@ namespace Landru {
 				return j->second;
 
 			return std::shared_ptr<Landru::Property>();
-	}
+		}
 
 		void storeInstance(const Fiber * f, const std::string & str, std::shared_ptr<Landru::Property> p)
 		{
 			LandruIndex i = propertyIndex(str, std::hash<const Fiber *>{}(f));
 			properties[i] = p;
 		}
-
-
 
 #ifdef HAVE_VMCONTEXT_REQUIRES
         std::map<std::string, std::string> requireDefinitions;

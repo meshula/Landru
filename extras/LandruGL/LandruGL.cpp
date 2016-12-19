@@ -74,13 +74,14 @@ namespace {
     void windowClosed(FnContext& run)
     {
         vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
-        Wires::Data<GLFWwindow*> window = run.self->pop<GLFWwindow*>();
-        run.self->popVar(); // drop the instr
+		auto property = run.self->pop<std::shared_ptr<Property>>();
+		Wires::Data<GLFWwindow*>* windowData = reinterpret_cast<Wires::Data<GLFWwindow*>*>(property->data.get());
+		run.self->popVar(); // drop the instr
 
         //record a few things like Fiber, and emplace_back them so that callback can work
-		GLFWwindow * w = window.value();
+		GLFWwindow * w = windowData->value();
 		if (w)
-			sgOnWindowClosed.emplace_back(OnWindowClosed(window.value()));
+			sgOnWindowClosed.emplace_back(OnWindowClosed(w));
     }
 
 } // anon

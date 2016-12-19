@@ -69,7 +69,7 @@ namespace Landru {
             prop->type = p.second->type;
             prop->visibility = p.second->visibility;
             prop->create(vm);
-            properties[p.first] = std::move(prop);
+			vm.storeInstance(this, p.first, prop);
         }
         stack.push_back(vector<shared_ptr<Wires::TypedData>>());
     }

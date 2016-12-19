@@ -171,7 +171,7 @@ namespace Landru {
 
         std::shared_ptr<MachineDefinition> machineDefinition;
 
-        std::map<std::string, std::shared_ptr<Property>> properties;
+        //std::map<std::string, std::shared_ptr<Property>> properties;
 
 		// vector, because local scopes push back their local variables, and pop them on exit
 		std::vector<std::shared_ptr<Property>> locals;

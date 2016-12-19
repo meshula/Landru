@@ -643,10 +643,11 @@ namespace Landru {
 						_context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run) {
 							FnContext fnRun(run);
 							fnRun.library = run.vm->getLibraryInstanceData(libName).get();
-							auto property = run.self->properties.find(propertyName);
-							if (property == run.self->properties.end())
+							auto property = run.vm->findInstance(run.self, propertyName);
+							if (!property)
 								VM_RAISE("Couldn't find property: " << propertyName);
-							fnRun.var = property->second->data.get();
+
+							fnRun.var = property->data.get();
 							fn(fnRun);
 						}, str.c_str()));
 						found = true;
@@ -680,9 +681,9 @@ namespace Landru {
 		{
 			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)
 			{
-				auto prop = run.self->properties.find(parts); // already checked at compile time
+				auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 				auto data = run.self->popVar();
-				prop->second->copy(data, true);
+				prop->copy(data, true);
 			}, str.c_str()));
 		}
 		else {
@@ -700,18 +701,20 @@ namespace Landru {
 			return;
 		}
 		_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run) {
-			auto prop = run.self->properties.find(parts); // already checked at compile time
+			auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 			auto data = run.self->popVar();
-			if (!prop->second->assignCount) {
-				prop->second->data->copy(data.get());
-				++prop->second->assignCount;
+			if (!prop->assignCount) {
+				prop->data->copy(data.get());
+				++prop->assignCount;
 			}
 		}, str.c_str()));
 	}
 
-    void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) {
+    void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) 
+	{
         _context->bsonGlobals[name] = bson;
     }
+
 	void ActorAssembler::addGlobalString(const char* name, const char* value) {
 		std::shared_ptr<Property> prop = std::make_shared<Property>();
 		prop->name.assign(name);
@@ -810,8 +813,8 @@ namespace Landru {
 
         _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)
 		{
-            auto i = run.self->properties.find(str);
-            run.self->stack.back().emplace_back(i->second->data);
+			auto i = run.vm->findInstance(run.self, str);
+            run.self->stack.back().emplace_back(i->data);
         }, "pushInstanceVar"));
     }
 
@@ -830,8 +833,8 @@ namespace Landru {
             AB_RAISE("Shared variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
         _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) {
-            auto i = run.self->properties.find(str);
-            run.self->stack.back().emplace_back(i->second->data);
+			auto i = run.vm->findInstance(run.self, str);
+			run.self->stack.back().emplace_back(i->data);
         }, "pushSharedVar"));
     }
 
