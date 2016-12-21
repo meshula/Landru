@@ -20,6 +20,11 @@ namespace Landru {
     class VMContext;
     struct FnContext;
     class Meta;
+
+	enum class RunState {
+		Stop, Continue, Goto, UndefinedBehavior
+	};
     
-    typedef std::pair<std::function<void(FnContext&)>, Meta> Instruction;
+    typedef std::pair<std::function<RunState(FnContext&)>, Meta> Instruction;
+	typedef std::function<RunState(FnContext&)> ActorFn;
 }

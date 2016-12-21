@@ -17,13 +17,13 @@ namespace Landru {
         class IntLib {
         public:
             static void registerLib(Library& l);
-            static void add(FnContext& run);
-            static void sub(FnContext& run);
-            static void mul(FnContext& run);
-            static void div(FnContext& run);
-            static void mod(FnContext& run);
-            static void min(FnContext& run);
-            static void max(FnContext& run);
+            static RunState add(FnContext& run);
+            static RunState sub(FnContext& run);
+            static RunState mul(FnContext& run);
+            static RunState div(FnContext& run);
+            static RunState mod(FnContext& run);
+            static RunState min(FnContext& run);
+            static RunState max(FnContext& run);
         };
         
     } // Std

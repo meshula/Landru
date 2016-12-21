@@ -11,8 +11,8 @@ declare:
         w = gl.createWindow(640, 480, "Hello World")
         on time.after(30):
             io.print("Time's up, it was swell")
-            goto done ;
-        on gl.windowClosed(@w):
+            goto done;
+        on gl.windowClosed(w):
             io.print("Goodbye cruel world")
             goto done;
     ;

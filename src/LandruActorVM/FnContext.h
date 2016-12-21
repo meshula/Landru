@@ -25,16 +25,21 @@ namespace Landru {
         Wires::TypedData* var;      // variable whose function is being invoked
         Wires::TypedData* library;  // library that created the variable
         
-        void run(std::vector<Instruction>& instructions) 
+        RunState run(std::vector<Instruction>& instructions) 
 		{
-            if (vm->activateMeta)
-                for (auto& i : instructions) {
-                    i.second.exec(*this);
-                    i.first(*this);
-                }
-            else
-                for (auto& i : instructions)
-                    i.first(*this);
+			RunState runstate = RunState::Continue;
+			if (vm->activateMeta)
+				for (auto& i : instructions) {
+					i.second.exec(*this);
+					if ((runstate = i.first(*this)) != RunState::Continue)
+						break;
+				}
+			else
+				for (auto& i : instructions)
+					if ((runstate = i.first(*this)) != RunState::Continue)
+						break;
+
+			return runstate;
         }
 
 		void clearContinuations(Fiber* f, int level)

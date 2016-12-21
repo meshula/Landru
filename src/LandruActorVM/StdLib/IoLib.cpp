@@ -29,7 +29,7 @@ namespace Landru {
             u->registerFn("2.0", "print", "...", "", print);
             l.registerVtable(move(u));
         }
-        void IoLib::print(FnContext& run) {
+        RunState IoLib::print(FnContext& run) {
             auto& params = run.self->stack.back();
             for (auto p : params) {
                 if (p->type() == typeid(string)) {
@@ -51,7 +51,9 @@ namespace Landru {
             size_t pop = params.size();
             for (size_t i = 0; i < pop; ++i)
                 run.self->popVar();
-        }
+		
+			return RunState::Continue;
+		}
 
 
     } // Std

@@ -19,7 +19,7 @@ namespace Landru {
         class IoLib {
         public:
             static void registerLib(Library& l);
-            static void print(FnContext& run);
+            static RunState print(FnContext& run);
         };
         
 

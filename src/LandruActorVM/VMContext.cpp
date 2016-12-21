@@ -303,4 +303,13 @@ namespace Landru {
         }
     }
 
+	std::shared_ptr<Fiber> VMContext::fiberPtr(Fiber* f)
+	{
+		auto fiberIt = _detail->fibers.find(f->id());
+		if (fiberIt == _detail->fibers.end()) {
+			VM_RAISE("Runtime error, unknown machine");
+		}
+		return fiberIt->second;
+	}
+
 } // Landru

@@ -28,27 +28,30 @@ namespace Landru {
             u->registerFn("2.0", "recur", "ff", "f", recur);
             l.registerVtable(move(u));
         }
-        void TimeLib::after(FnContext& run) {
+        RunState TimeLib::after(FnContext& run) {
             vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
             float delay = run.self->pop<float>();
             run.self->popVar(); // drop the instr
             int recurrences = 1;
             run.vm->onTimeout(delay, recurrences, *run.self, instr);
+			return RunState::Continue;
         }
-        void TimeLib::every(FnContext& run) {
+		RunState TimeLib::every(FnContext& run) {
             vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
             float delay = run.self->pop<float>();
             run.self->popVar(); // drop the instr
             int recurrences = -1;
             run.vm->onTimeout(delay, recurrences, *run.self, instr);
-        }
-        void TimeLib::recur(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState TimeLib::recur(FnContext& run) {
             vector<Instruction> instr = run.self->back<vector<Instruction>>(-3);
             int recurrences = run.self->pop<int>();
             float delay = run.self->pop<float>();
             run.self->popVar(); // drop the instr
             run.vm->onTimeout(delay, recurrences, *run.self, instr);
-        }
+			return RunState::Continue;
+		}
         
     } // Std
 } // Landru

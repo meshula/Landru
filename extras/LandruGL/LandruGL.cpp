@@ -15,8 +15,9 @@ namespace {
 
     struct OnWindowClosed : public OnEventEvaluator
     {
-		explicit OnWindowClosed(GLFWwindow* w)
-			: window(w) {}
+		explicit OnWindowClosed(GLFWwindow* w, std::shared_ptr<Fiber> f, vector<Instruction> & statements)
+			: OnEventEvaluator(f, statements)
+			, window(w) {}
 
         GLFWwindow* window;
     };
@@ -56,7 +57,7 @@ namespace {
     public:
     };
 
-    void createWindow(FnContext& run)
+	RunState createWindow(FnContext& run)
     {
         string title = run.self->pop<string>();
         float height = run.self->pop<float>();
@@ -68,20 +69,23 @@ namespace {
         glfwMakeContextCurrent(window);
         glfwSwapInterval(1);
         sgWindows.emplace_back(window);
-        run.self->push<Wires::Data<GLFWwindow*>>(window);
+        run.self->push<GLFWwindow*>(window);
+		return RunState::Continue;
     }
 
-    void windowClosed(FnContext& run)
+	RunState windowClosed(FnContext& run)
     {
         vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
-		auto property = run.self->pop<std::shared_ptr<Property>>();
-		Wires::Data<GLFWwindow*>* windowData = reinterpret_cast<Wires::Data<GLFWwindow*>*>(property->data.get());
+		auto property = run.self->pop<GLFWwindow*>();
+//		Wires::Data<GLFWwindow*>* windowData = reinterpret_cast<Wires::Data<GLFWwindow*>*>(property->data.get());
 		run.self->popVar(); // drop the instr
-
+//&&& onWindowClosed should be monitoring properties not values of properties
         //record a few things like Fiber, and emplace_back them so that callback can work
-		GLFWwindow * w = windowData->value();
-		if (w)
-			sgOnWindowClosed.emplace_back(OnWindowClosed(w));
+	//	GLFWwindow * w = windowData->value();
+		if (property)
+			sgOnWindowClosed.emplace_back(OnWindowClosed(property, run.vm->fiberPtr(run.self), instr));
+
+		return RunState::Continue;
     }
 
 } // anon

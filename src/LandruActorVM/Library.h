@@ -9,6 +9,7 @@
 #pragma once
 
 #include "Exception.h"
+#include "LandruLibForward.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -20,11 +21,6 @@ namespace Wires {
 }
 
 namespace Landru {
-
-    class Fiber;
-    struct FnContext;
-    class VMContext;
-    typedef std::function<void(FnContext&)> ActorFn;
 
     //---------------
     //  Library      \____________________

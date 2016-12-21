@@ -172,208 +172,250 @@ namespace Landru {
 		case Context::Conditional::Op::unknown:
 			break;
 		case Context::Conditional::Op::eq:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				float test1 = run.self->pop<float>();
 				float test2 = run.self->pop<float>();
 
+				RunState runstate = RunState::Continue;
 				if (run.vm->activateMeta) {
 					if (test1 == test2) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test1 == test2) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::Eq"));
 			break;
 		case Context::Conditional::Op::eq0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test == 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test == 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::Eq0"));
 			break;
 		case Context::Conditional::Op::lte0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test <= 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test <= 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::lte0"));
 			break;
 		case Context::Conditional::Op::gte0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test >= 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test >= 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::gte0"));
 			break;
 		case Context::Conditional::Op::lt0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test < 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test < 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::lte0"));
 			break;
 		case Context::Conditional::Op::gt0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test > 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test > 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::gte0"));
 			break;
 		case Context::Conditional::Op::neq0:
-			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
+				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
 				if (run.vm->activateMeta) {
 					if (test != 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions) {
 							i.second.exec(run);
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 						}
 					}
 				}
 				else {
 					if (test != 0) {
 						for (auto& i : conditional->conditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 					else {
 						for (auto i : conditional->contraConditionalInstructions)
-							i.first(run);
+							if ((runstate = i.first(run)) != RunState::Continue)
+								break;
 					}
 				}
+				return runstate;
 			}, "Op::neq0"));
 			break;
 		}
@@ -394,8 +436,9 @@ namespace Landru {
 		shared_ptr<Context::Conditional> conditional = _context->currConditional.back();
 		_context->currConditional.pop_back();
 		_context->currInstr.pop_back();
-		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)
+		_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState
 		{
+			RunState runstate = RunState::Continue;
 			auto genVarPtr = run.self->popVar();
 			auto generatorVar = reinterpret_cast<Wires::Data<shared_ptr<Generator>>*>(genVarPtr.get());
 			auto generator = generatorVar->value();
@@ -403,8 +446,6 @@ namespace Landru {
 			auto factory = run.vm->libs->findFactory(generator->typeName());
 			auto local = factory(*run.vm);
 			auto var = run.self->push_local(std::string("gen"), std::string(generator->typeName()), local);
-//			run.self->locals.emplace_back(local);
-//			auto var = run.self->locals.back().get();
 
 			for (generator->begin(); !generator->done(); generator->next())
 			{
@@ -412,18 +453,19 @@ namespace Landru {
 				if (run.vm->activateMeta) {
 					for (auto& i : conditional->conditionalInstructions) {
 						i.second.exec(run);
-						i.first(run);
+						if ((runstate = i.first(run)) != RunState::Continue)
+							break;
 					}
 				}
 				else
 					for (auto& i : conditional->conditionalInstructions)
-						i.first(run);
+						if ((runstate = i.first(run)) != RunState::Continue)
+							break;
 				generator->finalize(run);
 			}
 
 			run.self->pop_local(); // discard the local variable
-			//run.self->locals.pop_back();    // discard the local variable
-
+			return runstate;
 		}, "endForEach"));
 		_context->localVariables.pop_back();
 	}
@@ -448,7 +490,9 @@ namespace Landru {
 		shared_ptr<Context::Conditional> onStatement = _context->currConditional.back();
 		_context->currConditional.pop_back();
 		_context->currInstr.pop_back();
-		_context->currInstr.back()->emplace_back(Instruction([onStatement, onStatements](FnContext& run) {
+		_context->currInstr.back()->emplace_back(Instruction([onStatement, onStatements](FnContext& run)->RunState
+		{
+			RunState runstate = RunState::Continue;
 			// push the statements to execute if the on fires
 			run.self->stack.back().emplace_back(make_shared<Wires::Data<vector<Instruction>>>(onStatements->conditionalInstructions));
 
@@ -456,12 +500,15 @@ namespace Landru {
 			if (run.vm->activateMeta) {
 				for (auto& i : onStatement->conditionalInstructions) {
 					i.second.exec(run);
-					i.first(run);
+					if ((runstate = i.first(run)) != RunState::Continue)
+						break;
 				}
 			}
 			else
 				for (auto& i : onStatement->conditionalInstructions)
-					i.first(run);
+					if ((runstate = i.first(run)) != RunState::Continue)
+						break;
+			return runstate;
 		}, "endOn"));
 	}
 
@@ -480,11 +527,12 @@ namespace Landru {
 		string nStr(name);
 		string tStr(type);
 		_context->localVariables.emplace_back(make_pair(name, type));
-		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run)
+		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run)->RunState
 		{
 			auto factory = run.vm->libs->findFactory(tStr.c_str());
 			auto local = factory(*run.vm);
 			run.self->push_local(nStr, tStr, local);
+			return RunState::Continue;
 		}, "addLocalVariable"));
 	}
 
@@ -495,9 +543,11 @@ namespace Landru {
 		for (int i = 0; i < localsCount; ++i)
 			_context->localVariables.pop_back();
 
-		_context->currInstr.back()->emplace_back(Instruction([localsCount](FnContext& run) {
+		_context->currInstr.back()->emplace_back(Instruction([localsCount](FnContext& run)->RunState
+		{
 			for (int i = 0; i < localsCount; ++i)
 				run.self->locals.pop_back();
+			return RunState::Continue;
 		}, "endLocalVariableScope"));
 	}
 
@@ -555,8 +605,9 @@ namespace Landru {
 
 			auto fn = fnEntry->fn;
 			string str = "self call to " + parts[index];
-			_context->currInstr.back()->emplace_back(Instruction([fn, str](FnContext& run) {
-				fn(run);
+			_context->currInstr.back()->emplace_back(Instruction([fn, str](FnContext& run)->RunState
+			{
+				return fn(run);
 			}, str.c_str()));
 			break;
 		}
@@ -595,10 +646,11 @@ namespace Landru {
 			auto fn = fnEntry->fn;
 			string str = "library call on " + parts[0] + " to " + parts[1];
 			string libraryName = lib->name;
-			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run) {
+			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState 
+			{
 				FnContext fnRun(run);
 				fnRun.library = run.vm->getLibraryInstanceData(libraryName).get();
-				fn(fnRun);
+				return fn(fnRun);
 			}, str.c_str()));
 			break;
 		}
@@ -618,9 +670,12 @@ namespace Landru {
 					AB_RAISE("No std library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
 				}
 				AB_RAISE("@TODO callOnProperty");
-				_context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+				_context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState 
+				{
 					// we know what the lambda to call is, but we're going to have to look up the property named parts[0] at runtime
 					// call function on require parts[index] and then clear the params
+					// &&& @TODO
+					return RunState::UndefinedBehavior;
 				}, "callOnStdProperty"));
 			}
 			else {
@@ -640,7 +695,8 @@ namespace Landru {
 						string propertyName = parts[0];
 						string libName = i.name;
 						shared_ptr<Wires::TypedData> libInstance = i.libraryInstanceData;
-						_context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run) {
+						_context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run)->RunState
+						{
 							FnContext fnRun(run);
 							fnRun.library = run.vm->getLibraryInstanceData(libName).get();
 							auto property = run.vm->findInstance(run.self, propertyName);
@@ -648,7 +704,7 @@ namespace Landru {
 								VM_RAISE("Couldn't find property: " << propertyName);
 
 							fnRun.var = property->data.get();
-							fn(fnRun);
+							return fn(fnRun);
 						}, str.c_str()));
 						found = true;
 						break;
@@ -671,19 +727,21 @@ namespace Landru {
 		int localIndex = _context->localVariableIndex(name);
 		if (localIndex >= 0)
 		{
-			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run)
+			_context->currInstr.back()->emplace_back(Instruction([localIndex](FnContext& run)->RunState
 			{
 				auto data = run.self->popVar();
 				run.self->locals[localIndex]->assign(data, true);
+				return RunState::Continue;
 			}, str.c_str()));
 		}
 		else if (_context->currMachineDefinition->properties.find(parts) != _context->currMachineDefinition->properties.end())
 		{
-			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)
+			_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)->RunState
 			{
 				auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 				auto data = run.self->popVar();
 				prop->copy(data, true);
+				return RunState::Continue;
 			}, str.c_str()));
 		}
 		else {
@@ -700,13 +758,15 @@ namespace Landru {
 			AB_RAISE("Couldn't find shared variable: " << string(name));
 			return;
 		}
-		_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run) {
+		_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)->RunState
+		{
 			auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 			auto data = run.self->popVar();
 			if (!prop->assignCount) {
 				prop->data->copy(data.get());
 				++prop->assignCount;
 			}
+			return RunState::Continue;
 		}, str.c_str()));
 	}
 
@@ -760,9 +820,11 @@ namespace Landru {
     }
 
     void ActorAssembler::pushConstant(int i) {
-        _context->currInstr.back()->emplace_back(Instruction([i](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([i](FnContext& run)->RunState
+		{
             run.self->stack.back().emplace_back(make_shared<Wires::Data<int>>(i));
-        }, "pushIntConstant"));
+			return RunState::Continue;
+		}, "pushIntConstant"));
     }
 
     void ActorAssembler::pushFloatConstant(float f) {
@@ -771,26 +833,32 @@ namespace Landru {
         string str("push float constant: ");
         str += buff;
 		string s(str);
-        _context->currInstr.back()->emplace_back(Instruction([f, s](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([f, s](FnContext& run)->RunState
+		{
             run.self->stack.back().emplace_back(make_shared<Wires::Data<float>>(f));
-        }, str.c_str()));
+			return RunState::Continue;
+		}, str.c_str()));
     }
 
     void ActorAssembler::pushStringConstant(const char *str) {
         string s(str);
         string verbose = "push string constant: " + s;
-        _context->currInstr.back()->emplace_back(Instruction([s, verbose](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([s, verbose](FnContext& run)->RunState
+		{
             run.self->stack.back().emplace_back(make_shared<Wires::Data<string>>(s));
-        }, verbose.c_str()));
+			return RunState::Continue;
+		}, verbose.c_str()));
     }
 
     void ActorAssembler::pushRangedRandom(float r1, float r2) {
-        _context->currInstr.back()->emplace_back(Instruction([r1, r2](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([r1, r2](FnContext& run)->RunState
+		{
             float r = (float)rand()/RAND_MAX;
             r *= (r2 - r1);
             r += r1;
             run.self->stack.back().emplace_back(make_shared<Wires::Data<float>>(r));
-        }, "pushRangedRandom"));
+			return RunState::Continue;
+		}, "pushRangedRandom"));
     }
 
 #ifdef HAVE_VMCONTEXT_REQUIRES
@@ -799,10 +867,12 @@ namespace Landru {
         if (_requires.find(nameStr) == _requires.end())
             AB_RAISE("Library " << nameStr << " not found");
 
-        _context->currInstr.back()->emplace_back(Instruction([nameStr](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([nameStr](FnContext& run)->RunState
+		{
             auto r = run.vm->_requires.find(nameStr);
             run.self->stack.back().emplace_back(r->second->data);
-        }, "pushRequire " + nameStr));
+			return RunState::Continue;
+		}, "pushRequire " + nameStr));
     }
 #endif
 
@@ -811,20 +881,23 @@ namespace Landru {
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
             AB_RAISE("Instance variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)
+        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)->RunState
 		{
 			auto i = run.vm->findInstance(run.self, str);
             run.self->stack.back().emplace_back(i->data);
-        }, "pushInstanceVar"));
+			return RunState::Continue;
+		}, "pushInstanceVar"));
     }
 
     void ActorAssembler::pushLocalVar(const char *varName) {
         int var = _context->localVariableIndex(varName);
         if (var < 0)
             AB_RAISE("Unknown local variable " << varName << " on machine" << _context->currMachineDefinition->name);
-        _context->currInstr.back()->emplace_back(Instruction([var](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([var](FnContext& run)->RunState
+		{
             run.self->stack.back().emplace_back(run.self->locals[var]->data);
-        }, "pushLocalVar"));
+			return RunState::Continue;
+		}, "pushLocalVar"));
     }
 
     void ActorAssembler::pushSharedVar(const char* name) {
@@ -832,10 +905,12 @@ namespace Landru {
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
             AB_RAISE("Shared variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)->RunState
+		{
 			auto i = run.vm->findInstance(run.self, str);
 			run.self->stack.back().emplace_back(i->data);
-        }, "pushSharedVar"));
+			return RunState::Continue;
+		}, "pushSharedVar"));
     }
 
     void ActorAssembler::pushGlobalBsonVar(const char *varName) {
@@ -843,10 +918,12 @@ namespace Landru {
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
             AB_RAISE("Shared variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)->RunState
+		{
             auto i = run.vm->bsonGlobals.find(str);
             run.self->stack.back().emplace_back(i->second);
-        }, "pushGlobalBsonVar"));
+			return RunState::Continue;
+		}, "pushGlobalBsonVar"));
     }
 
 	void ActorAssembler::pushGlobalVar(const char *varName) {
@@ -854,9 +931,11 @@ namespace Landru {
 		if (globals.find(str) == globals.end())
 			AB_RAISE("Global variable " << str << " not found");
 
-		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
+		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run)->RunState
+		{
 			auto i = run.vm->findGlobal(str);
 			run.self->stack.back().emplace_back(i->data);
+			return RunState::Continue;
 		}, "pushGlobalVar"));
 	}
 
@@ -866,9 +945,11 @@ namespace Landru {
 		if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
 			AB_RAISE("Instance variable " << str << " not found on machine" << _context->currMachineDefinition->name);
 
-		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
+		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run)->RunState
+		{
 			auto i = run.vm->findInstance(run.self, str);
 			run.self->stack.back().emplace_back(make_shared<Wires::Data<shared_ptr<Property>>>(i));
+			return RunState::Continue;
 		}, "pushInstanceVarReference"));
 	}
 
@@ -878,9 +959,11 @@ namespace Landru {
 		if (globals.find(str) == globals.end())
 			AB_RAISE("Global variable " << str << " not found");
 
-		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run) {
+		_context->currInstr.back()->emplace_back(Instruction([str](FnContext & run)->RunState
+		{
 			auto i = run.vm->findGlobal(str);
 			run.self->stack.back().emplace_back(make_shared<Wires::Data<shared_ptr<Property>>>(i));
+			return RunState::Continue;
 		}, "pushGlobalVarReference"));
 	}
 
@@ -932,80 +1015,99 @@ namespace Landru {
     }
 
     void ActorAssembler::opAdd() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 + v2);
-        }, "opAdd"));
+			return RunState::Continue;
+		}, "opAdd"));
     }
 
     void ActorAssembler::opSubtract() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 - v2);
-        }, "opSubtract"));
+			return RunState::Continue;
+		}, "opSubtract"));
     }
 
     void ActorAssembler::opMultiply() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 * v2);
-        }, "opMultiply"));
+			return RunState::Continue;
+		}, "opMultiply"));
     }
 
     void ActorAssembler::opDivide() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState {
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 / v2);
-        }, "opDivide"));
+			return RunState::Continue;
+		}, "opDivide"));
     }
 
     void ActorAssembler::opNegate() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v1 = run.self->pop<float>();
             run.self->push<float>(-v1);
-        }, "opNegate"));
+			return RunState::Continue;
+		}, "opNegate"));
     }
 
     void ActorAssembler::opModulus() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(fmodf(v1, v2));
-        }, "opModulus"));
+			return RunState::Continue;
+		}, "opModulus"));
     }
 
     void ActorAssembler::opGreaterThan() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 > v2 ? 1.f : 0.f);
-        }, "opGreaterThan"));
+			return RunState::Continue;
+		}, "opGreaterThan"));
     }
 
     void ActorAssembler::opLessThan() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             float v2 = run.self->pop<float>();
             float v1 = run.self->pop<float>();
             run.self->push<float>(v1 < v2 ? 1.f : 0.f);
-        }, "opLessThan"));
+			return RunState::Continue;
+		}, "opLessThan"));
     }
 
     void ActorAssembler::launchMachine() {
-        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+		{
             string machine = run.self->pop<string>();
             run.vm->launchQueue.emplace_back(Landru::VMContext::LaunchRecord(machine, Landru::Fiber::Stack()));
-        }, "launchMachine"));
+			return RunState::Continue;
+		}, "launchMachine"));
     }
 
     void ActorAssembler::gotoState(const char *stateName) {
         string s(stateName);
-        _context->currInstr.back()->emplace_back(Instruction([s](FnContext& run) {
+        _context->currInstr.back()->emplace_back(Instruction([s](FnContext& run)->RunState
+		{
             run.self->gotoState(run, s.c_str(), true);
-        }, "gotoState"));
+			return RunState::Goto;
+		}, "gotoState"));
     }
 
 } // Landru

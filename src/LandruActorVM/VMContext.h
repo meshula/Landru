@@ -134,6 +134,8 @@ namespace Landru {
         std::vector<Fiber*> fibers;
 		std::vector<LandruRequire> plugins;
 
+		std::shared_ptr<Fiber> fiberPtr(Fiber*);
+
 		typedef size_t LandruIndex;
 		LandruIndex propertyIndex(const std::string & str, LandruIndex parent = 0)
 		{
