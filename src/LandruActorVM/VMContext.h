@@ -186,12 +186,7 @@ namespace Landru {
 			properties[i] = p;
 		}
 
-#ifdef HAVE_VMCONTEXT_REQUIRES
-        std::map<std::string, std::string> requireDefinitions;
-        std::map<std::string, Property*> requires;
-#endif
         std::map<std::string, std::shared_ptr<Wires::TypedData>> bsonGlobals; // when VM is instantiated make TypedData's around the bson globals
-	//	std::map<std::string, std::shared_ptr<Landru::Property>> globals;
         bool activateMeta;
         uint32_t breakPoint;
     };

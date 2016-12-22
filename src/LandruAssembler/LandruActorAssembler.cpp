@@ -861,21 +861,6 @@ namespace Landru {
 		}, "pushRangedRandom"));
     }
 
-#ifdef HAVE_VMCONTEXT_REQUIRES
-    void ActorAssembler::pushRequire(const char* name) {
-        string nameStr(name);
-        if (_requires.find(nameStr) == _requires.end())
-            AB_RAISE("Library " << nameStr << " not found");
-
-        _context->currInstr.back()->emplace_back(Instruction([nameStr](FnContext& run)->RunState
-		{
-            auto r = run.vm->_requires.find(nameStr);
-            run.self->stack.back().emplace_back(r->second->data);
-			return RunState::Continue;
-		}, "pushRequire " + nameStr));
-    }
-#endif
-
     void ActorAssembler::pushInstanceVar(const char* name) {
         string str(name);
         if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())

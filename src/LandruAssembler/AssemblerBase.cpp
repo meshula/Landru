@@ -157,11 +157,6 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             else if (sharedVars.find(name) != sharedVars.end()) {
                 pushSharedVar(name);
             }
-#ifdef HAVE_VMCONTEXT_REQUIRES
-			else if (_requires.find(name) != _requires.end()) {
-                pushRequire(name);
-            }
-#endif
             else if (globalBsons.find(name) != globalBsons.end()) {
                 pushGlobalBsonVar(name);
             }
@@ -187,11 +182,6 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             else if (sharedVars.find(name) != sharedVars.end()) {
                 pushSharedVarReference(name);
             }
-#ifdef HAVE_VMCONTEXT_REQUIRES
-			else if (_requires.find(name) != _requires.end()) {
-                AB_RAISE("Cannot reference requires. " << root->str2);
-            }
-#endif
             else if (globalBsons.find(name) != globalBsons.end()) {
                 AB_RAISE("Cannot reference global bsons. " << root->str2);
             }

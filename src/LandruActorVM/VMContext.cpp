@@ -176,11 +176,6 @@ namespace Landru {
 
     void VMContext::instantiateLibs()
     {
-#ifdef HAVE_VMCONTEXT_REQUIRES
-        for (auto r : requireDefinitions)
-            if (requires.find(r.first) == requires.end())
-                requires[r.first] = new Property(*this, r.first, r.second);
-#endif
     }
 
     void VMContext::update(double now)

@@ -63,10 +63,6 @@ namespace Landru {
         virtual void pushGlobalVarReference(const char* varName) = 0;
         virtual void pushSharedVarReference(const char* varName) = 0;
 
-#ifdef HAVE_VMCONTEXT_REQUIRES
-        virtual void pushRequire(const char* name) = 0;
-#endif
-
         virtual void pushConstant(int) = 0;
         virtual void pushFloatConstant(float) = 0;
         virtual void pushRangedRandom(float r1, float r2) = 0;
