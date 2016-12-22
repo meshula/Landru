@@ -120,10 +120,11 @@ void landru_gl_init(void* vl)
 
 extern "C"
 LANDRUGL_API
-void landru_gl_update(double now, VMContext* vm)
+RunState landru_gl_update(double now, VMContext* vm)
 {
-    bool cullWindows = false;
+    bool cullWindows;
     do {
+		cullWindows = false;
         for (auto i = sgWindows.begin(); i != sgWindows.end(); ++i) {
             if (glfwWindowShouldClose(*i)) {
                 for (auto j = sgOnWindowClosed.begin(); j != sgOnWindowClosed.end(); ++j) {
@@ -152,6 +153,8 @@ void landru_gl_update(double now, VMContext* vm)
         glfwSwapBuffers(w);
     }
     glfwPollEvents();
+
+	return RunState::Continue;
 }
 
 extern "C"

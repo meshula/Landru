@@ -261,19 +261,43 @@ namespace Landru {
             }
         }
 
-        // finally, send all pending messages
+        // send all pending messages
         for (auto i : _detail->pendingMessages) {
             map<Id, MessageQueue>::iterator qIt = _detail->messageQueue.find(i);
             if (qIt == _detail->messageQueue.end())
                 continue;
             MessageQueue& q = qIt->second;
             for (auto & j : q) {
-
+				// &&& yup
             }
             q.clear();
         }
         _detail->pendingMessages.clear();
+
+		// execute pending gotos for all machines simultaneously
+		{
+			finalizeGotos();
+		}
     }
+
+	void VMContext::enqueueGoto(Fiber * f, const std::string & state)
+	{
+		std::shared_ptr<Fiber> fiber = fiberPtr(f);
+		if (fiber && state.length()) {
+			gotos.push_back(std::make_pair(fiber, state));
+		}
+	}
+
+	void VMContext::finalizeGotos()
+	{
+		while (gotos.begin() != gotos.end()) {
+			auto i = gotos.front();
+			FnContext run = { this, i.first.get(), nullptr, nullptr };
+			i.first->gotoState(run, i.second.c_str(), true);
+			gotos.pop_front();
+		}
+	}
+
 
     void VMContext::onTimeout(float delay, int recurrences,
                               const Landru::Fiber &f,

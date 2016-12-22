@@ -17,5 +17,6 @@ declare:
             goto done;
     ;
 
-    state done:;
+    state done:
+        io.print("Machine finished");
 ;

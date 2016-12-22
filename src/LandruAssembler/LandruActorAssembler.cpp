@@ -1105,7 +1105,8 @@ namespace Landru {
         string s(stateName);
         _context->currInstr.back()->emplace_back(Instruction([s](FnContext& run)->RunState
 		{
-            run.self->gotoState(run, s.c_str(), true);
+			run.vm->enqueueGoto(run.self, s);
+//            run.self->gotoState(run, s.c_str(), true);
 			return RunState::Goto;
 		}, "gotoState"));
     }

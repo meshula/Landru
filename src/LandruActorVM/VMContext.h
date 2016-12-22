@@ -9,6 +9,7 @@
 #pragma once
 
 #include "WiresTypedData.h"
+#include "FnContext.h"
 #include "State.h"
 
 #include <deque>
@@ -29,7 +30,7 @@ namespace Landru {
 	{
 	public:
 		typedef void(*InitFn)(Landru::Library*);
-		typedef void(*UpdateFn)(double, Landru::VMContext*);
+		typedef RunState(*UpdateFn)(double, Landru::VMContext*);
 		typedef void(*FinishFn)(Landru::Library*);
 		typedef void(*FiberExpiringFn)(Landru::Fiber*);
 		typedef void(*ClearContinuationsFn)(Landru::Fiber*, int level);
@@ -62,6 +63,8 @@ namespace Landru {
 		FiberExpiringFn fiberExpiring = nullptr;
 		ClearContinuationsFn clearContinuations = nullptr;
 		PendingContinuationsFn pendingContinuations = nullptr;
+
+		RunState runState = RunState::Continue;
 	};
 
 
@@ -135,6 +138,11 @@ namespace Landru {
 		std::vector<LandruRequire> plugins;
 
 		std::shared_ptr<Fiber> fiberPtr(Fiber*);
+
+		std::deque<std::pair<std::shared_ptr<Fiber>, std::string>> gotos;
+
+		void enqueueGoto(Fiber * f, const std::string & state);
+		void finalizeGotos();
 
 		typedef size_t LandruIndex;
 		LandruIndex propertyIndex(const std::string & str, LandruIndex parent = 0)
