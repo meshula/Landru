@@ -34,8 +34,6 @@ namespace Landru {
         Library& operator=(Library && rhs)
         {
             name = rhs.name;
-            libraryInstanceData = rhs.libraryInstanceData;
-            rhs.libraryInstanceData.reset();
             vtables.clear();
             std::swap(vtables, rhs.vtables);
             factories.clear();
@@ -44,7 +42,6 @@ namespace Landru {
         }
 
         std::string name;
-        std::shared_ptr<Wires::TypedData> libraryInstanceData;
         std::vector<Library> libraries;
 
         //---------------------

@@ -129,7 +129,7 @@ RunState landru_gl_update(double now, VMContext* vm)
             if (glfwWindowShouldClose(*i)) {
                 for (auto j = sgOnWindowClosed.begin(); j != sgOnWindowClosed.end(); ++j) {
 					if (j->window == *i) {
-						FnContext fn(vm, j->fiber(), nullptr, nullptr);
+						FnContext fn(vm, j->fiber(), nullptr);
 						auto & instr = j->instructions();
 						fn.run(instr);
 					}

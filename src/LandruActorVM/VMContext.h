@@ -116,9 +116,8 @@ namespace Landru {
 		//--------------\_____________________________________________________
 		// Libraries
         void instantiateLibs();
-		std::shared_ptr<Wires::TypedData> getLibraryInstanceData(const std::string& name);
-		Library* libs;
-		std::vector<LandruRequire> plugins;
+		Library* libs;							// holds all vtables
+		std::vector<LandruRequire> plugins;		// holds the implementations
 
 		//--------------\_____________________________________________________
 		// Update

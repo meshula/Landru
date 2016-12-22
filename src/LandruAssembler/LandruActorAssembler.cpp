@@ -644,7 +644,6 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState 
 			{
 				FnContext fnRun(run);
-				fnRun.library = run.vm->getLibraryInstanceData(libraryName).get();
 				return fn(fnRun);
 			}, str.c_str()));
 			break;
@@ -689,11 +688,9 @@ namespace Landru {
 						string str = "library call on property '" + parts[0] + "' to " + type + "." + parts[1];
 						string propertyName = parts[0];
 						string libName = i.name;
-						shared_ptr<Wires::TypedData> libInstance = i.libraryInstanceData;
 						_context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run)->RunState
 						{
 							FnContext fnRun(run);
-							fnRun.library = run.vm->getLibraryInstanceData(libName).get();
 							auto property = run.vm->findInstance(run.self, propertyName);
 							if (!property)
 								VM_RAISE("Couldn't find property: " << propertyName);

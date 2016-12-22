@@ -112,18 +112,6 @@ namespace Landru {
     VMContext::~VMContext() {
     }
 
-    std::shared_ptr<Wires::TypedData> VMContext::getLibraryInstanceData(const std::string& name) {
-        if (libs->name == name) {
-            return libs->libraryInstanceData;
-        }
-        for (auto& i : libs->libraries) {
-            if (i.name == name) {
-                return i.libraryInstanceData;
-            }
-        }
-        return std::shared_ptr<Wires::TypedData>();
-    }
-
     bool VMContext::deferredMessagesPending() const
 	{
 		if (!_detail->timeoutQueue.empty())
@@ -195,7 +183,7 @@ namespace Landru {
                 _detail->fibers[f->id()] = f;
                 _detail->messageQueue[f->id()] = vector<OnEventEvaluator>();   //// @TODO emplace queues only when needed at first access
                 try {
-                    FnContext fn(this, f.get(), nullptr, nullptr);
+                    FnContext fn(this, f.get(), nullptr);
 					f->gotoState(fn, "__auto__", false);
                     f->gotoState(fn, "main", true);
                 }
@@ -238,7 +226,7 @@ namespace Landru {
                 shared_ptr<Fiber> fiberPtr = i._detail->fiber;
                 Fiber *fiber = fiberPtr.get();
                 auto& statements = i._detail->instructions;
-                FnContext fn = {this, fiber, nullptr, nullptr};
+                FnContext fn = {this, fiber, nullptr};
                 if (traceEnabled)
                     for (auto& s : statements) {
                         s.second.exec(fn);
@@ -289,7 +277,7 @@ namespace Landru {
 	{
 		while (_detail->gotos.begin() != _detail->gotos.end()) {
 			auto i = _detail->gotos.front();
-			FnContext run = { this, i.first.get(), nullptr, nullptr };
+			FnContext run = { this, i.first.get(), nullptr };
 			i.first->gotoState(run, i.second.c_str(), true);
 			_detail->gotos.pop_front();
 		}
