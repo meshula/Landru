@@ -7,7 +7,7 @@ namespace Landru {
 	RunState FnContext::run(std::vector<Instruction>& instructions)
 	{
 		RunState runstate = RunState::Continue;
-		if (vm->activateMeta)
+		if (vm->traceEnabled)
 			for (auto& i : instructions) {
 				i.second.exec(*this);
 				if ((runstate = i.first(*this)) != RunState::Continue)

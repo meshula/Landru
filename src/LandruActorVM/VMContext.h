@@ -108,15 +108,27 @@ namespace Landru {
         std::unique_ptr<Detail> _detail;
 
     public:
-        VMContext(Library*);
+		const float TIME_QUANTA = 1.e-4f;
+		
+		VMContext(Library*);
         ~VMContext();
 
-        const float TIME_QUANTA = 1.e-4f;
-
+		//--------------\_____________________________________________________
+		// Libraries
         void instantiateLibs();
-        void update(double now);
+		std::shared_ptr<Wires::TypedData> getLibraryInstanceData(const std::string& name);
+		Library* libs;
+		std::vector<LandruRequire> plugins;
 
-        OnEventEvaluator registerOnEvent(const Fiber& self, std::vector<Instruction> instr);
+		//--------------\_____________________________________________________
+		// Update
+		bool traceEnabled;
+		uint32_t breakPoint;
+		void update(double now);
+
+		//--------------\_____________________________________________________
+		// Events
+		OnEventEvaluator registerOnEvent(const Fiber& self, std::vector<Instruction> instr);
 
         void onTimeout(float delay, int recurrences, const Fiber& self,
                        std::vector<Instruction> instr);
@@ -126,24 +138,19 @@ namespace Landru {
 
 		void clearContinuations(Fiber* f, int level);
 
-        std::shared_ptr<Wires::TypedData> getLibraryInstanceData(const std::string& name);
-
+		//--------------\_____________________________________________________
+		// Machines
         typedef std::pair<std::string,
                           std::vector<std::shared_ptr<Wires::TypedData>>> LaunchRecord;
 
         std::deque<LaunchRecord> launchQueue;
-        Library* libs;
-        std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
-        std::vector<Fiber*> fibers;
-		std::vector<LandruRequire> plugins;
-
+		std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
 		std::shared_ptr<Fiber> fiberPtr(Fiber*);
-
-		std::deque<std::pair<std::shared_ptr<Fiber>, std::string>> gotos;
-
 		void enqueueGoto(Fiber * f, const std::string & state);
 		void finalizeGotos();
 
+		//--------------\_____________________________________________________
+		// Properties
 		typedef size_t LandruIndex;
 		LandruIndex propertyIndex(const std::string & str, LandruIndex parent = 0)
 		{
@@ -187,8 +194,6 @@ namespace Landru {
 		}
 
         std::map<std::string, std::shared_ptr<Wires::TypedData>> bsonGlobals; // when VM is instantiated make TypedData's around the bson globals
-        bool activateMeta;
-        uint32_t breakPoint;
-    };
+	};
 
 }

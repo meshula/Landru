@@ -209,7 +209,7 @@ int main(int argc, char** argv)
 
             if (run && success)
 			{
-                vmContext.activateMeta = verbose;
+                vmContext.traceEnabled = verbose;
                 vmContext.breakPoint = breakPoint;
 
                 //Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());

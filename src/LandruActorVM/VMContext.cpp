@@ -98,12 +98,14 @@ namespace Landru {
         map<Id, MessageQueue> messageQueue;
 
 		multiset<TimeoutTuple, CompareTimeout> timeoutQueue;
-    };
+	
+		std::deque<std::pair<std::shared_ptr<Fiber>, std::string>> gotos;
+	};
 
     VMContext::VMContext(Library* l)
     : _detail(new Detail())
     , libs(l)
-    , activateMeta(false)
+    , traceEnabled(false)
     , breakPoint(~0) {
     }
 
@@ -237,7 +239,7 @@ namespace Landru {
                 Fiber *fiber = fiberPtr.get();
                 auto& statements = i._detail->instructions;
                 FnContext fn = {this, fiber, nullptr, nullptr};
-                if (activateMeta)
+                if (traceEnabled)
                     for (auto& s : statements) {
                         s.second.exec(fn);
                         s.first(fn);
@@ -279,17 +281,17 @@ namespace Landru {
 	{
 		std::shared_ptr<Fiber> fiber = fiberPtr(f);
 		if (fiber && state.length()) {
-			gotos.push_back(std::make_pair(fiber, state));
+			_detail->gotos.push_back(std::make_pair(fiber, state));
 		}
 	}
 
 	void VMContext::finalizeGotos()
 	{
-		while (gotos.begin() != gotos.end()) {
-			auto i = gotos.front();
+		while (_detail->gotos.begin() != _detail->gotos.end()) {
+			auto i = _detail->gotos.front();
 			FnContext run = { this, i.first.get(), nullptr, nullptr };
 			i.first->gotoState(run, i.second.c_str(), true);
-			gotos.pop_front();
+			_detail->gotos.pop_front();
 		}
 	}
 

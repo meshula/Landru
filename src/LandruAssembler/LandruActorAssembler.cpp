@@ -177,7 +177,7 @@ namespace Landru {
 				float test2 = run.self->pop<float>();
 
 				RunState runstate = RunState::Continue;
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test1 == test2) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -212,7 +212,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test == 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -247,7 +247,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test <= 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -282,7 +282,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test >= 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -317,7 +317,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test < 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -352,7 +352,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test > 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -387,7 +387,7 @@ namespace Landru {
 			_context->currInstr.back()->emplace_back(Instruction([conditional](FnContext& run)->RunState {
 				RunState runstate = RunState::Continue;
 				float test = run.self->pop<float>();
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					if (test != 0) {
 						for (auto& i : conditional->conditionalInstructions) {
 							i.second.exec(run);
@@ -450,7 +450,7 @@ namespace Landru {
 			for (generator->begin(); !generator->done(); generator->next())
 			{
 				generator->generate(var.get());
-				if (run.vm->activateMeta) {
+				if (run.vm->traceEnabled) {
 					for (auto& i : conditional->conditionalInstructions) {
 						i.second.exec(run);
 						if ((runstate = i.first(run)) != RunState::Continue)
@@ -497,7 +497,7 @@ namespace Landru {
 			run.self->stack.back().emplace_back(make_shared<Wires::Data<vector<Instruction>>>(onStatements->conditionalInstructions));
 
 			// the on-statement must consume the on-statements
-			if (run.vm->activateMeta) {
+			if (run.vm->traceEnabled) {
 				for (auto& i : onStatement->conditionalInstructions) {
 					i.second.exec(run);
 					if ((runstate = i.first(run)) != RunState::Continue)
