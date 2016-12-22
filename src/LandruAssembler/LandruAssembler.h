@@ -113,7 +113,6 @@ namespace Landru {
     	virtual void initializeSharedVarIfNecessary(const char * varName) override;
 
         virtual void pushGlobalVar(const char* varName) override;
-		virtual void pushGlobalBsonVar(const char* varName) override;
 		virtual void pushInstanceVar(const char* varName) override;
         virtual void pushLocalVar(const char* varName) override;
         virtual void pushSharedVar(const char* varName) override;

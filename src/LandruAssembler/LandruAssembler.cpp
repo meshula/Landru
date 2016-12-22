@@ -326,16 +326,10 @@ namespace Landru {
         }
     }
 
-    void Assembler::pushGlobalBsonVar(const char* varName)
-    {
-        // global variables will be fetched at run time by name from main
-        pushConstant(stringIndex(varName));
-        getGlobalVar();
-    }
-
 	void Assembler::pushGlobalVar(const char * varName)
 	{
-		RaiseError(0, "pushGlobalVar not implemented", varName);
+		pushConstant(stringIndex(varName));
+		getGlobalVar();
 	}
 
     void Assembler::pushInstanceVarReference(const char* varName)

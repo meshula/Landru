@@ -157,9 +157,6 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             else if (sharedVars.find(name) != sharedVars.end()) {
                 pushSharedVar(name);
             }
-            else if (globalBsons.find(name) != globalBsons.end()) {
-                pushGlobalBsonVar(name);
-            }
 			else if (globals.find(name) != globals.end()) {
 				pushGlobalVar(name);
 			}
@@ -181,9 +178,6 @@ void AssemblerBase::assembleNode(ASTNode* root) {
             }
             else if (sharedVars.find(name) != sharedVars.end()) {
                 pushSharedVarReference(name);
-            }
-            else if (globalBsons.find(name) != globalBsons.end()) {
-                AB_RAISE("Cannot reference global bsons. " << root->str2);
             }
 			else if (globals.find(name) != globals.end()) {
                 pushGlobalVarReference(name);

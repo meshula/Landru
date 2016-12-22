@@ -192,8 +192,6 @@ namespace Landru {
 			LandruIndex i = propertyIndex(str, std::hash<const Fiber *>{}(f));
 			properties[i] = p;
 		}
-
-        std::map<std::string, std::shared_ptr<Wires::TypedData>> bsonGlobals; // when VM is instantiated make TypedData's around the bson globals
 	};
 
 }

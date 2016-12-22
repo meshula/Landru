@@ -213,7 +213,6 @@ int main(int argc, char** argv)
                 vmContext.breakPoint = breakPoint;
 
                 //Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());
-                //vmContext.bsonGlobals = laa.assembledGlobalBsonVariables();
                 vmContext.machineDefinitions = laa.assembledMachineDefinitions();
 
 				for (auto i : laa.assembledGlobalVariables()) {

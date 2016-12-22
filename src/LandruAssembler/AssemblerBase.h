@@ -54,7 +54,6 @@ namespace Landru {
     	virtual void initializeSharedVarIfNecessary(const char * varName) = 0;
 
 		virtual void pushGlobalVar(const char* varName) = 0;
-		virtual void pushGlobalBsonVar(const char* varName) = 0;
         virtual void pushInstanceVar(const char* varName) = 0;
         virtual void pushLocalVar(const char* varName) = 0;
 		virtual void pushSharedVar(const char* varName) = 0;
@@ -150,7 +149,6 @@ namespace Landru {
         std::map<std::string, std::string> _requires;
         std::set<std::string> selfVarNames;
         std::map<std::string, std::string>	sharedVars;
-        std::map<std::string, std::shared_ptr<Lab::Bson>> globalBsons;
 		std::map<std::string, std::shared_ptr<Landru::Property>> globals;
 
         std::vector<std::vector<std::pair<std::string, std::string>>> scopedVariables; // stack of local variable scopes

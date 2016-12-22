@@ -44,7 +44,6 @@ namespace Landru {
 		// the result of the assembly
 		//
 		map<string, shared_ptr<MachineDefinition>> machineDefinitions;
-		map<string, shared_ptr<Bson>> bsonGlobals;
 		//
 
 		// current state of assembly
@@ -127,10 +126,6 @@ namespace Landru {
 		return _context->libs;
 	}
 
-
-	const std::map<std::string, std::shared_ptr<Lab::Bson>>& ActorAssembler::assembledGlobalBsonVariables() const {
-		return _context->bsonGlobals;
-	}
 	const std::map<std::string, std::shared_ptr<MachineDefinition>>& ActorAssembler::assembledMachineDefinitions() const {
 		return _context->machineDefinitions;
 	}
@@ -772,7 +767,13 @@ namespace Landru {
 
     void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) 
 	{
-        _context->bsonGlobals[name] = bson;
+		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		prop->name.assign(name);
+		prop->type.assign("bson");
+		prop->visibility = Property::Visibility::Global;
+		std::shared_ptr<Wires::TypedData> val = std::make_shared<Wires::Data<std::shared_ptr<Lab::Bson>>>(bson);
+		prop->assign(val, false);
+		globals[name] = prop;
     }
 
 	void ActorAssembler::addGlobalString(const char* name, const char* value) {
@@ -896,19 +897,6 @@ namespace Landru {
 			run.self->stack.back().emplace_back(i->data);
 			return RunState::Continue;
 		}, "pushSharedVar"));
-    }
-
-    void ActorAssembler::pushGlobalBsonVar(const char *varName) {
-        string str(varName);
-        if (_context->currMachineDefinition->properties.find(str) == _context->currMachineDefinition->properties.end())
-            AB_RAISE("Shared variable " << str << " not found on machine" << _context->currMachineDefinition->name);
-
-        _context->currInstr.back()->emplace_back(Instruction([str](FnContext& run)->RunState
-		{
-            auto i = run.vm->bsonGlobals.find(str);
-            run.self->stack.back().emplace_back(i->second);
-			return RunState::Continue;
-		}, "pushGlobalBsonVar"));
     }
 
 	void ActorAssembler::pushGlobalVar(const char *varName) {
