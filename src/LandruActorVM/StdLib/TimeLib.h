@@ -9,18 +9,13 @@
 #pragma once
 #include "LandruActorVM/LandruLibForward.h"
 
+#define LANDRUTIME_API
+
 namespace Landru {
     namespace Std {
         
-        //-------------
-        // Real Libary \__________________________________________
-        class TimeLib {
-        public:
-            static void registerLib(Library& l);
-            static RunState after(FnContext& run);
-            static RunState every(FnContext& run);
-            static RunState recur(FnContext& run);
-        };
         
     } // Std
 } // Landru
+
+void create_time_plugin(Landru::VMContext&);

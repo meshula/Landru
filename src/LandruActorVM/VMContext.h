@@ -99,7 +99,8 @@ namespace Landru {
 		}
 
 		std::vector<Instruction>& instructions() { return _detail->instructions;  }
-		Fiber* fiber() { return _detail->fiber.get(); }
+		Fiber* fiber() const { return _detail->fiber.get(); }
+		std::shared_ptr<Fiber> fiberPtr() const { return _detail->fiber; }
     };
 
     class VMContext
@@ -109,9 +110,11 @@ namespace Landru {
 
     public:
 		const float TIME_QUANTA = 1.e-4f;
-		
+
 		VMContext(Library*);
         ~VMContext();
+
+		double now() const;
 
 		//--------------\_____________________________________________________
 		// Libraries
@@ -128,9 +131,6 @@ namespace Landru {
 		//--------------\_____________________________________________________
 		// Events
 		OnEventEvaluator registerOnEvent(const Fiber& self, std::vector<Instruction> instr);
-
-        void onTimeout(float delay, int recurrences, const Fiber& self,
-                       std::vector<Instruction> instr);
 
         bool deferredMessagesPending() const;
         bool undeferredMessagesPending() const;

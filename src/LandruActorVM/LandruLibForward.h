@@ -16,7 +16,8 @@ namespace Wires {
 
 namespace Landru {
     class Fiber;
-    class Library;
+	class LandruRequire;
+	class Library;
     class VMContext;
     struct FnContext;
     class Meta;
@@ -28,3 +29,4 @@ namespace Landru {
     typedef std::pair<std::function<RunState(FnContext&)>, Meta> Instruction;
 	typedef std::function<RunState(FnContext&)> ActorFn;
 }
+

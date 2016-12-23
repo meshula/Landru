@@ -147,111 +147,126 @@ int main(int argc, char** argv)
     op.AddTrueOption("v", "verbose", verbose, "Verbose output");
     int breakPoint = ~0;
     op.AddIntOption("b", "breakpoint", breakPoint, "Breakpoint");
-    if (op.Parse(argc, argv)) {
+
+	if (op.Parse(argc, argv)) 
+	{
         if (path.length() == 0) {
             op.Usage();
             exit(1);
         }
-        std::cout << "Compiling " << path << std::endl;
 
         FILE* f = fopen(path.c_str(), "rb");
 		if (!f) {
 			std::cout << path << " not found" << std::endl;
 			exit(1);
 		}
-        if (f) {
-            fseek(f, 0, SEEK_END);
-            size_t len = ftell(f);
-            fseek(f, 0, SEEK_SET);
-            char* text = new char[len+1];
-            fread(text, 1, len, f);
-            text[len] = '\0';
-            fclose(f);
 
-            void* rootNode = landruCreateRootNode();
-            std::vector<std::pair<std::string, Json::Value*> > jsonVars;
-            landruParseProgram(rootNode, &jsonVars, text, len);
+		fseek(f, 0, SEEK_END);
+		size_t len = ftell(f);
+		fseek(f, 0, SEEK_SET);
+		char* text = new char[len + 1];
+		fread(text, 1, len, f);
+		text[len] = '\0';
+		fclose(f);
 
-			bool success = !lcCurrentError();
+		std::cout << "Compiling " << path << std::endl;
 
-			Landru::Library library("landru");
-            Landru::ActorAssembler laa(&library);
-            Landru::Std::populateLibrary(library);
+		// parse the program
+		//
+		void* rootNode = landruCreateRootNode();
+		std::vector<std::pair<std::string, Json::Value*> > jsonVars;
+		landruParseProgram(rootNode, &jsonVars, text, len);
+
+		bool success = !lcCurrentError();
+
+		Landru::Library library("landru");
+		Landru::ActorAssembler laa(&library);
+
+		Landru::VMContext vmContext(&library);
+
+		try
+		{
+			// load libraries to learn valid interfaces
+			//
+			Landru::Std::populateLibrary(library, vmContext);
 			//Landru::Audio::LabSoundLib::registerLib(library());
 
-			Landru::VMContext vmContext(&library);
+			vector<string> requires = laa.requires2((Landru::ASTNode*) rootNode);
+			for (auto r : requires) {
+				loadLibrary(library, r, &vmContext);
+			}
+			for (auto & r : vmContext.plugins) {
+				if (r.init)
+					r.init(&library);
+			}
 
-			try {
+			// assemble the program
+			laa.assemble((Landru::ASTNode*) rootNode);
+		}
+		catch (const std::exception& exc) {
+			std::cout << "Compilation error occured: " << exc.what() << std::endl;
+			success = false;
+		}
 
-				vector<string> requires = laa.requires2((Landru::ASTNode*) rootNode);
-				for (auto r : requires) {
-					loadLibrary(library, r, &vmContext);
+		delete[] text;
+
+		// diagnostic
+		//
+		if (json)
+			landruToJson(rootNode);
+		if (printAst)
+			landruPrintRawAST(rootNode);
+
+		// execution
+		//
+		if (run && success)
+		{
+			vmContext.traceEnabled = verbose;
+			vmContext.breakPoint = breakPoint;
+
+			//Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());
+			vmContext.machineDefinitions = laa.assembledMachineDefinitions();
+
+			for (auto i : laa.assembledGlobalVariables()) {
+				vmContext.storeGlobal(i.first, i.second);
+			}
+
+			vmContext.instantiateLibs();
+			vmContext.launchQueue.push_back(Landru::VMContext::LaunchRecord("main", Landru::Fiber::Stack()));
+
+			bool run = true;
+			do {
+				chrono::high_resolution_clock::time_point now = chrono::high_resolution_clock::now();
+				chrono::duration<double> time_span = chrono::duration_cast<chrono::seconds>(now.time_since_epoch());
+				try {
+					vmContext.update(time_span.count());
 				}
-
-				for (auto & r : vmContext.plugins) {
-					if (r.init)
-						r.init(&library);
+				catch (Landru::Exception & exc) {
+					std::cerr << "Caught Landru exception: " << std::endl << exc.s << std::endl;
+					run = false;
 				}
-
-				laa.assemble((Landru::ASTNode*) rootNode);
-            }
-            catch (const std::exception& exc) {
-                std::cout << "Compilation error occured: " << exc.what() << std::endl;
-                success = false;
-            }
-
-            delete [] text;
-
-            if (json)
-                landruToJson(rootNode);
-            if (printAst)
-                landruPrintRawAST(rootNode);
-
-            if (run && success)
-			{
-                vmContext.traceEnabled = verbose;
-                vmContext.breakPoint = breakPoint;
-
-                //Landru::Audio::LabSoundLib::registerLib(*vmContext.libs.get());
-                vmContext.machineDefinitions = laa.assembledMachineDefinitions();
-
-				for (auto i : laa.assembledGlobalVariables()) {
-					vmContext.storeGlobal(i.first, i.second);
+				catch (...) {
+					std::cerr << "Exception caught, exiting" << std::endl;
+					run = false;
 				}
-
-                vmContext.instantiateLibs();
-                vmContext.launchQueue.push_back(Landru::VMContext::LaunchRecord("main", Landru::Fiber::Stack()));
-
-				bool run = true;
-                do {
-                    chrono::high_resolution_clock::time_point now = chrono::high_resolution_clock::now();
-                    chrono::duration<double> time_span = chrono::duration_cast<chrono::seconds>(now.time_since_epoch());
-					try {
-						vmContext.update(time_span.count());
-					}
-					catch (Landru::Exception & exc) {
-						std::cerr << "Caught Landru exception: " << std::endl << exc.s << std::endl;
-						run = false;
-					}
-					catch (...) {
-						std::cerr << "Exception caught, exiting" << std::endl;
-						run = false;
-					}
-                    if (vmContext.undeferredMessagesPending()) {
-                        continue;
-                    }
-					else if (!vmContext.launchQueue.empty()) {
-						continue;
-					}
-					else if (vmContext.deferredMessagesPending()) {
-
-                        std::this_thread::sleep_for(std::chrono::microseconds(2000));
-                    }
-                    else
-                        break;
-                } while (run);
-            }
-        }
-    }
+				if (vmContext.undeferredMessagesPending()) {
+					continue;
+				}
+				else if (!vmContext.launchQueue.empty()) {
+					continue;
+				}
+				else if (vmContext.deferredMessagesPending()) {
+					std::this_thread::sleep_for(std::chrono::microseconds(2000));
+				}
+				else
+					break;
+			} while (run);
+		}
+	}
+	else {
+		// no arguments supplied.
+		op.Usage();
+		exit(1);
+	}
     return 0;
 }

@@ -16,6 +16,6 @@
 
 namespace Landru {
     namespace Std {
-        void populateLibrary(Landru::Library&);
+        void populateLibrary(Library&, VMContext&);
     }
 }
