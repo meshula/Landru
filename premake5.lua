@@ -56,8 +56,10 @@ project "landruc"
 
     files { "include/Landru/**.h", "src/LandruC/**.h", "src/LandruC/**.cpp" }
 
-    libdirs { "../LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
-              "../LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}" }
+    libdirs {
+        "thirdparty/src/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}"
+    }
 
     links { "Landru", "LabJson", "LabText" }
 
@@ -66,5 +68,9 @@ project "landru_gl"
     language "C++"
     includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }
     files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
-    libdirs { "../LabText/bin/%{cfg.platform}/%{cfg.buildcfg}", "thirdparty/lib" }
+    libdirs { 
+        "thirdparty/src/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/lib"
+    }
     links { "glfw3", "Landru", "LabText" }
