@@ -22,9 +22,10 @@ namespace Landru {
         create(vm); 
 	}
 
-	Property::Property(const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
+	Property::Property(VMContext& vm, const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
 		: name(name), type(type), assignCount(0)
 	{
+		create(vm);
 		data->copy(d.get());
 	}
 

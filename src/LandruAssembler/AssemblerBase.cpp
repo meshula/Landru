@@ -275,10 +275,9 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
 
 				if ((*j)->children.size()) {
 					ASTConstIter k = (*j)->children.begin();
-					if ((*k)->token == kTokenEq) {
+					if ((*k)->token == kTokenAssignment) {
 						// An assignment is part of the local variable declaration
 						assembleNode(*k);
-						storeToVar(name);
 					}
 				}
 			}

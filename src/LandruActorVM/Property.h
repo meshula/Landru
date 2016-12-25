@@ -28,7 +28,7 @@ namespace Landru {
         enum class Visibility { Shared, ActorLocal, Global };
         
         Property(VMContext& vm, const std::string& name, const std::string& type);
-		Property(const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>&);
+		Property(VMContext& vm, const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>&);
 		Property();
         ~Property();
         

@@ -518,7 +518,8 @@ namespace Landru {
 		_context->localVariableState.emplace_back(0);
 	}
 
-	void ActorAssembler::addLocalVariable(const char* name, const char* type) {
+	void ActorAssembler::addLocalVariable(const char* name, const char* type) 
+	{
 		string nStr(name);
 		string tStr(type);
 		_context->localVariables.emplace_back(make_pair(name, type));

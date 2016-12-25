@@ -28,9 +28,9 @@ void parseGoto(CurrPtr& curr, EndPtr end);
 void parseStatement(CurrPtr& curr, EndPtr end);
 void parseParamList(CurrPtr& curr, EndPtr end);
 void parseParam(CurrPtr& curr, EndPtr end);
-void parseStatements(CurrPtr&, EndPtr);
+void parseStatements(CurrPtr&, EndPtr, ASTNode *& currNode);
 void parseConditional(CurrPtr& curr, EndPtr end);
-void parseState(CurrPtr& curr, EndPtr end);
+void parseState(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseLocals(CurrPtr& curr, EndPtr end);
 void parseMachine(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
@@ -459,7 +459,7 @@ void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end)
 	;
  */
 
-void parseState(CurrPtr& curr, EndPtr end)
+void parseState(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	if (getToken(curr, end) != kTokenState)
 	{
@@ -478,7 +478,7 @@ void parseState(CurrPtr& curr, EndPtr end)
 	currNode = ast;
 
 	// landruStatements*
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
@@ -488,7 +488,7 @@ void parseState(CurrPtr& curr, EndPtr end)
  landruStatements* ;
  */
 
-void parseStatements(CurrPtr& curr, EndPtr end)
+void parseStatements(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	ASTNode* pop = currNode;
 	ASTNode* ast = new ASTNode(kTokenStatements);
@@ -661,7 +661,7 @@ void parseConditional(CurrPtr& curr, EndPtr end) {
 	if (!getColon(curr, end))
 		return;
 
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	tokenId = peekToken(curr, end);
@@ -689,7 +689,7 @@ void parseElse(CurrPtr& curr, EndPtr end) {
 	currNode = new ASTNode(kTokenElse);
 	pop->addChild(currNode);
 
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
@@ -742,7 +742,7 @@ void parseFor(CurrPtr& curr, EndPtr end) {
 		return;
     }
 
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
@@ -798,7 +798,7 @@ void parseOn(CurrPtr& curr, EndPtr end) {
 	if (!getColon(curr, end))
 		return;
 
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
@@ -1269,7 +1269,7 @@ void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 	switch (token) {
 		case kTokenDeclare:  parseDeclare(curr, end, currNode);          break;
         case kTokenLocal:    parseLocals(curr, end);                     break;
-		case kTokenState:    parseState(curr, end);                      break;
+		case kTokenState:    parseState(curr, end, currNode);            break;
 		default:             lcRaiseError("Only declare, local, or state valid here. Found", curr, 32);    break;
 	}
 }

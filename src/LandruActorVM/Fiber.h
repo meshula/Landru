@@ -161,7 +161,7 @@ namespace Landru {
 		std::shared_ptr<Wires::TypedData> push_local(const std::string & name, const std::string & type, 
 												     std::shared_ptr<Wires::TypedData> v) 
 		{
-			locals.push_back(std::move(std::make_shared<Property>(name, type, v)));
+			locals.push_back(std::move(std::make_shared<Property>(vm, name, type, v)));
 			return (*locals.rbegin())->data;
 		}
 
