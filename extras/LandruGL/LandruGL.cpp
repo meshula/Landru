@@ -21,9 +21,20 @@ namespace {
 
         GLFWwindow* window;
     };
+	struct OnWindowResized : public OnEventEvaluator
+	{
+		explicit OnWindowResized(GLFWwindow* w, std::shared_ptr<Fiber> f, vector<Instruction> & statements)
+			: OnEventEvaluator(f, statements)
+			, window(w) {}
+
+		GLFWwindow* window;
+
+		static void window_resized(GLFWwindow* w, int width, int height);
+	};
 
     std::vector<GLFWwindow*> sgWindows;
     std::vector<OnWindowClosed> sgOnWindowClosed;
+	std::vector<OnWindowResized> sgOnWindowResized;
 
     void error_callback(int error, const char* description)
     {
@@ -38,6 +49,12 @@ namespace {
 
         /// @TODO reroute key to landru as a string, like "alt-G" or "alt-g"
     }
+
+
+	void OnWindowResized::window_resized(GLFWwindow* w, int width, int height)
+	{
+		std::cout << "Resize to " << width << " " << height << std::endl;
+	}
 
 
 
@@ -77,16 +94,26 @@ namespace {
     {
         vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
 		auto property = run.self->pop<GLFWwindow*>();
-//		Wires::Data<GLFWwindow*>* windowData = reinterpret_cast<Wires::Data<GLFWwindow*>*>(property->data.get());
 		run.self->popVar(); // drop the instr
-//&&& onWindowClosed should be monitoring properties not values of properties
-        //record a few things like Fiber, and emplace_back them so that callback can work
-	//	GLFWwindow * w = windowData->value();
 		if (property)
 			sgOnWindowClosed.emplace_back(OnWindowClosed(property, run.vm->fiberPtr(run.self), instr));
 
 		return RunState::Continue;
     }
+
+	RunState windowResized(FnContext& run)
+	{
+		vector<Instruction> instr = run.self->back<vector<Instruction>>(-2);
+		auto property = run.self->pop<GLFWwindow*>();
+		run.self->popVar(); // drop the instr
+
+		if (property) {
+			glfwSetWindowSizeCallback(property, OnWindowResized::window_resized);
+			sgOnWindowResized.emplace_back(OnWindowResized(property, run.vm->fiberPtr(run.self), instr));
+		}
+
+		return RunState::Continue;
+	}
 
 } // anon
 
@@ -102,8 +129,9 @@ void landru_gl_init(void* vl)
 
     auto glVtable = unique_ptr<Library::Vtable>(new Library::Vtable("gl"));
     glVtable->registerFn("1.0", "createWindow", "ffs", "o", createWindow);
-    glVtable->registerFn("1.0", "windowClosed", "o", "o", windowClosed);
-    gl_lib.registerVtable(move(glVtable));
+    glVtable->registerFn("1.0", "windowClosed", "o", "", windowClosed);
+	glVtable->registerFn("1.0", "windowResized", "o", "ff", windowResized);
+	gl_lib.registerVtable(move(glVtable));
 
     gl_lib.registerFactory("context", [](VMContext&)->std::shared_ptr<Wires::TypedData>
     {
@@ -179,19 +207,26 @@ void landru_gl_clearContinuations(Fiber* f, int level)
     if (!f)
         sgOnWindowClosed.clear();
     else {
-        for (std::vector<OnWindowClosed>::iterator i = sgOnWindowClosed.begin(); i != sgOnWindowClosed.end(); ++i) {
+		for (std::vector<OnWindowClosed>::iterator i = sgOnWindowClosed.begin(); i != sgOnWindowClosed.end(); ++i) {
             if (i->fiber() == f) {
                 i = sgOnWindowClosed.erase(i);
                 if (i == sgOnWindowClosed.end())
                     break;
             }
         }
-    }
+		for (std::vector<OnWindowResized>::iterator i = sgOnWindowResized.begin(); i != sgOnWindowResized.end(); ++i) {
+			if (i->fiber() == f) {
+				i = sgOnWindowResized.erase(i);
+				if (i == sgOnWindowResized.end())
+					break;
+			}
+		}
+	}
 }
 
 extern "C"
 LANDRUGL_API
 bool landru_gl_pendingContinuations(Fiber * f)
 {
-    return sgOnWindowClosed.size() > 0;
+	return sgOnWindowClosed.size() > 0 || sgOnWindowResized.size() > 0;
 }
