@@ -19,10 +19,14 @@ machine main:
     ;
 
     state main:
+        local:
+            int j = 10
+        ;
         io.print("a = ", a, " b = ", b, " c = ", c, "\n")
         io.print("d = ", d, " e = ", e, " f = ", f, "\n")
         io.print("Shared a0 = ", a0, " shared g = ", g, "\n")
         io.print("Global string h = ", h, "\n")
         io.print("Global int i = ", i, "\n")
+        io.print("Local j = ", j, "\n")
     ;
 ;

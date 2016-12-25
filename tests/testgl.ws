@@ -9,12 +9,16 @@ declare:
 
     state main:
         w = gl.createWindow(640, 480, "Hello World")
-        on time.after(5):
-            io.print("Time's up, it was swell")
+        on time.after(30):
+            io.print("Time's up, it was swell\n")
             goto done;
         on gl.windowClosed(w):
-            io.print("Goodbye cruel world")
+            io.print("Goodbye cruel world\n")
             goto done;
+        on gl.windowResized(w):
+            param float width;
+            param float height;
+            io.print("resized to ", width, " height ", height, "\n");
     ;
 
     state done:
