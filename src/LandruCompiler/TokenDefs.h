@@ -4,7 +4,6 @@
 
 TOKEN_DECL(Unknown,			"unknown"	)
 TOKEN_DECL(Declare,			"declare"	)
-TOKEN_DECL(Local, 			"local"	)
 TOKEN_DECL(Shared,			"shared"	)
 TOKEN_DECL(Dot,				"."			)
 TOKEN_DECL(Else,			"else"		)

@@ -197,6 +197,16 @@ machine globalVar:
 Variables declared in the global scope persist until all launched machines have
 exited and the script stops running.
 
+States can have local variables.
+
+```
+machine stateVar:
+    state main:
+      declare: int j = 5; ;
+    ;
+;
+```
+
 Scoping rules are that the most local scope has precedence. So a local variable
 is preferred to machine variable (shared or instance), is preferred to a required
 module's variable or a global variable. If for some reason namespacing caused a

@@ -19,7 +19,7 @@ machine main:
     ;
 
     state main:
-        local:
+        declare:
             int j = 10
         ;
         io.print("a = ", a, " b = ", b, " c = ", c, "\n")

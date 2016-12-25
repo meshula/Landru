@@ -325,7 +325,7 @@ bool getSemiColon(CurrPtr& curr, EndPtr end)
  */
 
 void parseLocals(CurrPtr& curr, EndPtr end) {
-	if (getToken(curr, end) != kTokenLocal) {
+	if (getToken(curr, end) != kTokenDeclare) {
 		lcRaiseError("Expected 'local'", curr, 32);
 		return;
 	}
@@ -522,7 +522,7 @@ void parseStatement(CurrPtr& curr, EndPtr end)
 {
 	TokenId token = peekToken(curr, end);
 	switch (token) {
-        case kTokenLocal:
+        case kTokenDeclare:
             parseLocals(curr, end);
             break;
 
@@ -1261,14 +1261,13 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::ve
 
 /*
  landruBlock
- : lDeclareBlock | lLocalBlock | lStateBlock ;
+ : lDeclareBlock | lStateBlock ;
  */
 
 void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 	TokenId token = peekToken(curr, end);
 	switch (token) {
 		case kTokenDeclare:  parseDeclare(curr, end, currNode);          break;
-        case kTokenLocal:    parseLocals(curr, end);                     break;
 		case kTokenState:    parseState(curr, end, currNode);            break;
 		default:             lcRaiseError("Only declare, local, or state valid here. Found", curr, 32);    break;
 	}
