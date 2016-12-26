@@ -10,6 +10,7 @@
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruCompiler/Parser.h"
 #include "LandruCompiler/ParseExpression.h"
+#include "LandruCompiler/Tokens.h"
 #include "LabJson/LabJson.h"
 
 #include <iostream>
@@ -20,7 +21,7 @@ using namespace Landru;
 
 void parseAssignment(CurrPtr& curr, EndPtr end);
 void parseLandruBlock(CurrPtr&, EndPtr);
-void parseLandruVarDeclaration(CurrPtr&, EndPtr);
+void parseLandruVarDeclaration(CurrPtr&, EndPtr, ASTNode *& currNode);
 void parseElse(CurrPtr& curr, EndPtr end);
 void parseFor(CurrPtr& curr, EndPtr end);
 void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
@@ -32,7 +33,7 @@ void parseStatements(CurrPtr&, EndPtr, ASTNode *& currNode);
 void parseConditional(CurrPtr& curr, EndPtr end);
 void parseState(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
-void parseLocals(CurrPtr& curr, EndPtr end);
+void parseLocals(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseMachine(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseOn(CurrPtr& curr, EndPtr end);
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId);
@@ -324,7 +325,7 @@ bool getSemiColon(CurrPtr& curr, EndPtr end)
  ;
  */
 
-void parseLocals(CurrPtr& curr, EndPtr end) {
+void parseLocals(CurrPtr& curr, EndPtr end, ASTNode *& currNode) {
 	if (getToken(curr, end) != kTokenDeclare) {
 		lcRaiseError("Expected 'local'", curr, 32);
 		return;
@@ -343,7 +344,7 @@ void parseLocals(CurrPtr& curr, EndPtr end) {
 			++curr;
 			break;
 		}
-		parseLandruVarDeclaration(curr, end);
+		parseLandruVarDeclaration(curr, end, currNode);
 	}
 
 	currNode = pop;
@@ -383,7 +384,7 @@ void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 			break;
 		}
 
-		parseLandruVarDeclaration(curr, end);
+		parseLandruVarDeclaration(curr, end, currNode);
 	}
 
 	currNode = pop;
@@ -404,10 +405,11 @@ void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 	 ;
  */
 
-void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end)
+void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	bool sharedToken = peekToken(curr, end) == kTokenShared;
-	if (sharedToken)
+	bool paramToken = !sharedToken && peekToken(curr, end) == kTokenParam;
+	if (sharedToken || paramToken)
 		getToken(curr, end);
 
 	char varType[256];
@@ -424,11 +426,16 @@ void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end)
     if (!strlen(name))
         lcRaiseError("Expected variable name, found:", curr, 32);
 
-	ASTNode * variableNode = new ASTNode(sharedToken ? kTokenSharedVariable : kTokenLocalVariable,
-		                                 varType, name);
+	auto token = kTokenLocalVariable;
+	if (sharedToken)
+		token = kTokenSharedVariable;
+	else if (paramToken)
+		token = kTokenParam;
+
+	ASTNode * variableNode = new ASTNode(token, varType, name);
 	currNode->addChild(variableNode);
 
-	TokenId token = peekToken(curr, end);
+	token = peekToken(curr, end);
 	if (token == kTokenEq) {
 		getToken(curr, end); // consume assignment operator
 		ASTNode * pop = currNode;
@@ -523,7 +530,7 @@ void parseStatement(CurrPtr& curr, EndPtr end)
 	TokenId token = peekToken(curr, end);
 	switch (token) {
         case kTokenDeclare:
-            parseLocals(curr, end);
+            parseLocals(curr, end, currNode);
             break;
 
 		case kTokenUnknown: {

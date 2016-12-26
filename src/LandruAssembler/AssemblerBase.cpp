@@ -273,6 +273,9 @@ void AssemblerBase::assembleStatements(ASTNode* root) {
 				addLocalVariable(name, type);
 				scopedVariables.back().push_back(pair<string, string>(name, type));
 
+				if ((*j)->token == kTokenParam)
+					storeToVar(name);
+
 				if ((*j)->children.size()) {
 					ASTConstIter k = (*j)->children.begin();
 					if ((*k)->token == kTokenAssignment) {

@@ -36,6 +36,13 @@ namespace {
     std::vector<OnWindowClosed> sgOnWindowClosed;
 	std::vector<OnWindowResized> sgOnWindowResized;
 
+	struct PendingResize
+	{
+		GLFWwindow * window;
+		float width, height;
+	};
+	std::vector<PendingResize> sgResizes;
+
     void error_callback(int error, const char* description)
     {
         fprintf(stderr, "Error: %s\n", description);
@@ -53,7 +60,11 @@ namespace {
 
 	void OnWindowResized::window_resized(GLFWwindow* w, int width, int height)
 	{
-		std::cout << "Resize to " << width << " " << height << std::endl;
+		for (auto & i : sgOnWindowResized) {
+			if (i.window == w) {
+				sgResizes.push_back({ w, (float) width, (float) height });
+			}
+		}
 	}
 
 
@@ -174,6 +185,19 @@ RunState landru_gl_update(double now, VMContext* vm)
             }
         }
     } while (cullWindows);
+
+	for (auto i : sgResizes) {
+		for (auto & j : sgOnWindowResized) {
+			if (j.window == i.window) {
+				FnContext fn(vm, j.fiber(), nullptr);
+				j.fiber()->push<float>(i.height);
+				j.fiber()->push<float>(i.width);
+				auto & instr = j.instructions();
+				fn.run(instr);
+			}
+		}
+	}
+	sgResizes.clear();
 
     for (auto w : sgWindows) {
         /// @TODO only render and swap buffers if the window needs redrawing

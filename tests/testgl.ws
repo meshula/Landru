@@ -16,8 +16,9 @@ declare:
             io.print("Goodbye cruel world\n")
             goto done;
         on gl.windowResized(w):
-            param float width;
-            param float height;
+        declare:
+            param float width
+            param float height ;
             io.print("resized to ", width, " height ", height, "\n");
     ;
 
