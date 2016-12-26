@@ -68,9 +68,20 @@ project "landru_gl"
     language "C++"
     includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }
     files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
-    libdirs { 
+    libdirs {
         "thirdparty/src/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/lib"
+    }
+    links { "glfw3", "Landru", "LabText" }
+
+project "landru_audio"
+    kind "SharedLib"
+    language "C++"
+    includedirs { "extras/LandruAudio", "include", "src", "thirdparty/include" }
+    files { "extras/LandruAudio/**.h", "extras/LandruAudio/**.cpp" }
+    libdirs {
+        "thirdparty/src/LabSound/build/x64/%{cfg.buildcfg}",
         "thirdparty/lib"
     }
     links { "glfw3", "Landru", "LabText" }
