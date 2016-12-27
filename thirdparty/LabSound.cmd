@@ -7,7 +7,7 @@ if not exist "src" mkdir src
 cd src
 
 if not exist "LabSound\README.md" ^
-git clone https://github.com/LabSound/LabSound.git --recursive
+git clone https://meshula@github.com/meshula/LabSound.git --recursive
 
 cd LabSound
 git pull

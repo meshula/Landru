@@ -44,7 +44,7 @@ project "Landru"
     -- targetdir ("local/lib/%{cfg.longname}")
 
     includedirs { "src",
-                   "../LabText/src", "../LabJson/src" }
+                   "thirdparty/src/LabText/src", "thirdparty/src/LabJson/src" }
     files { "src/**.h", "src/**.cpp", "src/**.c" }
     excludes { }
 
@@ -78,10 +78,12 @@ project "landru_gl"
 project "landru_audio"
     kind "SharedLib"
     language "C++"
-    includedirs { "extras/LandruAudio", "include", "src", "thirdparty/include" }
+    includedirs { "extras/LandruAudio", "include", "src", "thirdparty/include", "thirdparty/src/labsound-c" }
     files { "extras/LandruAudio/**.h", "extras/LandruAudio/**.cpp" }
     libdirs {
         "thirdparty/src/LabSound/build/x64/%{cfg.buildcfg}",
-        "thirdparty/lib"
+        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/lib",
+        "thirdparty/src/labsound-c/bin/%{cfg.platform}/%{cfg.buildcfg}"
     }
-    links { "glfw3", "Landru", "LabText" }
+    links { "Landru", "LabText", "labsoundc" }
