@@ -36,3 +36,5 @@ Landru.VC.db
 Landru.VC.VC.opendb
 landru_gl.vcxproj
 landru_gl.vcxproj.*
+landru_audio.vcxproj
+landru_audio.vcxproj.*
