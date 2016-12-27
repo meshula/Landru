@@ -100,7 +100,8 @@ namespace Landru {
         virtual void endLocalVariableScope() override;
 
         // requires
-        virtual void addRequire(const char* name, const char* module) override;
+		virtual void addGlobal(const char* name, const char* type) override;
+		virtual void addRequire(const char* name, const char* module) override;
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) override;
 		virtual void addGlobalString(const char* name, const char* value) override;
 		virtual void addGlobalInt(const char* name, int value) override;

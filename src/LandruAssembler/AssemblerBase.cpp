@@ -439,16 +439,25 @@ void AssemblerBase::assemble(ASTNode* root)
 			else if (i->token == kTokenDeclare) {
 				// gather all global declarations
 				for (auto j : i->children)
-					if (j->token == kTokenLocalVariable)
+					if (j->token == kTokenLocalVariable) {
+						declarations.push_back(j);
+					}
+					else if (j->token == kTokenAssignment) {
 						for (auto k : j->children)
 							declarations.push_back(k);
+					}
 			}
 		}
 
         // instantiate the globals
 		if (declarations.size() > 0) {
 			for (auto i : declarations) {
-				if (i->token == kTokenAssignment) {
+				if (i->token == kTokenLocalVariable) {
+					string type = i->str1;
+					string name = i->str2;
+					addGlobal(name.c_str(), type.c_str());
+				}
+				else if (i->token == kTokenAssignment) {
 					string name = i->str2;
 					if (i->children.size()) {
 						auto j = *i->children.begin();

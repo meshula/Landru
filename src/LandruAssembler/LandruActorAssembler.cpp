@@ -518,7 +518,7 @@ namespace Landru {
 		_context->localVariableState.emplace_back(0);
 	}
 
-	void ActorAssembler::addLocalVariable(const char* name, const char* type) 
+	void ActorAssembler::addLocalVariable(const char* name, const char* type)
 	{
 		string nStr(name);
 		string tStr(type);
@@ -650,11 +650,11 @@ namespace Landru {
 					if (!found)
 						AB_RAISE("Couldn't find function " << f);
 				}
-				lib = l->findVtable(parts[parts.size()-2].c_str());
+				lib = l->findVtable(parts[parts.size() - 2].c_str());
 				if (!lib)
 					AB_RAISE("Couldn't find function in " << parts[parts.size() - 2]);
 
-				partIndex = parts.size() - 1;
+				partIndex = int(parts.size()) - 1;
 			}
 
 			auto fnEntry = lib->function(parts[partIndex].c_str());
@@ -664,7 +664,7 @@ namespace Landru {
 			auto fn = fnEntry->fn;
 			string str = "library call on " + parts[0] + " to " + parts[partIndex];
 			string libraryName = lib->name;
-			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState 
+			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState
 			{
 				FnContext fnRun(run);
 				return fn(fnRun);
@@ -687,7 +687,7 @@ namespace Landru {
 					AB_RAISE("No std library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
 				}
 				AB_RAISE("@TODO callOnProperty");
-				_context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState 
+				_context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
 				{
 					// we know what the lambda to call is, but we're going to have to look up the property named parts[0] at runtime
 					// call function on require parts[index] and then clear the params
@@ -755,12 +755,23 @@ namespace Landru {
 			{
 				auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 				auto data = run.self->popVar();
-				prop->copy(data, true);
+				prop->copy(*run.vm, data, true);
 				return RunState::Continue;
 			}, str.c_str()));
 		}
 		else {
-			AB_RAISE("Couldn't find variable: " << string(name));
+			auto global_iter = globals.find(parts);
+			if (global_iter != globals.end()) {
+				_context->currInstr.back()->emplace_back(Instruction([parts, str](FnContext& run)->RunState
+				{
+					auto prop = run.vm->findGlobal(parts); // already checked at compile time
+					auto data = run.self->popVar();
+					prop->copy(*run.vm, data, true);
+					return RunState::Continue;
+				}, str.c_str()));
+			}
+			else 
+				AB_RAISE("Couldn't find variable: " << string(name));
 		}
 	}
 
@@ -783,6 +794,15 @@ namespace Landru {
 			}
 			return RunState::Continue;
 		}, str.c_str()));
+	}
+
+	void ActorAssembler::addGlobal(const char* name, const char* type)
+	{
+		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		prop->name.assign(name);
+		prop->type.assign(type);
+		prop->visibility = Property::Visibility::Global;
+		globals[name] = prop;
 	}
 
     void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) 

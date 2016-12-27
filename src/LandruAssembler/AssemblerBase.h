@@ -110,6 +110,7 @@ namespace Landru {
 
         // requires and globals
         virtual void addRequire(const char* name, const char* module) = 0;
+		virtual void addGlobal(const char* name, const char* type) = 0;
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) = 0;
 		virtual void addGlobalString(const char* name, const char* value) = 0;
 		virtual void addGlobalInt(const char* name, int value) = 0;

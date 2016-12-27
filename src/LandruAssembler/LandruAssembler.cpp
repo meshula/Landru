@@ -812,6 +812,9 @@ namespace Landru {
         return std::unique_ptr<Exemplar>(e);
     }
 
+	void Assembler::addGlobal(const char* name, const char* type) {
+		RaiseError(0, "global not implemented ", name);
+	}
 
     void Assembler::addGlobalBson(const char* name, shared_ptr<Lab::Bson> b) {
 		RaiseError(0, "global bson not implemented ", name);

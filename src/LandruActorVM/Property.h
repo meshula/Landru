@@ -35,8 +35,9 @@ namespace Landru {
         // return false if data is compatible, and compatibility required
         bool assign(std::shared_ptr<Wires::TypedData>&, bool mustBeCompatible);
 
-		// return false if data is compatible, and compatibility required
-		bool copy(std::shared_ptr<Wires::TypedData>&, bool mustBeCompatible);
+		// return false if data is not compatible, and compatibility required
+		// will create data if necessary
+		bool copy(VMContext& vm, std::shared_ptr<Wires::TypedData>&, bool mustBeCompatible);
         
         std::string name;
         std::string type;

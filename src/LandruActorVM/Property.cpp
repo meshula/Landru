@@ -44,12 +44,16 @@ namespace Landru {
         return true;
     }
 
-	bool Property::copy(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
+	bool Property::copy(VMContext& vm, std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
 	{
-		if (mustBeCompatible) {
-			if (!data || td->type() != data->type())
+		if (mustBeCompatible && data) {
+			if (td->type() != data->type())
 				return false;
 		}
+
+		if (!data)
+			create(vm);
+
 		data->copy(td.get());
 		++assignCount;
 		return true;
