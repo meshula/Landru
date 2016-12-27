@@ -615,6 +615,8 @@ namespace Landru {
 				AB_RAISE("Can't find require library " << parts[0]);
 			}
 
+			int partIndex = 1;
+
 			Library::Vtable const* lib = nullptr;
 			if (parts.size() == 1) {
 				lib = _context->libs->findVtable(parts[0].c_str());
@@ -632,15 +634,35 @@ namespace Landru {
 						}
 					}
 			}
-			else
-				AB_RAISE("Couldn't find function " << f);
+			else {
+				std::vector<Library> * libraries = &_context->libs->libraries;
+				Library * l = nullptr;
+				for (int part = 0; part < parts.size() - 1; ++part) {
+					bool found = false;
+					for (auto& i : *libraries) {
+						if (i.name == parts[part]) {
+							libraries = &i.libraries;
+							l = &i;
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						AB_RAISE("Couldn't find function " << f);
+				}
+				lib = l->findVtable(parts[parts.size()-2].c_str());
+				if (!lib)
+					AB_RAISE("Couldn't find function in " << parts[parts.size() - 2]);
 
-			auto fnEntry = lib->function(parts[1].c_str());
+				partIndex = parts.size() - 1;
+			}
+
+			auto fnEntry = lib->function(parts[partIndex].c_str());
 			if (!fnEntry)
-				AB_RAISE("Function " << parts[1] << " does not exist on library: " << parts[0]);
+				AB_RAISE("Function " << parts[partIndex] << " does not exist on library: " << parts[0]);
 
 			auto fn = fnEntry->fn;
-			string str = "library call on " + parts[0] + " to " + parts[1];
+			string str = "library call on " + parts[0] + " to " + parts[partIndex];
 			string libraryName = lib->name;
 			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState 
 			{

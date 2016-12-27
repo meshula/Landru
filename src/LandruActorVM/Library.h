@@ -26,9 +26,10 @@ namespace Landru {
     //  Library      \____________________
 
     class Library {
+		explicit Library() = delete;
     public:
-        Library(const char* name) : name(name) {}
-        Library(Library && rhs) { *this = std::move(rhs); }
+        explicit Library(const char* name) : name(name) {}
+        explicit Library(Library && rhs) { *this = std::move(rhs); }
         ~Library() {}
 
         Library& operator=(Library && rhs)
@@ -38,6 +39,7 @@ namespace Landru {
             std::swap(vtables, rhs.vtables);
             factories.clear();
             std::swap(factories, rhs.factories);
+			std::swap(libraries, rhs.libraries);
             return *this;
         }
 
