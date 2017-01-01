@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+
 using namespace std;
 
 namespace Landru {
@@ -27,9 +28,12 @@ namespace Landru {
         void IoLib::registerLib(Library& l) {
             auto u = unique_ptr<Library::Vtable>(new Library::Vtable("io"));
             u->registerFn("2.0", "print", "...", "", print);
-            l.registerVtable(move(u));
+			u->registerFn("2.0", "resolve", "s", "s", resolve);
+			l.registerVtable(move(u));
         }
-        RunState IoLib::print(FnContext& run) {
+
+        RunState IoLib::print(FnContext& run)
+        {
             auto& params = run.self->stack.back();
             for (auto p : params) {
                 if (p->type() == typeid(string)) {
@@ -51,9 +55,17 @@ namespace Landru {
             size_t pop = params.size();
             for (size_t i = 0; i < pop; ++i)
                 run.self->popVar();
-		
+
 			return RunState::Continue;
 		}
+
+        RunState IoLib::resolve(FnContext& run)
+        {
+            string inPath = run.self->pop<string>();
+            inPath = "c:\\Projects\\landru-stage\\Landru\\tests\\" + inPath;
+            run.self->push<string>(inPath);
+			return RunState::Continue;
+        }
 
 
     } // Std

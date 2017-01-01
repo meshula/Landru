@@ -575,6 +575,7 @@ namespace Landru {
 		CallOn callOn = CallOn::callOnSelf;
 
 		int index = 0;
+
 		while (index < parts.size() - 1) {
 			if (_context->currMachineDefinition->properties.find(parts[index]) != _context->currMachineDefinition->properties.end()) {
 				callOn = CallOn::callOnProperty;
@@ -582,6 +583,10 @@ namespace Landru {
 			}
 			if (_context->requireAliases.find(parts[index]) != _context->requireAliases.end()) {
 				callOn = CallOn::callOnRequire;
+				break;
+			}
+			if (globals.find(parts[index]) != globals.end()) {
+				callOn = CallOn::callOnProperty;
 				break;
 			}
 			AB_RAISE("Unknown identifier " << parts[index] << " while parsing " << fnName);
@@ -673,11 +678,17 @@ namespace Landru {
 		}
 
 		case CallOn::callOnProperty:
-			auto property = _context->currMachineDefinition->properties.find(parts[0]);
-			if (property == _context->currMachineDefinition->properties.end()) {
-				AB_RAISE("Property " << parts[0] << " not found for function call " << f);
+			auto machineProperty = _context->currMachineDefinition->properties.find(parts[0]);
+			string type;
+			if (machineProperty == _context->currMachineDefinition->properties.end()) {
+				auto globalProperty = globals.find(parts[0]);
+				if (globalProperty == globals.end())
+					AB_RAISE("Property " << parts[0] << " not found for function call " << f);
+				type = globalProperty->second->type;
 			}
-			string type = property->second->type;
+			else
+				type = machineProperty->second->type;
+
 			vector<string> typeParts = TextScanner::Split(type, ".");
 
 			if (typeParts.size() == 0) {
@@ -715,9 +726,11 @@ namespace Landru {
 						{
 							FnContext fnRun(run);
 							auto property = run.vm->findInstance(run.self, propertyName);
-							if (!property)
-								VM_RAISE("Couldn't find property: " << propertyName);
-
+							if (!property) {
+								property = run.vm->findGlobal(propertyName);
+								if (!property)
+									VM_RAISE("Couldn't find property: " << propertyName);
+							}
 							fnRun.var = property->data.get();
 							return fn(fnRun);
 						}, str.c_str()));

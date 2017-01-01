@@ -15,7 +15,7 @@ class TypedData {
 public:
     TypedData() : _type(typeid(TypedData)) { }
     virtual ~TypedData() { }
-    std::type_index type() const { return _type; }
+    const std::type_index type() const { return _type; }
 
     virtual void copy(const TypedData*) = 0;
 

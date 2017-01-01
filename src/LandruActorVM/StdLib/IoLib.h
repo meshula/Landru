@@ -11,18 +11,19 @@
 
 namespace Landru {
     namespace Std {
-        
-        
+
+
         //-----------
         // Io Libary \__________________________________________
-        
+
         class IoLib {
         public:
             static void registerLib(Library& l);
             static RunState print(FnContext& run);
+            static RunState resolve(FnContext& run);
         };
-        
 
-        
+
+
     } // Std
 } // Landru

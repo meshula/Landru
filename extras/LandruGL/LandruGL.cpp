@@ -21,6 +21,7 @@ namespace {
 
         GLFWwindow* window;
     };
+
 	struct OnWindowResized : public OnEventEvaluator
 	{
 		explicit OnWindowResized(GLFWwindow* w, std::shared_ptr<Fiber> f, vector<Instruction> & statements)
@@ -57,7 +58,6 @@ namespace {
         /// @TODO reroute key to landru as a string, like "alt-G" or "alt-g"
     }
 
-
 	void OnWindowResized::window_resized(GLFWwindow* w, int width, int height)
 	{
 		for (auto & i : sgOnWindowResized) {
@@ -66,8 +66,6 @@ namespace {
 			}
 		}
 	}
-
-
 
     void initGL()
     {
@@ -230,7 +228,8 @@ void landru_gl_clearContinuations(Fiber* f, int level)
 	// called when continuations must be cleared, for example before executing a goto statement
     if (!f)
         sgOnWindowClosed.clear();
-    else {
+    else 
+	{
 		for (std::vector<OnWindowClosed>::iterator i = sgOnWindowClosed.begin(); i != sgOnWindowClosed.end(); ++i) {
             if (i->fiber() == f) {
                 i = sgOnWindowClosed.erase(i);
