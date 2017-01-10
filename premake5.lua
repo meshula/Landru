@@ -24,6 +24,7 @@ filter "system:windows"
 filter "system:macosx"
     system "macosx"
     defines {  "PLATFORM_DARWIN" }
+    buildoptions { "-std=c++11" }
 
 filter {}
 
@@ -44,7 +45,7 @@ project "Landru"
     -- targetdir ("local/lib/%{cfg.longname}")
 
     includedirs { "src",
-                   "thirdparty/src/LabText/src", "thirdparty/src/LabJson/src" }
+                   "thirdparty/prereq/LabText/src", "thirdparty/prereq/LabJson/src" }
     files { "src/**.h", "src/**.cpp", "src/**.c" }
     excludes { }
 
@@ -52,13 +53,16 @@ project "landruc"
     kind "ConsoleApp"
     language "C++"
 
-    includedirs { "include", "src" }
+    includedirs {
+        "include", "src",
+        "thirdparty/prereq/LabText/src"
+    }
 
     files { "include/Landru/**.h", "src/LandruC/**.h", "src/LandruC/**.cpp" }
 
     libdirs {
-        "thirdparty/src/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
-        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}"
+        "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}"
     }
 
     links { "Landru", "LabJson", "LabText" }
@@ -69,21 +73,39 @@ project "landru_gl"
     includedirs { "extras/LandruGL", "include", "src", "thirdparty/include" }
     files { "extras/LandruGL/**.h", "extras/LandruGL/**.cpp" }
     libdirs {
-        "thirdparty/src/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
-        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
-        "thirdparty/lib"
+        "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/local/lib"
     }
     links { "glfw3", "Landru", "LabText" }
 
 project "landru_audio"
     kind "SharedLib"
     language "C++"
-    includedirs { "extras/LandruAudio", "include", "src", "thirdparty/include", "thirdparty/src/labsound-c" }
+    includedirs {
+        "extras/LandruAudio", "include", "src", "thirdparty/include",
+        "thirdparty/src/labsound-c"
+    }
     files { "extras/LandruAudio/**.h", "extras/LandruAudio/**.cpp" }
     libdirs {
-        "thirdparty/src/LabSound/build/x64/%{cfg.buildcfg}",
-        "thirdparty/src/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/prereq/LabSound/build/x64/%{cfg.buildcfg}",
+        "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/lib",
         "thirdparty/src/labsound-c/bin/%{cfg.platform}/%{cfg.buildcfg}"
     }
     links { "Landru", "LabText", "labsoundc" }
+
+project "landru_vr"
+    kind "SharedLib"
+    language "C++"
+    includedirs { "extras/LandruVR", "include", "src",
+                  "thirdparty/prereq/openvr/headers",
+                  "thirdparty/local/include" }
+    files { "extras/LandruVR/**.hpp", "extras/LandruVR/**.cpp" }
+    libdirs {
+        "thirdparty/prereq/openvr/lib/win64",
+        "thirdparty/local/lib"
+    }
+    links {
+        "Landru", "openvr_api", "glew", "opengl32"
+    }
