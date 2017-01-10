@@ -125,7 +125,7 @@ namespace Landru {
 		RunState FiberLib::newFn(FnContext& run) {
             string type = run.self->pop<string>();
             auto factory = run.vm->libs->findFactory(type.c_str());
-            auto v = factory(*run.vm);
+            auto v = factory();
             run.self->push(v);
 			return RunState::Continue;
         }

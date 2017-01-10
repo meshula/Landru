@@ -9,6 +9,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 namespace Wires {
     class TypedData;
@@ -28,5 +29,6 @@ namespace Landru {
     
     typedef std::pair<std::function<RunState(FnContext&)>, Meta> Instruction;
 	typedef std::function<RunState(FnContext&)> ActorFn;
+	typedef std::function<std::shared_ptr<Wires::TypedData>()> TypeFactory;
 }
 

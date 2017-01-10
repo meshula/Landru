@@ -142,12 +142,12 @@ void landru_gl_init(void* vl)
 	glVtable->registerFn("1.0", "windowResized", "o", "ff", windowResized);
 	gl_lib.registerVtable(move(glVtable));
 
-    gl_lib.registerFactory("context", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+    gl_lib.registerFactory("context", []()->std::shared_ptr<Wires::TypedData>
     {
         return std::make_shared<Wires::Data<GLContext>>();
     });
 
-    gl_lib.registerFactory("window", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+    gl_lib.registerFactory("window", []()->std::shared_ptr<Wires::TypedData>
     {
         return std::make_shared<Wires::Data<GLFWwindow*>>(nullptr);
     });

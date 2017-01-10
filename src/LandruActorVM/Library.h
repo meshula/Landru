@@ -124,9 +124,9 @@ namespace Landru {
 
         //---------------------
         // Type factories      \_________________________
-        typedef std::function<std::shared_ptr<Wires::TypedData>(VMContext&)> TypeFactory;
 
-        void registerFactory(const char* type, TypeFactory factory) {
+        void registerFactory(const char* type, TypeFactory factory) 
+		{
             factories[type] = factory;
         }
 

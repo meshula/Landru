@@ -45,6 +45,15 @@ namespace Landru {
     public:
         Detail() : now(0) {}
 
+		~Detail()
+		{
+			gotos.clear();
+			messageQueue.clear();
+			pendingMessages.clear();
+			fibers.clear();
+			machineDefinitions.clear();
+		}
+
         double now;
 
         map<Id, shared_ptr<Fiber>> fibers;
@@ -53,16 +62,40 @@ namespace Landru {
         map<Id, MessageQueue> messageQueue;
 
 		std::deque<std::pair<std::shared_ptr<Fiber>, std::string>> gotos;
+		std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
 	};
 
     VMContext::VMContext(Library* l)
     : _detail(new Detail())
     , libs(l)
     , traceEnabled(false)
-    , breakPoint(~0) {
+    , breakPoint(~0) 
+	{
     }
 
-    VMContext::~VMContext() {
+    VMContext::~VMContext() 
+	{
+    }
+
+    void VMContext::setDefinitions(const std::map<std::string, std::shared_ptr<MachineDefinition>>& d)
+    {
+        _detail->machineDefinitions = d;
+    }
+
+	std::vector<std::string> VMContext::definitions() const
+    {
+        vector<string> r;
+        for (auto i : _detail->machineDefinitions)
+            r.push_back(i.first);
+        return r;
+    }
+
+    std::vector<std::shared_ptr<Fiber>> VMContext::fibers() const
+    {
+        vector<shared_ptr<Fiber>> r;
+        for (auto i : _detail->fibers)
+            r.push_back(i.second);
+        return r;
     }
 
 	double VMContext::now() const {
@@ -122,28 +155,30 @@ namespace Landru {
         // launch all machines that were requested
         while (!launchQueue.empty())
 		{
-            auto rec = launchQueue.front();
-            launchQueue.pop_front();
-            auto m = machineDefinitions.find(rec.first);
-            if (m != machineDefinitions.end()) {
-                std::shared_ptr<Landru::Fiber> f = std::make_shared<Landru::Fiber>(m->second, *this);
-                _detail->fibers[f->id()] = f;
-                _detail->messageQueue[f->id()] = vector<OnEventEvaluator>();   //// @TODO emplace queues only when needed at first access
-                try {
-                    FnContext fn(this, f.get(), nullptr);
-					f->gotoState(fn, "__auto__", false);
-                    f->gotoState(fn, "main", true);
-                }
-                catch(const std::exception& e) {
-                    cerr << e.what() << endl;
-                    auto i = _detail->fibers.find(f->id());
-                    if (i != _detail->fibers.end())
-                        _detail->fibers.erase(i);
-                }
-            }
-            else {
-                VM_RAISE("machine " << rec.first << " not found to launch");
-            }
+			LaunchRecord rec;
+			if (launchQueue.try_pop(rec))
+			{
+				auto m = _detail->machineDefinitions.find(rec.first);
+				if (m != _detail->machineDefinitions.end()) {
+					std::shared_ptr<Landru::Fiber> f = std::make_shared<Landru::Fiber>(m->second, this);
+					_detail->fibers[f->id()] = f;
+					_detail->messageQueue[f->id()] = vector<OnEventEvaluator>();   //// @TODO emplace queues only when needed at first access
+					try {
+						FnContext fn(this, f.get(), nullptr);
+						f->gotoState(fn, "__auto__", false);
+						f->gotoState(fn, "main", true);
+					}
+					catch (const std::exception& e) {
+						cerr << e.what() << endl;
+						auto i = _detail->fibers.find(f->id());
+						if (i != _detail->fibers.end())
+							_detail->fibers.erase(i);
+					}
+				}
+				else {
+					VM_RAISE("machine " << rec.first << " not found to launch");
+				}
+			}
         }
 
 		for (auto & p : plugins) {
@@ -196,5 +231,24 @@ namespace Landru {
 		}
 		return fiberIt->second;
 	}
+
+	void VMContext::removeInstances(const Fiber * f)
+	{
+		std::unordered_map<LandruIndex, std::shared_ptr<Landru::Property>>::iterator itr = properties.begin();
+		while (itr != properties.end())
+		{
+			if ((*itr).second->owner == f)
+			{
+				(*itr).second->owner = nullptr;
+
+				// erase the property only if owned by the fiber. if shared, or global don't erase it.
+				if ((*itr).second->visibility == Landru::Property::Visibility::ActorLocal)
+					itr = properties.erase(itr);
+			}
+			else
+				itr++;
+		}
+	}
+
 
 } // Landru

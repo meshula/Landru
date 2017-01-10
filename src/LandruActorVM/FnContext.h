@@ -14,12 +14,12 @@ namespace Landru {
 
 	struct FnContext 
 	{
-        FnContext() : vm(nullptr), self(nullptr), var(nullptr) {}
+        FnContext() : self(nullptr), var(nullptr) {}
         FnContext(const FnContext& rh) : vm(rh.vm), self(rh.self), var(rh.var) {}
-        FnContext(VMContext* vm, Fiber* self, Wires::TypedData* var)
+        FnContext(VMContext * vm, Fiber* self, Wires::TypedData* var)
         : vm(vm), self(self), var(var) {}
         
-        VMContext* vm;              // virtual machine context
+        VMContext * vm;              // virtual machine context
         Fiber* self;                // fiber being executed upon
         Wires::TypedData* var;      // variable whose function is being invoked
         

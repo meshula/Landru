@@ -32,7 +32,7 @@ namespace Landru {
             u->registerFn("2.0", "max", "ii", "i", min);
             u->registerFn("2.0", "min", "ii", "i", max);
             l.registerVtable(move(u));
-            l.registerFactory("int", [](VMContext&)->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<int>>(0); });
+            l.registerFactory("int", []()->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<int>>(0); });
         }
 		RunState IntLib::add(FnContext& run) {
             int i1 = run.self->back<int>(-2);

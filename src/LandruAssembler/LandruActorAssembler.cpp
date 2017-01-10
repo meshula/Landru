@@ -439,7 +439,7 @@ namespace Landru {
 			auto generator = generatorVar->value();
 
 			auto factory = run.vm->libs->findFactory(generator->typeName());
-			auto local = factory(*run.vm);
+			auto local = factory();
 			auto var = run.self->push_local(std::string("gen"), std::string(generator->typeName()), local);
 
 			for (generator->begin(); !generator->done(); generator->next())
@@ -526,7 +526,7 @@ namespace Landru {
 		_context->currInstr.back()->emplace_back(Instruction([nStr, tStr](FnContext& run)->RunState
 		{
 			auto factory = run.vm->libs->findFactory(tStr.c_str());
-			auto local = factory(*run.vm);
+			auto local = factory();
 			run.self->push_local(nStr, tStr, local);
 			return RunState::Continue;
 		}, "addLocalVariable"));
@@ -768,7 +768,7 @@ namespace Landru {
 			{
 				auto prop = run.vm->findInstance(run.self, parts); // already checked at compile time
 				auto data = run.self->popVar();
-				prop->copy(*run.vm, data, true);
+				prop->copy(data, true);
 				return RunState::Continue;
 			}, str.c_str()));
 		}
@@ -779,7 +779,7 @@ namespace Landru {
 				{
 					auto prop = run.vm->findGlobal(parts); // already checked at compile time
 					auto data = run.self->popVar();
-					prop->copy(*run.vm, data, true);
+					prop->copy(data, true);
 					return RunState::Continue;
 				}, str.c_str()));
 			}
@@ -811,7 +811,8 @@ namespace Landru {
 
 	void ActorAssembler::addGlobal(const char* name, const char* type)
 	{
-		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		TypeFactory factory = library()->findFactory(type);
+		std::shared_ptr<Property> prop = std::make_shared<Property>(factory);
 		prop->name.assign(name);
 		prop->type.assign(type);
 		prop->visibility = Property::Visibility::Global;
@@ -820,7 +821,8 @@ namespace Landru {
 
     void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) 
 	{
-		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		TypeFactory factory = library()->findFactory("bson");
+		std::shared_ptr<Property> prop = std::make_shared<Property>(factory);
 		prop->name.assign(name);
 		prop->type.assign("bson");
 		prop->visibility = Property::Visibility::Global;
@@ -830,7 +832,8 @@ namespace Landru {
     }
 
 	void ActorAssembler::addGlobalString(const char* name, const char* value) {
-		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		TypeFactory factory = library()->findFactory("string");
+		std::shared_ptr<Property> prop = std::make_shared<Property>(factory);
 		prop->name.assign(name);
 		prop->type.assign("string");
 		prop->visibility = Property::Visibility::Global;
@@ -839,7 +842,8 @@ namespace Landru {
 		globals[name] = prop;
 	}
 	void ActorAssembler::addGlobalInt(const char* name, int value) {
-		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		TypeFactory factory = library()->findFactory("int");
+		std::shared_ptr<Property> prop = std::make_shared<Property>(factory);
 		prop->name.assign(name);
 		prop->type.assign("int");
 		prop->visibility = Property::Visibility::Global;
@@ -848,7 +852,8 @@ namespace Landru {
 		globals[name] = prop;
 	}
 	void ActorAssembler::addGlobalFloat(const char* name, float value) {
-		std::shared_ptr<Property> prop = std::make_shared<Property>();
+		TypeFactory factory = library()->findFactory("float");
+		std::shared_ptr<Property> prop = std::make_shared<Property>(factory);
 		prop->name.assign(name);
 		prop->type.assign("float");
 		prop->visibility = Property::Visibility::Global;
@@ -858,7 +863,8 @@ namespace Landru {
 	}
 
     void ActorAssembler::addSharedVariable(const char *name, const char *type) {
-        Property *prop = new Property();
+		TypeFactory factory = library()->findFactory(type);
+        Property *prop = new Property(factory);
         prop->name.assign(name);
         prop->type.assign(type);
         prop->visibility = Property::Visibility::Shared;
@@ -866,7 +872,8 @@ namespace Landru {
     }
 
     void ActorAssembler::addInstanceVariable(const char *name, const char *type) {
-        Property *prop = new Property();
+		TypeFactory factory = library()->findFactory(type);
+		Property *prop = new Property(factory);
         prop->name.assign(name);
         prop->type.assign(type);
         prop->visibility = Property::Visibility::ActorLocal;
@@ -1122,7 +1129,7 @@ namespace Landru {
         _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
 		{
             string machine = run.self->pop<string>();
-            run.vm->launchQueue.emplace_back(Landru::VMContext::LaunchRecord(machine, Landru::Fiber::Stack()));
+            run.vm->launchQueue.push(Landru::VMContext::LaunchRecord(machine, Landru::Fiber::Stack()));
 			return RunState::Continue;
 		}, "launchMachine"));
     }

@@ -11,26 +11,25 @@
 #include "VMContext.h"
 
 namespace Landru {
-    void Property::create(VMContext& vm) {
-        auto factory = vm.libs->findFactory(type.c_str());
-        data = factory(vm);
+    void Property::create() {
+        data = _typeFactory();
     }
 
-    Property::Property(VMContext& vm, const std::string& name, const std::string& type)
-    : name(name), type(type), assignCount(0) 
+    Property::Property(const std::string& name, const std::string& type, TypeFactory tf)
+    : name(name), type(type), assignCount(0), _typeFactory(tf)
 	{
-        create(vm); 
+        create(); 
 	}
 
-	Property::Property(VMContext& vm, const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
+	Property::Property(const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
 		: name(name), type(type), assignCount(0)
 	{
-		create(vm);
+		create();
 		data->copy(d.get());
 	}
 
     
-    Property::Property() {}
+    Property::Property(TypeFactory tf) : _typeFactory(tf) {}
     Property::~Property() {}
 
     bool Property::assign(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
@@ -44,7 +43,7 @@ namespace Landru {
         return true;
     }
 
-	bool Property::copy(VMContext& vm, std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible) 
+	bool Property::copy(std::shared_ptr<Wires::TypedData>& td, bool mustBeCompatible)
 	{
 		if (mustBeCompatible && data) {
 			if (td->type() != data->type())
@@ -52,7 +51,7 @@ namespace Landru {
 		}
 
 		if (!data)
-			create(vm);
+			create();
 
 		data->copy(td.get());
 		++assignCount;

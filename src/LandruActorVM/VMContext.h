@@ -8,11 +8,11 @@
 
 #pragma once
 
-#include "WiresTypedData.h"
+#include "ConcurrentQueue.h"
 #include "FnContext.h"
 #include "State.h"
+#include "WiresTypedData.h"
 
-#include <deque>
 #include <map>
 #include <unordered_map>
 #include <memory>
@@ -142,11 +142,15 @@ namespace Landru {
         typedef std::pair<std::string,
                           std::vector<std::shared_ptr<Wires::TypedData>>> LaunchRecord;
 
-        std::deque<LaunchRecord> launchQueue;
-		std::map<std::string, std::shared_ptr<MachineDefinition>> machineDefinitions;
+        concurrent_queue<LaunchRecord> launchQueue;
 		std::shared_ptr<Fiber> fiberPtr(Fiber*);
 		void enqueueGoto(Fiber * f, const std::string & state);
 		void finalizeGotos();
+
+		void setDefinitions(const std::map<std::string, std::shared_ptr<MachineDefinition>>&);
+
+		std::vector<std::string> definitions() const;
+		std::vector<std::shared_ptr<Fiber>> fibers() const;
 
 		//--------------\_____________________________________________________
 		// Properties
@@ -191,6 +195,8 @@ namespace Landru {
 			LandruIndex i = propertyIndex(str, std::hash<const Fiber *>{}(f));
 			properties[i] = p;
 		}
+
+		void removeInstances(const Fiber * f);
 	};
 
 }

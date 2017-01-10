@@ -2,6 +2,7 @@
 gl = require("gl")
 time = require("time")
 io = require("io")
+audio = require("audio")
 
 machine main:
 declare:
@@ -9,7 +10,7 @@ declare:
 
     state main:
         w = gl.createWindow(640, 480, "Hello World")
-        on time.after(30):
+        on time.after(300):
             io.print("Time's up, it was swell\n")
             goto done;
         on gl.windowClosed(w):

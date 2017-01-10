@@ -55,8 +55,8 @@ namespace Landru {
             u->registerFn("2.0", "min", "ff", "f", max);
             u->registerFn("2.0", "range", "fff", "o", range);
             l.registerVtable(move(u));
-            l.registerFactory("real", [](VMContext&)->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<float>>(0.f); });
-			l.registerFactory("float", [](VMContext&)->std::shared_ptr<Wires::TypedData> { return std::make_shared<Wires::Data<float>>(0.f); });
+            l.registerFactory("real", []()->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<float>>(0.f); });
+			l.registerFactory("float", []()->std::shared_ptr<Wires::TypedData> { return std::make_shared<Wires::Data<float>>(0.f); });
 		}
         RunState RealLib::add(FnContext& run) {
             float f1 = run.self->back<float>(-2);

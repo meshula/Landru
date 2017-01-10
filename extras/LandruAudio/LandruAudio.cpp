@@ -358,7 +358,7 @@ void landru_audio_init(void* vl)
 	auto audio_vt = unique_ptr<Library::Vtable>(new Library::Vtable("audio"));
 	audio_lib.registerVtable(move(audio_vt));
 
-	audio_lib.registerFactory("context", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("context", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>(ls_AudioContext_Create());
 	});
@@ -374,7 +374,7 @@ void landru_audio_init(void* vl)
 		audio_lib.libraries.emplace_back(std::move(context_lib));
 	}
 
-	audio_lib.registerFactory("audioBuffer", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("audioBuffer", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});
@@ -395,7 +395,7 @@ void landru_audio_init(void* vl)
 		audio_lib.libraries.emplace_back(std::move(buffer_lib));
 	}
 
-	audio_lib.registerFactory("audioBufferSourceNode", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("audioBufferSourceNode", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});
@@ -419,7 +419,7 @@ void landru_audio_init(void* vl)
 		audio_lib.libraries.emplace_back(std::move(buffer_lib));
 	}
 
-	audio_lib.registerFactory("buffer", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("buffer", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});
@@ -434,12 +434,12 @@ void landru_audio_init(void* vl)
 		audio_lib.libraries.emplace_back(std::move(buffer_lib));
 	}
 
-	audio_lib.registerFactory("convolver", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("convolver", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});
 
-	audio_lib.registerFactory("listener", [](VMContext&)->std::shared_ptr<Wires::TypedData>
+	audio_lib.registerFactory("listener", []()->std::shared_ptr<Wires::TypedData>
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});

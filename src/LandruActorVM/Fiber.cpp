@@ -7,6 +7,7 @@
 //
 
 #include "LandruActorVM/Fiber.h"
+#include "LandruActorVM/Library.h"
 
 #ifdef PLATFORM_WINDOWS
 #define WINDOWS_LEAN_AND_MEAN
@@ -59,45 +60,46 @@ using namespace std;
 
 namespace Landru {
 
-	Fiber::Fiber(std::shared_ptr<MachineDefinition> m, VMContext& vm)
+	Fiber::Fiber(std::shared_ptr<MachineDefinition> m, VMContext * vm)
 		: machineDefinition(m)
-		, vm(vm)
 	{
         for (auto& p : m->properties) {
-            shared_ptr<Property> prop = make_shared<Property>();
+			TypeFactory tf = vm->libs->findFactory(p.second->type.c_str());
+            shared_ptr<Property> prop = make_shared<Property>(tf);
             prop->name = p.second->name;
             prop->type = p.second->type;
             prop->visibility = p.second->visibility;
-            prop->create(vm);
-			vm.storeInstance(this, p.first, prop);
+            prop->create();
+			prop->owner = this;
+			vm->storeInstance(this, p.first, prop);
         }
         stack.push_back(vector<shared_ptr<Wires::TypedData>>());
     }
-    
+
     Fiber::~Fiber() {
     }
-    
+
     Id::Id() {
         _pid = getpid();
         uuid_generate_time(_uuid);
     }
-    
+
     Id::Id(const Id& rh) {
         _pid = rh._pid;
         uuid_copy(_uuid, rh._uuid);
     }
-    
+
     Id::Id(const InvalidId& rh) {
         _pid = ~0;
         uuid_clear(_uuid);
     }
-    
+
     Id& Id::operator=(const Id& rh) {
         _pid = rh._pid;
         uuid_copy(_uuid, rh._uuid);
         return *this;
     }
-    
+
     Id& Id::operator=(const InvalidId&) {
         _pid = ~0;
         uuid_clear(_uuid);
@@ -107,7 +109,7 @@ namespace Landru {
     int Id::compare(const InvalidId&) const {
         return (_pid != ~0) ? 1 : 0; // invalid instances are always smaller
     }
-    
+
     int Id::compare(const Id& other) const {
         if (this == &other) {
             return 0; // shortcut for comparing to self
@@ -128,5 +130,5 @@ namespace Landru {
         return tmp;
     }
 
-    
+
 }

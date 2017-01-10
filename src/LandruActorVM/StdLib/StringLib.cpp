@@ -27,7 +27,7 @@ namespace Landru {
 		void StringLib::registerLib(Library& l) {
 			auto u = unique_ptr<Library::Vtable>(new Library::Vtable("string"));
 			l.registerVtable(move(u));
-			l.registerFactory("string", [](VMContext&)->std::shared_ptr<Wires::TypedData> { return std::make_shared<Wires::Data<string>>(); });
+			l.registerFactory("string", []()->std::shared_ptr<Wires::TypedData> { return std::make_shared<Wires::Data<string>>(); });
 		}
 
 
