@@ -93,7 +93,7 @@ namespace {
         GLFWwindow* window = glfwCreateWindow((int) width, (int) height, title.c_str(), NULL, NULL);
         glfwSetKeyCallback(window, key_callback);
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
         sgWindows.emplace_back(window);
         run.self->push<GLFWwindow*>(window);
 		return RunState::Continue;
@@ -228,7 +228,7 @@ void landru_gl_clearContinuations(Fiber* f, int level)
 	// called when continuations must be cleared, for example before executing a goto statement
     if (!f)
         sgOnWindowClosed.clear();
-    else 
+    else
 	{
 		for (std::vector<OnWindowClosed>::iterator i = sgOnWindowClosed.begin(); i != sgOnWindowClosed.end(); ++i) {
             if (i->fiber() == f) {

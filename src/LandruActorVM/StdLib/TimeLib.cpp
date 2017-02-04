@@ -126,6 +126,7 @@ void landru_time_init(Landru::Library* lib)
     auto vtable = unique_ptr<Library::Vtable>(new Library::Vtable("time"));
     vtable->registerFn("2.0", "after", "ff", "f", Landru::Std::TimeLib::after);
     vtable->registerFn("2.0", "every", "ff", "f", Landru::Std::TimeLib::every);
+    vtable->registerFn("2.0", "repeat", "ff", "f", Landru::Std::TimeLib::every);
     vtable->registerFn("2.0", "recur", "ff", "f", Landru::Std::TimeLib::recur);
     time_lib.registerVtable(move(vtable));
 

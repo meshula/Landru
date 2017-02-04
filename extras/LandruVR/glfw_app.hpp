@@ -51,10 +51,10 @@ namespace avl
         bool is_mouse_down() const { return action != GLFW_RELEASE; }
         bool is_mouse_up() const { return action == GLFW_RELEASE; }
         
-        bool using_shift_key() const { return mods & GLFW_MOD_SHIFT; };
-        bool using_control_key() const { return mods & GLFW_MOD_CONTROL; };
-        bool using_alt_key() const { return mods & GLFW_MOD_ALT; };
-        bool using_super_key() const { return mods & GLFW_MOD_SUPER; };
+        bool using_shift_key() const { return (mods & GLFW_MOD_SHIFT) != 0; };
+        bool using_control_key() const { return (mods & GLFW_MOD_CONTROL) != 0; };
+        bool using_alt_key() const { return (mods & GLFW_MOD_ALT) != 0; };
+        bool using_super_key() const { return (mods & GLFW_MOD_SUPER) != 0; };
     };
         
     class GLFWApp

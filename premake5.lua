@@ -46,7 +46,16 @@ project "Landru"
 
     includedirs { "src",
                    "thirdparty/prereq/LabText/src", "thirdparty/prereq/LabJson/src" }
-    files { "src/**.h", "src/**.cpp", "src/**.c" }
+    files {
+        "src/Landru/*.h", "src/Landru/*.c", "src/Landru/*.cpp",
+        "src/LandruActorVM/*.h", "src/LandruActorVM/*.c", "src/LandruActorVM/*.cpp",
+        "src/LandruActorVM/StdLib/*.h", "src/LandruActorVM/StdLib/*.c", "src/LandruActorVM/StdLib/*.cpp",
+        "src/LandruAssembler/*.h", "src/LandruAssembler/*.c", "src/LandruAssembler/*.cpp",
+        "src/LandruCompiler/*.h", "src/LandruCompiler/*.c", "src/LandruCompiler/*.cpp",
+        "src/LandruStd/*.h", "src/LandruStd/*.c", "src/LandruStd/*.cpp",
+        "src/LandruVM/*.h", "src/LandruVM/*.c", "src/LandruVM/*.cpp"
+    }
+
     excludes { }
 
 project "landruc"
@@ -66,6 +75,30 @@ project "landruc"
     }
 
     links { "Landru", "LabJson", "LabText" }
+
+project "landruIDE"
+    kind "ConsoleApp"
+    language "C++"
+
+    includedirs {
+        "thirdparty/include",
+        "thirdparty/local/include",
+        "thirdparty/prereq/LabText/src",
+        "src/LandruIDE/interface/imgui",
+        "include", "src"
+    }
+
+    files {
+        "src/LandruIDE/**.h", "src/LandruIDE/**.cpp"
+    }
+
+    libdirs {
+        "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
+        "thirdparty/local/lib"
+    }
+
+    links { "Landru", "LabJson", "LabText", "glfw3", "glew", "opengl32" }
 
 project "landru_gl"
     kind "SharedLib"

@@ -229,6 +229,40 @@ namespace {
 		return RunState::Continue;
 	}
 
+	RunState convolver_create(FnContext& run)
+	{
+		Wires::Data<LS_Handle> * var = dynamic_cast<Wires::Data<LS_Handle>*>(run.var);
+		LS_Handle n = ls_ConvolverNode_Create(run.self->pop<float>());
+		var->setValue(n);
+		return RunState::Continue;
+	}
+
+	RunState convolver_setBuffer(FnContext& run)
+	{
+		Wires::Data<LS_Handle> * var = dynamic_cast<Wires::Data<LS_Handle>*>(run.var);
+		LS_Handle n = var->value();
+		LS_Handle b = run.self->pop<LS_Handle>();
+		LS_Handle c = run.self->pop<LS_Handle>();
+		ls_ConvolverNode_SetBuffer(c, n, b);
+		return RunState::Continue;
+	}
+
+	RunState convolver_setNormalize(FnContext& run)
+	{
+		Wires::Data<LS_Handle> * var = dynamic_cast<Wires::Data<LS_Handle>*>(run.var);
+		LS_Handle n = var->value();
+		ls_ConvolverNode_SetNormalize(n, bool(run.self->pop<int>()));
+		return RunState::Continue;
+	}
+
+	RunState convolver_getNormalize(FnContext& run)
+	{
+		Wires::Data<LS_Handle> * var = dynamic_cast<Wires::Data<LS_Handle>*>(run.var);
+		LS_Handle n = var->value();
+		run.self->push<int>(ls_ConvolverNode_GetNormalize(n));
+		return RunState::Continue;
+	}
+
 	RunState listener_SetPosition(FnContext& run)
 	{
 		float z = run.self->pop<float>();
@@ -438,6 +472,16 @@ void landru_audio_init(void* vl)
 	{
 		return std::make_shared<Wires::Data<LS_Handle>>();
 	});
+	{
+		Landru::Library sub_lib("convolver");
+		auto sub_vt = unique_ptr<Library::Vtable>(new Library::Vtable("convolver"));
+		sub_vt->registerFn("1.0", "create", "f", "", convolver_create);
+		sub_vt->registerFn("1.0", "setBuffer", "oo", "", convolver_create);
+		sub_vt->registerFn("1.0", "setNormalize", "i", "", convolver_setNormalize);
+		sub_vt->registerFn("1.0", "getNormalize", "", "i", convolver_getNormalize);
+		sub_lib.registerVtable(move(sub_vt));
+		audio_lib.libraries.emplace_back(std::move(sub_lib));
+	}
 
 	audio_lib.registerFactory("listener", []()->std::shared_ptr<Wires::TypedData>
 	{
