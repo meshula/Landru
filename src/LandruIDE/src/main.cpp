@@ -12,6 +12,7 @@
 #include "landruConsole.h"
 #include "interface/labImGuiWindow.h"
 #include "interface/imguidock.h"
+#include "interface/labCursorManager.h"
 
 using namespace std;
 
@@ -71,8 +72,12 @@ int main(int, char**)
 		}
 	}
 
+	lab::CursorManager cursorMgr;
+
 	while (true)
 	{
+		cursorMgr.set_cursor(ImGui::GetMouseCursor());
+
 		auto main_window = window.lock();
 		if (!main_window || main_window->should_close())
 			break;
