@@ -135,6 +135,7 @@ void LandruConsole::draw_contents()
 	// and appending newly elements as they are inserted. This is left as a task to the user until we can manage to improve this example code!
 	// If your items are of variable size you may want to implement code similar to what ImGuiListClipper does. Or split your data into fixed height items to allow random-seeking into your list.
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
+
 	for (int i = 0; i < Items.Size; i++)
 	{
 		const char* item = Items[i];
@@ -150,12 +151,13 @@ void LandruConsole::draw_contents()
 	if (ScrollToBottom)
 		ImGui::SetScrollHere();
 	ScrollToBottom = false;
+
 	ImGui::PopStyleVar();
 	ImGui::EndChild();
 	ImGui::Separator();
 
 	// Command-line
-	if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
+	if (ImGui::InputText(">", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
 	{
 		char* input_end = InputBuf + strlen(InputBuf);
 		while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;
@@ -167,7 +169,6 @@ void LandruConsole::draw_contents()
 	// Demonstrate keeping auto focus on the input box
 	if (ImGui::IsItemHovered() || (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
 		ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
-
 }
 
 void LandruConsole::Draw(const char* title, bool* p_open)

@@ -253,11 +253,15 @@ namespace lab
 			for (auto w : _windows)
 				windows.push_back(w);
 
+			ImGuiIO& io = ImGui::GetIO();
+
 			for (auto wp : windows)
 			{
 				auto w = wp.lock();
 				if (!w)
 					continue;
+
+				//io.DisplayFramebufferScale = { 1.75f, 1.75f };
 
 				w->frame_begin();
 

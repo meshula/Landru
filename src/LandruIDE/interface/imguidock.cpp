@@ -297,7 +297,8 @@ namespace ImGuiDock
 	{
 		uint32_t idgen = 0;
 
-		float tabbarHeight = 20;
+		ImGuiIO & io = ImGui::GetIO();
+		float tabbarHeight = 20;// *io.DisplayFramebufferScale.y;
 
 		std::function<void(Node*, ImVec2, ImVec2)> renderContainer = [&](Node *container, ImVec2 size, ImVec2 cursorPos) 
 		{

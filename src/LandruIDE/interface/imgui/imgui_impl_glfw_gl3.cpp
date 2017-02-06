@@ -365,7 +365,7 @@ void ImGui_ImplGlfwGL3_NewFrame(GLFWwindow * window)
     glfwGetWindowSize(window, &w, &h);
     glfwGetFramebufferSize(window, &display_w, &display_h);
     io.DisplaySize = ImVec2((float)w, (float)h);
-    io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
+//    io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
 
     // Setup time step
     double current_time =  glfwGetTime();
