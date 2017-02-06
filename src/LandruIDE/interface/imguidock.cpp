@@ -7,12 +7,15 @@
 #include "labImGuiWindow.h"
 #include <imgui_internal.h> // for ImRect
 #include <memory>
+#include <vector>
 
 namespace ImGuiDock
 {
-	Dockspace::Dockspace(lab::ImGuiWindow* owner) : owner(owner)
-	{
+	
+	using namespace std;
 
+	Dockspace::Dockspace(lab::GraphicsWindow* owner) : owner(owner)
+	{
 	}
 
 	Dockspace::~Dockspace()
@@ -248,7 +251,7 @@ namespace ImGuiDock
 		return false;
 	}
 
-	void updateDrag(lab::ImGuiWindow * window)
+	void updateDrag(lab::GraphicsWindow * window)
 	{
 		auto& dockspace = window->get_dockspace();
 		auto& split = dockspace.node.splits[0];
@@ -290,7 +293,7 @@ namespace ImGuiDock
 		}
 	}
 
-	void Dockspace::update_and_draw(ImVec2 dockspaceSize)
+	void Dockspace::update_and_draw(ImVec2 dockspaceSize, lab::GraphicsWindowManager& mgr)
 	{
 		uint32_t idgen = 0;
 
@@ -328,7 +331,7 @@ namespace ImGuiDock
 
 				ImGui::EndChild();
 
-				lab::ImGuiWindow* draggedWindow = is_any_window_dragged();
+				lab::GraphicsWindow* draggedWindow = is_any_window_dragged(mgr);
 				if (draggedWindow != nullptr && draggedWindow->get_dockspace().node.splits[0]->active_dock != container->active_dock)
 				{
 					auto mousePos = io.MousePos;
@@ -468,16 +471,18 @@ namespace ImGuiDock
 					_current_dock_to->container = nullptr;
 					_current_dock_to->dragging = true;
 					
-					auto guiWindow = std::make_shared<lab::ImGuiWindow>(
-						"", //std::string(m_currentDockTo->title),
-						(int) _current_dock_to->last_size.x, (int) _current_dock_to->last_size.y
-						//sf::Style::Resize
-						);
+					auto w = mgr.create_window(_current_dock_to->title,
+						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y);
 
+					auto guiWindow = w.lock();
 					guiWindow->get_dockspace().dock(_current_dock_to, DockSlot::Tab, 0, true);
 
 					auto pos = io.MousePos;
-					guiWindow->set_position((int) pos.x, (int) pos.y);
+
+					int x, y;
+					owner->get_position(x, y);
+
+					guiWindow->set_position(x + (int) pos.x, y + (int) pos.y);
 					guiWindow->request_focus();
 				}
 			}
@@ -530,20 +535,12 @@ namespace ImGuiDock
 		return false;
 	}
 
-	lab::ImGuiWindow *Dockspace::is_any_window_dragged()
+	lab::GraphicsWindow *Dockspace::is_any_window_dragged(lab::GraphicsWindowManager & mgr)
 	{
-		for (auto window : lab::ImGuiWindow::windows())
-		{
-			auto& dockspace = window->get_dockspace();
-			if (dockspace.node.splits[0] && dockspace.node.splits[0]->active_dock)
-			{
-				if (dockspace.node.splits[0]->active_dock->dragging)
-					return window;
-			}
-			
-		}
-		
-		return nullptr;
+		auto window = mgr.find_dragged_window();
+		if (!window)
+			return nullptr;
+		return window.get();
 	}
 
 	static ImRect getSlotRect(ImRect parent_rect, DockSlot dock_slot)

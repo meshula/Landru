@@ -97,17 +97,8 @@ void LandruConsole::AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
 	ScrollToBottom = true;
 }
 
-void LandruConsole::Draw(const char* title, bool* p_open)
+void LandruConsole::draw_contents()
 {
-	ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiSetCond_FirstUseEver);
-	if (!ImGui::Begin(title, p_open))
-	{
-		ImGui::End();
-		return;
-	}
-
-	ImGui::TextWrapped("This example implements a console with basic coloring, completion and history. A more elaborate implementation may want to store entries along with extra data such as timestamp, emitter, etc.");
-	ImGui::TextWrapped("Enter 'HELP' for help, press TAB to use text completion.");
 
 	// TODO: display items starting from the bottom
 
@@ -177,7 +168,16 @@ void LandruConsole::Draw(const char* title, bool* p_open)
 	if (ImGui::IsItemHovered() || (ImGui::IsRootWindowOrAnyChildFocused() && !ImGui::IsAnyItemActive() && !ImGui::IsMouseClicked(0)))
 		ImGui::SetKeyboardFocusHere(-1); // Auto focus previous widget
 
-	ImGui::End();
+}
+
+void LandruConsole::Draw(const char* title, bool* p_open)
+{
+	ImGui::SetNextWindowSize(ImVec2(520, 600), ImGuiSetCond_FirstUseEver);
+	if (ImGui::Begin(title, p_open))
+	{
+		draw_contents();
+		ImGui::End();
+	}
 }
 
 void    LandruConsole::ExecCommand(const char* command_line)

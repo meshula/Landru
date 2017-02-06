@@ -27,6 +27,7 @@ public:
 	void    ClearLog();
 	void    AddLog(const char* fmt, ...) IM_PRINTFARGS(2);
 	void    Draw(const char* title, bool* p_open);
+	void    draw_contents();
 	void    ExecCommand(const char* command_line);
 	static int TextEditCallbackStub(ImGuiTextEditCallbackData* data); // In C++11 you are better off using lambdas for this sort of forwarding callbacks
 	int     TextEditCallback(ImGuiTextEditCallbackData* data);

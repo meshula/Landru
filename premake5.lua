@@ -67,7 +67,9 @@ project "landruc"
         "thirdparty/prereq/LabText/src"
     }
 
-    files { "include/Landru/**.h", "src/LandruC/**.h", "src/LandruC/**.cpp" }
+    files {
+        "include/Landru/**.h", "src/LandruC/**.h", "src/LandruC/**.cpp"
+    }
 
     libdirs {
         "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
@@ -85,6 +87,7 @@ project "landruIDE"
         "thirdparty/local/include",
         "thirdparty/prereq/LabText/src",
         "src/LandruIDE/interface/imgui",
+        "src/LandruIDE",
         "include", "src"
     }
 

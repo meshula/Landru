@@ -6,9 +6,14 @@
 #include <stdio.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <vector>
+#include <memory>
 
 #include "landruConsole.h"
 #include "interface/labImGuiWindow.h"
+#include "interface/imguidock.h"
+
+using namespace std;
 
 static void error_callback(int error, const char* description)
 {
@@ -22,7 +27,8 @@ int main(int, char**)
     if (!glfwInit())
         return 1;
 
-	lab::ImGuiWindow * window = new lab::ImGuiWindow("Landru IDE", 1280, 720);
+	lab::GraphicsWindowManager windowMgr;
+	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", 1280, 720);
 
     // Load Fonts
     // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -36,62 +42,43 @@ int main(int, char**)
     //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
     //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
-    bool show_test_window = false;
-	bool show_console_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImColor(114, 144, 154);
 
-    // Main loop
-    while (!window->should_close())
-    {
-		window->frame_begin();
+	std::vector<std::unique_ptr<ImGuiDock::Dock>> _docks;
+	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
+	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 
-        // 1. Show a simple window
-        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
-		if (show_test_window)
-        {
-            static float f = 0.0f;
-            ImGui::Text("Hello, world!");
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-            ImGui::ColorEdit3("clear color", (float*)&clear_color);
-            if (ImGui::Button("Test Window")) show_test_window ^= 1;
-            if (ImGui::Button("Another Window")) show_another_window ^= 1;
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        }
+	LandruConsole console;
 
-        // 2. Show another simple window, this time using an explicit Begin/End pair
-        if (show_another_window)
-        {
-            ImGui::SetNextWindowSize(ImVec2(200,100), ImGuiSetCond_FirstUseEver);
-            ImGui::Begin("Another Window", &show_another_window);
-            ImGui::Text("Hello");
-            ImGui::End();
-        }
+	auto& console_dock = _docks[0];
+	auto& dummy_dock = _docks[1];
 
-        // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
-        if (show_test_window)
-        {
-            ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-            ImGui::ShowTestWindow(&show_test_window);
-        }
+	console_dock->initialize("Console", true, ImVec2(400, 200), [&console](ImVec2 area) 
+	{
+		console.draw_contents();
+	});
 
-		if (show_console_window)
+	dummy_dock->initialize("Dock1", true, ImVec2(), [](ImVec2 area) {
+		ImGui::Text("Hello :)");
+	});
+
+	{
+		shared_ptr<lab::GraphicsWindow> w = window.lock();
+		if (w)
 		{
-			static bool consoleOpen = true;
-			static LandruConsole console;
-			console.Draw("Example: Scheme", &consoleOpen);
+			auto& dockspace = w->get_dockspace();
+			dockspace.dock(dummy_dock.get(), ImGuiDock::DockSlot::None, 300, true);
+			dockspace.dock(console_dock.get(), ImGuiDock::DockSlot::Bottom, 300, true);
 		}
+	}
 
-        // Rendering
-        int display_w, display_h;
-		window->get_frame_size(display_w, display_h);
+	while (true)
+	{
+		auto main_window = window.lock();
+		if (!main_window || main_window->should_close())
+			break;
 
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-		window->frame_end();
-    }
+		windowMgr.update_windows();
+	}
 
     // Cleanup
     ImGui_ImplGlfwGL3_Shutdown();

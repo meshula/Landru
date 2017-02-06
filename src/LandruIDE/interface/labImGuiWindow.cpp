@@ -14,19 +14,10 @@ namespace lab
 
 	using namespace std;
 
-	vector<ImGuiWindow*> _windows;
 
-	std::vector<ImGuiWindow*> & ImGuiWindow::windows()
-	{
-		return _windows;
-	}
-
-
-        ImGuiWindow::ImGuiWindow(const std::string & window_name, int width, int height)
+	GraphicsWindow::GraphicsWindow(const std::string & window_name, int width, int height)
 			: _dockspace(this)
         {
-			_windows.push_back(this);
-
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
             glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -54,32 +45,48 @@ namespace lab
             _context = ImGui::CreateContext();
         }
 
-        ImGuiWindow::~ImGuiWindow()
-        {
-			for (vector<ImGuiWindow*>::iterator i = _windows.begin(); i != _windows.end(); ++i)
-			{
-				if (*i == this)
-				{
-					_windows.erase(i);
-					break;
-				}
-			}
+	GraphicsWindow::~GraphicsWindow()
+	{
+		if (_context)
+			ImGui::DestroyContext(_context);
+		if (_window)
+			glfwDestroyWindow(_window);
+	}
 
-            if (_context)
-                ImGui::DestroyContext(_context);
-			if (_window)
-				glfwDestroyWindow(_window);
-        }
-
-        void ImGuiWindow::frame_begin()
+        void GraphicsWindow::frame_begin()
         {
 			if (!_window)
 				return;
 
+			glfwMakeContextCurrent(_window);
+
             _activate_context();
             glfwPollEvents();
-            ImGui_ImplGlfwGL3_NewFrame();
-        }
+
+			int w, h;
+			glfwGetFramebufferSize(_window, &w, &h);
+
+			auto& io = ImGui::GetIO();
+			// Setup display size (every frame to accommodate for window resizing)
+			io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
+
+			
+			ImGui_ImplGlfwGL3_NewFrame(_window);
+			ImGui::SetNextWindowPos(ImVec2(0, 0));
+
+			ImGui::SetNextWindowSize(ImVec2(static_cast<float>(w), static_cast<float>(h)));
+			ImGuiWindowFlags flags =
+				ImGuiWindowFlags_NoTitleBar
+				| ImGuiWindowFlags_NoResize
+				| ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoCollapse
+				| ImGuiWindowFlags_NoBringToFrontOnFocus
+				| ImGuiWindowFlags_NoFocusOnAppearing
+				;
+
+			ImGui::Begin("###workspace", 0, flags);
+		}
+
 
 		static const int drag_button = 0;
 
@@ -91,13 +98,14 @@ namespace lab
 		};
 		static DragObject * drag_object = nullptr;
 
-        void ImGuiWindow::frame_end()
+        void GraphicsWindow::frame_end(GraphicsWindowManager & mgr)
         {
 			if (!_window)
 				return;
 			
 			_activate_context();
-        	_dockspace.update_and_draw(ImGui::GetContentRegionAvail());
+
+        	_dockspace.update_and_draw(ImGui::GetContentRegionAvail(), mgr);
 
 			if (ImGui::IsMouseDragging(drag_button) && drag_object)
 			{
@@ -122,14 +130,14 @@ namespace lab
 				drag_object->drop();
 			}
 
-			//ImGui::End();
+			ImGui::End(); // end the main window
 			ImGui::Render();
 
 			
 			glfwSwapBuffers(_window);
         }
 
-		void ImGuiWindow::close()
+		void GraphicsWindow::close()
 		{
 			if (!_window)
 				return;
@@ -138,12 +146,12 @@ namespace lab
 			_window = nullptr;
 		}
 
-        bool ImGuiWindow::should_close() const
+        bool GraphicsWindow::should_close() const
         {
             return !_window || glfwWindowShouldClose(_window);
         }
 
-		void ImGuiWindow::request_focus()
+		void GraphicsWindow::request_focus()
 		{
 			if (!_window)
 				return;
@@ -151,7 +159,7 @@ namespace lab
 			glfwFocusWindow(_window);
 		}
 
-        void ImGuiWindow::get_frame_size(int & display_w, int & display_h)
+        void GraphicsWindow::get_frame_size(int & display_w, int & display_h)
         {
 			if (!_window)
 			{
@@ -164,7 +172,18 @@ namespace lab
             glfwGetFramebufferSize(_window, &display_w, &display_h);
         }
 
-		void ImGuiWindow::set_position(int x, int y)
+		void GraphicsWindow::get_position(int & x, int & y)
+		{
+			if (!_window)
+			{
+				x = 0; y = 0;
+				return;
+			}
+
+			glfwGetWindowPos(_window, &x, &y);
+		}
+
+		void GraphicsWindow::set_position(int x, int y)
 		{
 			if (!_window)
 				return;
@@ -173,7 +192,7 @@ namespace lab
 		}
 
 
-        void ImGuiWindow::_activate_context()
+        void GraphicsWindow::_activate_context()
         {
             ImGuiContext* prevContext = ImGui::GetCurrentContext();
             if (prevContext != nullptr && prevContext != _context)
@@ -184,9 +203,76 @@ namespace lab
                 _context->IO.IniFilename = prevContext->IO.IniFilename;
                 _context->IO.RenderDrawListsFn = prevContext->IO.RenderDrawListsFn;
                 _context->Initialized = prevContext->Initialized;
-            }
+			}
             ImGui::SetCurrentContext(_context);
         }
+
+
+		std::weak_ptr<GraphicsWindow> GraphicsWindowManager::create_window(const std::string & window_name, int width, int height)
+		{
+			shared_ptr<GraphicsWindow> w(new GraphicsWindow(window_name, width, height));
+			_windows.push_back(w);
+			return w;
+		}
+
+		void GraphicsWindowManager::close_window(std::weak_ptr<GraphicsWindow> w)
+		{
+			auto window = w.lock();
+			for (std::vector<std::shared_ptr<GraphicsWindow>>::iterator i = _windows.begin(); i != _windows.end(); ++i)
+			{
+				if (window.get() == (*i).get())
+				{
+					_windows.erase(i);
+					break;
+				}
+			}
+		}
+
+
+		shared_ptr<GraphicsWindow> GraphicsWindowManager::find_dragged_window()
+		{
+			for (auto window : _windows)
+			{
+				auto& dockspace = window->get_dockspace();
+				if (dockspace.node.splits[0] && dockspace.node.splits[0]->active_dock)
+				{
+					if (dockspace.node.splits[0]->active_dock->dragging)
+						return window;
+				}
+			}
+
+			return nullptr;
+		}
+
+
+		void GraphicsWindowManager::update_windows()
+		{
+			ImVec4 clear_color = ImColor(1, 0, 0);
+
+			vector < weak_ptr<GraphicsWindow>> windows;
+			for (auto w : _windows)
+				windows.push_back(w);
+
+			for (auto wp : windows)
+			{
+				auto w = wp.lock();
+				if (!w)
+					continue;
+
+				w->frame_begin();
+
+				// Rendering
+				int display_w, display_h;
+				w->get_frame_size(display_w, display_h);
+
+				glViewport(0, 0, display_w, display_h);
+				glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				w->frame_end(*this);
+			}
+		}
+
 
 
 } // lab

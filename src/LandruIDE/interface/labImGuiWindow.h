@@ -1,40 +1,64 @@
 
 #pragma once
 
-#include <string>
 
 #include "imguidock.h"
 
 struct ImGuiContext;
 struct GLFWwindow;
 
+#include <string>
+#include <vector>
+#include <memory>
+
 namespace lab
 {
-    class ImGuiWindow
+	// This is an OpenGL capable window, initialized with ImGui, and
+	// an ImGui dockspace.
+
+	class GraphicsWindowManager;
+
+    class GraphicsWindow
     {
         ImGuiContext * _context = nullptr;
         GLFWwindow * _window = nullptr;
 
-    public:
-        ImGuiWindow(const std::string & window_name, int width, int height);
-        ~ImGuiWindow();
+		friend class GraphicsWindowManager;
 
-        void frame_begin();
-        void frame_end();
+		GraphicsWindow(const std::string & window_name, int width, int height);
+
+		void frame_begin();
+		void frame_end(GraphicsWindowManager &);
+
+	public:
+		~GraphicsWindow(); // public to avoid needing a deleter friend
+
+		void request_focus();
 		void close();
         bool should_close() const;
-        void get_frame_size(int & display_w, int & display_h);
+
+		void get_frame_size(int & display_w, int & display_h);
+		void get_position(int & x, int & y);
 		void set_position(int x, int y);
-		void request_focus();
 
     	ImGuiDock::Dockspace & get_dockspace() { return _dockspace; }
-
-		static std::vector<ImGuiWindow*> & windows();
 
     private:
     	ImGuiDock::Dockspace _dockspace;
 
         void _activate_context();
     };
+
+	class GraphicsWindowManager
+	{
+		std::vector<std::shared_ptr<GraphicsWindow>> _windows;
+
+	public:
+		std::weak_ptr<GraphicsWindow> create_window(const std::string & window_name, int width, int height);
+		void close_window(std::weak_ptr<GraphicsWindow> w);
+		void update_windows();
+
+		std::shared_ptr<GraphicsWindow> find_dragged_window();
+	};
 
 } // lab
