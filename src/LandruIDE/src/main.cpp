@@ -10,7 +10,7 @@
 #include <memory>
 
 #include "landruConsole.h"
-#include "interface/labImGuiWindow.h"
+#include "interface/labGraphicsWindow.h"
 #include "interface/imguidock.h"
 #include "interface/labCursorManager.h"
 

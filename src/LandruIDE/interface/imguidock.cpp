@@ -4,7 +4,7 @@
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imguidock.h"
-#include "labImGuiWindow.h"
+#include "labGraphicsWindow.h"
 #include <imgui_internal.h> // for ImRect
 #include <memory>
 #include <vector>
