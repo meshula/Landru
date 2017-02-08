@@ -17,6 +17,7 @@ namespace lab
 	// an ImGui dockspace.
 
 	class GraphicsWindowManager;
+	class FontManager;
 
     class GraphicsWindow
     {
@@ -25,7 +26,7 @@ namespace lab
 
 		friend class GraphicsWindowManager;
 
-		GraphicsWindow(const std::string & window_name, int width, int height);
+		GraphicsWindow(const std::string & window_name, int width, int height, std::shared_ptr<lab::FontManager>);
 
 		void frame_begin();
 		void frame_end(GraphicsWindowManager &);
@@ -54,7 +55,7 @@ namespace lab
 		std::vector<std::shared_ptr<GraphicsWindow>> _windows;
 
 	public:
-		std::weak_ptr<GraphicsWindow> create_window(const std::string & window_name, int width, int height);
+		std::weak_ptr<GraphicsWindow> create_window(const std::string & window_name, int width, int height, std::shared_ptr<lab::FontManager>);
 		void close_window(std::weak_ptr<GraphicsWindow> w);
 		void update_windows();
 

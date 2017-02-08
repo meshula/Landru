@@ -13,8 +13,8 @@
 #include "interface/labGraphicsWindow.h"
 #include "interface/imguidock.h"
 #include "interface/labCursorManager.h"
-#include "interface/imgui/roboto_regular.ttf.h"
-#include "interface/imgui/robotomono_regular.ttf.h"
+#include "interface/labFontManager.h"
+#include "renderingView.h"
 
 using namespace std;
 
@@ -112,70 +112,55 @@ int main(int, char**)
     if (!glfwInit())
         return 1;
 
+	shared_ptr<lab::FontManager> fontMgr = make_shared<lab::FontManager>();
 	lab::GraphicsWindowManager windowMgr;
-	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", 1280, 720);
+	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", 1280, 720, fontMgr);
 
     // Load Fonts
     // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
     ImGuiIO& io = ImGui::GetIO();
 	io.DisplayFramebufferScale = { 1.f, 1.f };
 	io.FontGlobalScale = 1.f;
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyClean.ttf", 13.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-
-
-	std::uint8_t* data = nullptr;
-	std::int32_t width = 0;
-	std::int32_t height = 0;
-
-	ImFontConfig config;
-	config.FontDataOwnedByAtlas = false;
-	config.MergeMode = false;
-	config.MergeGlyphCenterV = true;
-
-	io.Fonts->AddFontDefault(&config);
-	io.Fonts->AddFontFromMemoryTTF((void*)s_robotoRegularTtf, sizeof(s_robotoRegularTtf), 17, &config);
-	io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), 14.0f, &config);
-	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
-
-	/*
-	s_font_texture = std::make_shared<Texture>(
-		static_cast<std::uint16_t>(width)
-		, static_cast<std::uint16_t>(height)
-		, false
-		, 1
-		, gfx::TextureFormat::BGRA8
-		, 0
-		, gfx::copy(data, width*height * 4)
-		);
-
-	// Store our identifier
-	io.Fonts->SetTexID(s_font_texture.get());
-*/
 
 	set_style_colors();
+
+	lab::CursorManager cursorMgr;
 
 
 	std::vector<std::unique_ptr<ImGuiDock::Dock>> _docks;
 	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-
-	LandruConsole console;
+	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
+	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 
 	auto& console_dock = _docks[0];
-	auto& dummy_dock = _docks[1];
+	auto& view_dock = _docks[1];
+	auto& outliner_dock = _docks[2];
+	auto& properties_dock = _docks[3];
 
-	console_dock->initialize("Console", true, ImVec2(400, 200), [&console](ImVec2 area) 
+	LandruConsole console(fontMgr);
+	console_dock->initialize("Console", true, ImVec2(400, 200), [&console](ImVec2 area)
 	{
 		console.draw_contents();
 	});
 
-	dummy_dock->initialize("Dock1", true, ImVec2(), [](ImVec2 area) {
-		ImGui::Text("Hello :)");
+	lab::RenderingView renderingView;
+	view_dock->initialize("View", true, ImVec2(), [&cursorMgr, &renderingView](ImVec2 area) {
+		renderingView.render_scene(cursorMgr, area);
+	});
+
+	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [](ImVec2 area)
+	{
+		ImGui::Text("Root");
+		ImGui::Text("+ child1");
+		ImGui::Text("+ child2");
+	});
+
+	properties_dock->initialize("Properties", true, ImVec2(100, 100), [](ImVec2 area)
+	{
+		ImGui::Text("Child1");
+		ImGui::Text("visible [x]");
+		ImGui::Text("lollipops [3]");
 	});
 
 	{
@@ -183,12 +168,12 @@ int main(int, char**)
 		if (w)
 		{
 			auto& dockspace = w->get_dockspace();
-			dockspace.dock(dummy_dock.get(), ImGuiDock::DockSlot::None, 300, true);
+			dockspace.dock(view_dock.get(), ImGuiDock::DockSlot::None, 300, true);
 			dockspace.dock(console_dock.get(), ImGuiDock::DockSlot::Bottom, 300, true);
+			dockspace.dock_with(outliner_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Left, 300, true);
+			dockspace.dock_with(properties_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Right, 300, true);
 		}
 	}
-
-	lab::CursorManager cursorMgr;
 
 	while (true)
 	{

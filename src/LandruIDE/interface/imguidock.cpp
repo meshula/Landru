@@ -4,6 +4,7 @@
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imguidock.h"
+#include "labFontManager.h"
 #include "labGraphicsWindow.h"
 #include <imgui_internal.h> // for ImRect
 #include <memory>
@@ -14,8 +15,9 @@ namespace ImGuiDock
 	
 	using namespace std;
 
-	Dockspace::Dockspace(lab::GraphicsWindow* owner) : owner(owner)
+	Dockspace::Dockspace(lab::GraphicsWindow* owner, shared_ptr<lab::FontManager> fm) : owner(owner)
 	{
+		fontManager = fm;
 	}
 
 	Dockspace::~Dockspace()
@@ -297,8 +299,8 @@ namespace ImGuiDock
 	{
 		uint32_t idgen = 0;
 
-		ImGuiIO & io = ImGui::GetIO();
-		float tabbarHeight = 20;// *io.DisplayFramebufferScale.y;
+		auto g = ImGui::GetCurrentContext();
+		float tabbarHeight = 2 * g->FontSize + 8;
 
 		std::function<void(Node*, ImVec2, ImVec2)> renderContainer = [&](Node *container, ImVec2 size, ImVec2 cursorPos) 
 		{
@@ -319,7 +321,8 @@ namespace ImGuiDock
 
 			if (container->splits[0] == nullptr && container != &node)
 			{
-				render_tab_bar(container, calculatedSize, cursorPos);
+				lab::SetFont sf(fontManager->regular_font);
+				render_tab_bar(container, calculatedSize, tabbarHeight, cursorPos);
 				cursorPos.y += tabbarHeight;
 
 				ImGui::SetCursorPos(cursorPos);
@@ -473,7 +476,7 @@ namespace ImGuiDock
 					_current_dock_to->dragging = true;
 					
 					auto w = mgr.create_window(_current_dock_to->title,
-						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y);
+						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y, fontManager);
 
 					auto guiWindow = w.lock();
 					guiWindow->get_dockspace().dock(_current_dock_to, DockSlot::Tab, 0, true);
@@ -642,7 +645,7 @@ namespace ImGuiDock
 		return false;
 	}
 
-	void Dockspace::render_tab_bar(Node* container, const ImVec2& size, const ImVec2& cursorPos)
+	void Dockspace::render_tab_bar(Node* container, const ImVec2& size, float tab_bar_height, const ImVec2& cursorPos)
 	{
 		ImGui::SetCursorPos(cursorPos);
 
@@ -671,7 +674,7 @@ namespace ImGuiDock
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, buttonColorActive);
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, buttonColorHovered);
 			}
-			if (ImGui::Button(dockTitle.c_str(), ImVec2(0, 20)))
+			if (ImGui::Button(dockTitle.c_str(), ImVec2(0, tab_bar_height)))
 			{
 				container->active_dock = dock;
 			}

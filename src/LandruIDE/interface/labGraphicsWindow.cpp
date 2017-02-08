@@ -12,11 +12,14 @@
 namespace lab
 {
 
+	class FontManager;
+
 	using namespace std;
 
 
-	GraphicsWindow::GraphicsWindow(const std::string & window_name, int width, int height)
-			: _dockspace(this)
+	GraphicsWindow::GraphicsWindow(const std::string & window_name, int width, int height,
+		shared_ptr<lab::FontManager> fm)
+			: _dockspace(this, fm)
         {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -208,9 +211,10 @@ namespace lab
         }
 
 
-		std::weak_ptr<GraphicsWindow> GraphicsWindowManager::create_window(const std::string & window_name, int width, int height)
+		std::weak_ptr<GraphicsWindow> GraphicsWindowManager::create_window(const std::string & window_name, int width, int height,
+			shared_ptr<FontManager> fm)
 		{
-			shared_ptr<GraphicsWindow> w(new GraphicsWindow(window_name, width, height));
+			shared_ptr<GraphicsWindow> w(new GraphicsWindow(window_name, width, height, fm));
 			_windows.push_back(w);
 			return w;
 		}
@@ -261,9 +265,13 @@ namespace lab
 				if (!w)
 					continue;
 
-				//io.DisplayFramebufferScale = { 1.75f, 1.75f };
+				const float scale = 1.0f;
+				io.DisplayFramebufferScale = { scale, scale };
 
 				w->frame_begin();
+
+				const float font_scale = 1.0f;
+				ImGui::SetWindowFontScale(font_scale);
 
 				// Rendering
 				int display_w, display_h;

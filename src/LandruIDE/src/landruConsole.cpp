@@ -1,8 +1,11 @@
 
 #include "landruConsole.h"
 #include "imgui_internal.h"
+#include "interface/labFontManager.h"
 
 #include <iostream>
+
+using namespace std;
 
 class DpSchemePort {
 public:
@@ -36,7 +39,8 @@ public:
 
 DpSchemePort * __port = nullptr;
 
-LandruConsole::LandruConsole()
+LandruConsole::LandruConsole(shared_ptr<lab::FontManager> fm)
+	: _fontManager(fm)
 {
 	ClearLog();
 	memset(InputBuf, 0, sizeof(InputBuf));
@@ -99,6 +103,7 @@ void LandruConsole::AddLog(const char* fmt, ...) IM_PRINTFARGS(2)
 
 void LandruConsole::draw_contents()
 {
+	lab::SetFont f(_fontManager->regular_font);
 
 	// TODO: display items starting from the bottom
 
@@ -157,7 +162,9 @@ void LandruConsole::draw_contents()
 	ImGui::Separator();
 
 	// Command-line
-	if (ImGui::InputText(">", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, &TextEditCallbackStub, (void*)this))
+	if (ImGui::InputText(">", InputBuf, IM_ARRAYSIZE(InputBuf), 
+		ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory, 
+		&TextEditCallbackStub, (void*)this))
 	{
 		char* input_end = InputBuf + strlen(InputBuf);
 		while (input_end > InputBuf && input_end[-1] == ' ') input_end--; *input_end = 0;

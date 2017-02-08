@@ -6,10 +6,10 @@
 #include <vector>
 #include <functional>
 #include <string>
-
+#include <memory>
 #include <imgui.h>
 
-namespace lab { class GraphicsWindow; class GraphicsWindowManager; }
+namespace lab { class GraphicsWindow; class GraphicsWindowManager; class FontManager; }
 
 namespace ImGuiDock
 {
@@ -39,7 +39,8 @@ namespace ImGuiDock
 
 	struct Dock
 	{
-		Dock* initialize(const std::string& dtitle, bool dcloseButton, ImVec2 dminSize, std::function<void(ImVec2)> ddrawFunction)
+		Dock* initialize(const std::string& dtitle, bool dcloseButton, ImVec2 dminSize, 
+						 std::function<void(ImVec2)> ddrawFunction)
 		{
 			title = dtitle;
 			close_button = dcloseButton;
@@ -74,7 +75,7 @@ namespace ImGuiDock
 	class Dockspace
 	{
 	public:
-		Dockspace(lab::GraphicsWindow* owner);
+		Dockspace(lab::GraphicsWindow* owner, std::shared_ptr<lab::FontManager> fm);
 		~Dockspace();
 
 		bool dock(Dock* dock, DockSlot dockSlot, float size = 0, bool active = false);
@@ -89,8 +90,10 @@ namespace ImGuiDock
 	protected:
 		friend class lab::GraphicsWindow;
 
+		std::shared_ptr<lab::FontManager> fontManager;
+
 		DockSlot render_dock_slot_preview(const ImVec2& mousePos, const ImVec2& cPos, const ImVec2& cSize);
-		void render_tab_bar(Node* container, const ImVec2& size, const ImVec2& cursorPos);
+		void render_tab_bar(Node* container, const ImVec2& size, float height, const ImVec2& cursorPos);
 		bool get_min_size(Node* container, ImVec2& min);
 		lab::GraphicsWindow* is_any_window_dragged(lab::GraphicsWindowManager&);
 

@@ -1,9 +1,13 @@
 #pragma once
 
 #include "imgui.h"
+
+#include <memory>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>          // vsnprintf, sscanf, printf
+
+namespace lab { class FontManager;  }
 
 // For the console example, here we are using a more C++ like approach of declaring a class to hold the data and the functions.
 class LandruConsole
@@ -15,8 +19,10 @@ class LandruConsole
 	int                   HistoryPos;    // -1: new line, 0..History.Size-1 browsing history.
 	ImVector<const char*> Commands;
 
+	std::shared_ptr<lab::FontManager> _fontManager;
+
 public:
-	LandruConsole();
+	LandruConsole(std::shared_ptr<lab::FontManager>);
 	~LandruConsole();
 
 	// Portable helpers
