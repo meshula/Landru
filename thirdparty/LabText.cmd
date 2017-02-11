@@ -22,3 +22,5 @@ msbuild ..\..\prereq\LabText\LabText.sln /t:Build /p:Configuration=Release /p:Pl
 msbuild ..\..\prereq\LabText\LabText.sln /t:Build /p:Configuration=Debug /p:Platform=windows
 
 cd %current%
+xcopy .\prereq\LabText\src\*.h .\include\ /s /y
+xcopy .\prereq\LabText\src\*.hpp .\include\ /s /y
