@@ -1,5 +1,5 @@
 @echo off
-ECHO building LabText
+ECHO building LabRender
 
 SET current=%cd%
 

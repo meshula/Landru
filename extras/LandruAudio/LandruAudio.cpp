@@ -251,7 +251,7 @@ namespace {
 	{
 		Wires::Data<LS_Handle> * var = dynamic_cast<Wires::Data<LS_Handle>*>(run.var);
 		LS_Handle n = var->value();
-		ls_ConvolverNode_SetNormalize(n, bool(run.self->pop<int>()));
+		ls_ConvolverNode_SetNormalize(n, !!run.self->pop<int>());
 		return RunState::Continue;
 	}
 

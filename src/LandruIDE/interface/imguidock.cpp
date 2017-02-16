@@ -316,8 +316,9 @@ namespace ImGuiDock
 
 			calculatedSize.y -= tabbarHeight;
 
-			float splitterButtonWidth = 4;
-			float splitterButtonWidthHalf = splitterButtonWidth / 2;
+			float splitterButtonWidth = 8;
+			float splitterButtonWidthHalf = splitterButtonWidth * 0.5f;
+			float active_splitterWidth = splitterButtonWidth * 3.f;
 
 			if (container->splits[0] == nullptr && container != &node)
 			{
@@ -402,7 +403,6 @@ namespace ImGuiDock
 					std::string idnamesb = "##SplitterButton";
 					idnamesb += idgen++;
 
-
 					ImVec4 buttonColor = ImGui::GetStyle().Colors[ImGuiCol_Button];
 					ImVec4 buttonActiveColor = ImGui::GetStyle().Colors[ImGuiCol_ButtonActive];
 					ImVec4 buttonHoveredColor = ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered];
@@ -415,8 +415,8 @@ namespace ImGuiDock
 					ImGui::PushStyleColor(ImGuiCol_ButtonHovered, buttonHoveredColor);
 
 					ImGui::Button(idnamesb.c_str(), ImVec2(
-						container->vertical_split ? splitterButtonWidth : size.x + splitterButtonWidth,
-						!container->vertical_split ? splitterButtonWidth : size.y + splitterButtonWidth));
+						container->vertical_split ? active_splitterWidth : size.x + active_splitterWidth,
+						!container->vertical_split ? active_splitterWidth : size.y + active_splitterWidth));
 
 					ImGui::PopStyleColor(3);
 					ImGui::SetItemAllowOverlap(); // This is to allow having other buttons OVER our splitter. 

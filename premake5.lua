@@ -101,10 +101,11 @@ project "landruIDE"
     libdirs {
         "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
-        "thirdparty/local/lib"
+        "thirdparty/lib/%{cfg.platform}/%{cfg.buildcfg}"
     }
 
-    links { "Landru", "LabJson", "LabText", "glfw3", "glew", "opengl32" }
+    links { "Landru", "LabJson", "LabText", "LabRender", "LabCmd",
+            "glfw3", "glew", "opengl32" }
 
 project "landru_gl"
     kind "SharedLib"
@@ -123,14 +124,14 @@ project "landru_audio"
     language "C++"
     includedirs {
         "extras/LandruAudio", "include", "src", "thirdparty/include",
-        "thirdparty/src/labsound-c"
+        "thirdparty/prereq/labsound-c"
     }
     files { "extras/LandruAudio/**.h", "extras/LandruAudio/**.cpp" }
     libdirs {
         "thirdparty/prereq/LabSound/build/x64/%{cfg.buildcfg}",
         "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/lib",
-        "thirdparty/src/labsound-c/bin/%{cfg.platform}/%{cfg.buildcfg}"
+        "thirdparty/prereq/labsound-c/bin/%{cfg.platform}/%{cfg.buildcfg}"
     }
     links { "Landru", "LabText", "labsoundc" }
 

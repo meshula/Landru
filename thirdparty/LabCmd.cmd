@@ -22,6 +22,3 @@ msbuild ..\..\prereq\LabCmd\LabCmd.sln /t:Build /p:Configuration=Release /p:Plat
 msbuild ..\..\prereq\LabCmd\LabCmd.sln /t:Build /p:Configuration=Debug /p:Platform=windows
 
 cd %current%
-if not exist "include\LabCmd" ^
-mkdir include\LabCmd
-copy /y .\prereq\LabCmd\src\*.h .\include\LabCmd

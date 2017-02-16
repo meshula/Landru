@@ -29,6 +29,7 @@ FontManager::FontManager()
 	default_font = io.Fonts->AddFontDefault(&config);
 	regular_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoRegularTtf, sizeof(s_robotoRegularTtf), 28, &config);
 	mono_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), 28.0f, &config);
+	mono_small_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), 20.f, &config);
 	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
 	/*

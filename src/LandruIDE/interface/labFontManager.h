@@ -10,7 +10,8 @@ public:
 
     ImFont * default_font;
     ImFont * regular_font;
-    ImFont * mono_font;
+	ImFont * mono_font;
+	ImFont * mono_small_font;
 };
 
 class SetFont

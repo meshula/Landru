@@ -145,8 +145,8 @@ int main(int, char**)
 	});
 
 	lab::RenderingView renderingView;
-	view_dock->initialize("View", true, ImVec2(), [&cursorMgr, &renderingView](ImVec2 area) {
-		renderingView.render_scene(cursorMgr, area);
+	view_dock->initialize("View", true, ImVec2(), [&fontMgr, &cursorMgr, &renderingView](ImVec2 area) {
+		renderingView.render_ui(cursorMgr, *fontMgr.get(), area);
 	});
 
 	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [](ImVec2 area)
@@ -175,15 +175,18 @@ int main(int, char**)
 		}
 	}
 
+	windowMgr.update_windows(); // prime the pump
+	renderingView.render_scene(); // width and height were recorded during UI rendering
+
 	while (true)
 	{
 		cursorMgr.set_cursor(ImGui::GetMouseCursor());
+		windowMgr.update_windows(); // prime the pump
+		renderingView.render_scene(); // width and height were recorded during UI rendering
 
 		auto main_window = window.lock();
 		if (!main_window || main_window->should_close())
 			break;
-
-		windowMgr.update_windows();
 	}
 
     // Cleanup

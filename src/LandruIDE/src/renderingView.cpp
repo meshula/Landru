@@ -1,15 +1,30 @@
 
 #include "renderingView.h"
+#include "renderer.h"
 #include "interface/labCursorManager.h"
+#include "interface/labFontManager.h"
+#include "interface/imguimath.h"
 #include "interface/imguiRenderFrameEx.h"
 
+
+#include <LabRender/Camera.h>
+#include <LabRender/gl4.h> // temp, shouldn't be using GL directly here
+#include <LabRender/PassRenderer.h>
+#include <LabRender/UtilityModel.h>
+#include <LabRender/Utils.h>
+
+#include <LabCmd/FFI.h>
+
 #include <imgui.h>
+
+#include <memory>
+
 
 // adapted from https://github.com/volcoma/EtherealEngine, BSD License
 
 namespace gfx
 {
-	struct Stats 
+	struct Stats
 	{
 		double waitToRender = 5.0e-3; //ms
 		double waitToSubmit = 10.0e-3; //ms
@@ -26,46 +41,82 @@ namespace gfx
 
 namespace lab
 {
+	namespace gui = ImGui;
+	using namespace std;
 
-namespace gui = ImGui;
 
-	void RenderingView::show_statistics(const unsigned int frameRate)
+
+	RenderingView::RenderingView()
+	: _detail(new RenderEngine())
 	{
+	}
+
+	RenderingView::~RenderingView()
+	{
+		delete _detail;
+	}
+
+	void RenderingView::show_statistics(lab::FontManager& fontManager, const unsigned int frameRate)
+	{
+		SetFont small(fontManager.mono_small_font);
+
+
 		ImVec2 pos = gui::GetCursorScreenPos();
 		gui::SetNextWindowPos(pos);
 		gui::SetNextWindowCollapsed(true, ImGuiSetCond_FirstUseEver);
-		gui::Begin("Statistics", nullptr,
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_AlwaysAutoResize);
-
-		gui::Text("FPS  : %u", frameRate);
-		gui::Separator();
-		gui::Text("MSPF : %.3f ms ", 1000.0f / float(frameRate));
-		gui::Separator();
-
-		auto stats = gfx::getStats();
-		gui::Text("Wait Render : %fms", stats->waitToRender);
-		gui::Text("Wait Submit : %fms", stats->waitToSubmit);
-		gui::Text("Draw calls: %u", stats->numDraw);
-		gui::Text("Compute calls: %u", stats->numCompute);
-
-		if (gui::Checkbox("More Stats", &ui_more_stats))
+		if (gui::Begin("Statistics", nullptr,
+						ImGuiWindowFlags_NoMove |
+						ImGuiWindowFlags_NoResize |
+						ImGuiWindowFlags_AlwaysAutoResize))
 		{
-/*			if (more_stats)
-				gfx::setDebug(BGFX_DEBUG_STATS);
-			else
-				gfx::setDebug(BGFX_DEBUG_NONE);
-				*/
-		}
-		gui::Separator();
-		gui::Checkbox("Show G-Buffer", &ui_show_gbuffer);
-		gui::End();
+			gui::Text("FPS  : %u", frameRate);
+			gui::Separator();
+			gui::Text("MSPF : %.3f ms ", 1000.0f / float(frameRate));
+			gui::Separator();
 
+			auto stats = gfx::getStats();
+			gui::Text("Wait Render : %fms", stats->waitToRender);
+			gui::Text("Wait Submit : %fms", stats->waitToSubmit);
+			gui::Text("Draw calls: %u", stats->numDraw);
+			gui::Text("Compute calls: %u", stats->numCompute);
+
+			if (gui::Checkbox("More Stats", &ui_more_stats))
+			{
+				/*			if (more_stats)
+								gfx::setDebug(BGFX_DEBUG_STATS);
+							else
+								gfx::setDebug(BGFX_DEBUG_NONE);
+								*/
+			}
+			gui::Separator();
+			gui::Checkbox("Show G-Buffer", &ui_show_gbuffer);
+		}
+		gui::End();
 	}
 
-	void RenderingView::draw_view_content(const ImVec2& size)
+	void RenderingView::draw_view_content(lab::FontManager& fontManager, const ImVec2& size)
 	{
+		static std::once_flag once;
+		std::call_once(once, [this]()
+        {
+			_detail->create_scene();
+        });
+
+//		auto pos = gui::GetWindowPos();
+		auto pos = gui::GetCursorScreenPos();
+//		pos.x += 20.f;
+//		pos.y += 40.f;
+		ImVec2 bounds = size;// (size.x - 40.f, size.y - 40.f);
+	//	gui::SetNextWindowPos(pos);
+		//ImGui::GetWindowDrawList()->AddRectFilled(pos, bounds + pos, ImColor(0, 0, 0, 255));
+
+		ImTextureID tex_id = (ImTextureID) uintptr_t(_detail->output_texture_id());
+		gui::Image(tex_id, bounds, ImVec2(0,1), ImVec2(1,0));
+
+		//_detail->save_output_texture("c:\\Projects\\foo.png");
+
+		gui::SetCursorScreenPos(pos);
+
 		// this routine draws the rendered image from the camera, rather than drawing the scene directly
 #if 0
 		auto input = core::get_subsystem<runtime::Input>();
@@ -302,38 +353,44 @@ namespace gui = ImGui;
 #endif
 	}
 
-	void RenderingView::render_scene(lab::CursorManager& cursorManager, ImVec2 area)
+	void RenderingView::render_ui(lab::CursorManager& cursorManager, lab::FontManager& fontManager, ImVec2 area)
 	{
-		#if 0
-		auto es = core::get_subsystem<editor::EditState>();
-		auto engine = core::get_subsystem<runtime::Engine>();
-		auto ecs = core::get_subsystem<runtime::EntityComponentSystem>();
-		auto input = core::get_subsystem<runtime::Input>();
+#		if 0
+			auto es = core::get_subsystem<editor::EditState>();
+			auto engine = core::get_subsystem<runtime::Engine>();
+			auto ecs = core::get_subsystem<runtime::EntityComponentSystem>();
+			auto input = core::get_subsystem<runtime::Input>();
 
-		auto window = engine->get_focused_window();
-		auto& editor_camera = es->camera;
-		auto& selected = es->selection_data.object;
-		auto& dragged = es->drag_data.object;
+			auto window = engine->get_focused_window();
+			auto& editor_camera = es->camera;
+			auto& selected = es->selection_data.object;
+			auto& dragged = es->drag_data.object;
 
-		bool has_edit_camera = editor_camera
-			&& editor_camera.has_component<CameraComponent>()
-			&& editor_camera.has_component<TransformComponent>();
-#endif
+			bool has_edit_camera = editor_camera
+				&& editor_camera.has_component<CameraComponent>()
+				&& editor_camera.has_component<TransformComponent>();
+#		endif
 
-		show_statistics(90.f);// engine->get_fps());
 
-#if 0
-		if (!has_edit_camera)
-			return;
-#endif
+#		if 0
+			if (!has_edit_camera)
+				return;
+#		endif
 
 		auto size = gui::GetContentRegionAvail();
-		auto pos = gui::GetCursorScreenPos();
-		draw_view_content(size);
 
-#if 0
-		auto camera_component = editor_camera.component<CameraComponent>().lock();
-#endif
+		width = size.x;
+		height = size.y;
+
+		auto pos = gui::GetCursorScreenPos();
+		draw_view_content(fontManager, size);
+
+		show_statistics(fontManager, 90);// engine->get_fps());
+
+#		if 0
+			auto camera_component = editor_camera.component<CameraComponent>().lock();
+#		endif
+
 		if (size.x > 0 && size.y > 0)
 		{
 #if 0
@@ -358,38 +415,38 @@ namespace gui = ImGui;
 				ImGui::PushStyleColor(ImGuiCol_Border, gui::GetStyle().Colors[ImGuiCol_Button]);
 				ImGui::RenderFrameEx(gui::GetItemRectMin(), gui::GetItemRectMax(), true, 0.0f, 2.0f);
 				ImGui::PopStyleColor();
-#if 0
-				if (input->is_key_pressed(sf::Keyboard::Delete))
-				{
-					if (selected && selected.is_type<runtime::Entity>())
-					{
-						auto sel = selected.get_value<runtime::Entity>();
-						if (sel != editor_camera)
-						{
-							sel.destroy();
-							es->unselect();
-						}
-					}
-				}
-
-				if (input->is_key_pressed(sf::Keyboard::D))
-				{
-					if (input->is_key_down(sf::Keyboard::LControl))
+#				if 0
+					if (input->is_key_pressed(sf::Keyboard::Delete))
 					{
 						if (selected && selected.is_type<runtime::Entity>())
 						{
 							auto sel = selected.get_value<runtime::Entity>();
 							if (sel != editor_camera)
 							{
-								auto clone = ecs->create_from_copy(sel);
-								clone.component<TransformComponent>().lock()
-									->set_parent(sel.component<TransformComponent>().lock()->get_parent(), false, true);
-								es->select(clone);
+								sel.destroy();
+								es->unselect();
 							}
 						}
 					}
-				}
-#endif
+
+					if (input->is_key_pressed(sf::Keyboard::D))
+					{
+						if (input->is_key_down(sf::Keyboard::LControl))
+						{
+							if (selected && selected.is_type<runtime::Entity>())
+							{
+								auto sel = selected.get_value<runtime::Entity>();
+								if (sel != editor_camera)
+								{
+									auto clone = ecs->create_from_copy(sel);
+									clone.component<TransformComponent>().lock()
+										->set_parent(sel.component<TransformComponent>().lock()->get_parent(), false, true);
+									es->select(clone);
+								}
+							}
+						}
+					}
+#				endif
 			}
 
 			if (gui::IsMouseReleased(1) || gui::IsMouseReleased(2))
@@ -399,92 +456,97 @@ namespace gui = ImGui;
 
 			if (ui_show_gbuffer)
 			{
-#if 0
-				const auto g_buffer = camera_component->get_g_buffer();
-				for (std::uint32_t i = 0; i < g_buffer->get_attachment_count(); ++i)
-				{
-					const auto attachment = g_buffer->get_attachment(i).texture;
-					gui::Image(attachment, size);
-
-					if (gui::IsItemClicked(1) || gui::IsItemClicked(2))
+#				if 0
+					const auto g_buffer = camera_component->get_g_buffer();
+					for (std::uint32_t i = 0; i < g_buffer->get_attachment_count(); ++i)
 					{
-						gui::SetWindowFocus();
-						window->setMouseCursorVisible(false);
+						const auto attachment = g_buffer->get_attachment(i).texture;
+						gui::Image(attachment, size);
+
+						if (gui::IsItemClicked(1) || gui::IsItemClicked(2))
+						{
+							gui::SetWindowFocus();
+							window->setMouseCursorVisible(false);
+						}
 					}
-				}
-#endif
+#				endif
 			}
 
 		}
 
 		if (gui::IsWindowHovered())
 		{
-#if 0
-			if (dragged)
-			{
-				math::vec3 projected_pos;
-
-				if (gui::IsMouseReleased(gui::drag_button))
+#			if 0
+				if (dragged)
 				{
-					auto cursor_pos = gui::GetMousePos();
-					camera_component->get_camera().viewport_to_world(
-						math::vec2{ cursor_pos.x, cursor_pos.y },
-						math::plane::fromPointNormal(math::vec3{ 0.0f, 0.0f, 0.0f }, math::vec3{ 0.0f, 1.0f, 0.0f }),
-						projected_pos,
-						false);
-				}
+					math::vec3 projected_pos;
 
-				if (dragged.is_type<runtime::Entity>())
-				{
-					gui::SetMouseCursor(ImGuiMouseCursor_Move);
 					if (gui::IsMouseReleased(gui::drag_button))
 					{
-						auto dragged_entity = dragged.get_value<runtime::Entity>();
-						dragged_entity.component<TransformComponent>().lock()
-							->set_parent(runtime::CHandle<TransformComponent>());
-
-						es->drop();
+						auto cursor_pos = gui::GetMousePos();
+						camera_component->get_camera().viewport_to_world(
+							math::vec2{ cursor_pos.x, cursor_pos.y },
+							math::plane::fromPointNormal(math::vec3{ 0.0f, 0.0f, 0.0f }, math::vec3{ 0.0f, 1.0f, 0.0f }),
+							projected_pos,
+							false);
 					}
-				}
-				if (dragged.is_type<AssetHandle<Prefab>>())
-				{
-					gui::SetMouseCursor(ImGuiMouseCursor_Move);
-					if (gui::IsMouseReleased(gui::drag_button))
+
+					if (dragged.is_type<runtime::Entity>())
 					{
-						auto prefab = dragged.get_value<AssetHandle<Prefab>>();
-						auto object = prefab->instantiate();
-						object.component<TransformComponent>().lock()
-							->set_position(projected_pos);
-						es->drop();
-						es->select(object);
+						gui::SetMouseCursor(ImGuiMouseCursor_Move);
+						if (gui::IsMouseReleased(gui::drag_button))
+						{
+							auto dragged_entity = dragged.get_value<runtime::Entity>();
+							dragged_entity.component<TransformComponent>().lock()
+								->set_parent(runtime::CHandle<TransformComponent>());
+
+							es->drop();
+						}
 					}
-				}
-				if (dragged.is_type<AssetHandle<Mesh>>())
-				{
-					gui::SetMouseCursor(ImGuiMouseCursor_Move);
-					if (gui::IsMouseReleased(gui::drag_button))
+					if (dragged.is_type<AssetHandle<Prefab>>())
 					{
-						auto mesh = dragged.get_value<AssetHandle<Mesh>>();
-						Model model;
-						model.set_lod(mesh, 0);
+						gui::SetMouseCursor(ImGuiMouseCursor_Move);
+						if (gui::IsMouseReleased(gui::drag_button))
+						{
+							auto prefab = dragged.get_value<AssetHandle<Prefab>>();
+							auto object = prefab->instantiate();
+							object.component<TransformComponent>().lock()
+								->set_position(projected_pos);
+							es->drop();
+							es->select(object);
+						}
+					}
+					if (dragged.is_type<AssetHandle<Mesh>>())
+					{
+						gui::SetMouseCursor(ImGuiMouseCursor_Move);
+						if (gui::IsMouseReleased(gui::drag_button))
+						{
+							auto mesh = dragged.get_value<AssetHandle<Mesh>>();
+							Model model;
+							model.set_lod(mesh, 0);
 
-						auto object = ecs->create();
-						//Add component and configure it.
-						object.assign<TransformComponent>().lock()
-							->set_position(projected_pos);
-						//Add component and configure it.
-						object.assign<ModelComponent>().lock()
-							->set_casts_shadow(true)
-							.set_casts_reflection(false)
-							.set_model(model);
+							auto object = ecs->create();
+							//Add component and configure it.
+							object.assign<TransformComponent>().lock()
+								->set_position(projected_pos);
+							//Add component and configure it.
+							object.assign<ModelComponent>().lock()
+								->set_casts_shadow(true)
+								.set_casts_reflection(false)
+								.set_model(model);
 
-						es->drop();
-						es->select(object);
+							es->drop();
+							es->select(object);
+						}
 					}
 				}
-			}
-#endif
+#			endif
 		}
+	}
+
+	void RenderingView::render_scene()
+	{
+		_detail->render(width, height);
 	}
 
 } // lab
