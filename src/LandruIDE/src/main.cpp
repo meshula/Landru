@@ -151,16 +151,44 @@ int main(int, char**)
 
 	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [](ImVec2 area)
 	{
-		ImGui::Text("Root");
-		ImGui::Text("+ child1");
-		ImGui::Text("+ child2");
+		if (ImGui::TreeNode("Scene"))
+		{
+			if (ImGui::TreeNode("Cameras"))
+			{
+				ImGui::Text("Interactive");
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("/"))
+			{
+				ImGui::Text("  ShaderBall");
+				ImGui::Text("  Sky");
+				ImGui::TreePop();
+			}
+			ImGui::TreePop();
+		}
 	});
 
 	properties_dock->initialize("Properties", true, ImVec2(100, 100), [](ImVec2 area)
 	{
-		ImGui::Text("Child1");
-		ImGui::Text("visible [x]");
-		ImGui::Text("lollipops [3]");
+		if (ImGui::TreeNode("ShaderBall"))
+		{
+			if (ImGui::TreeNode("Transform"))
+			{
+				ImGui::Text("Translate: 0 0 0");
+				ImGui::Text("Rotate: 0 0 0");
+				ImGui::Text("Scale: 1 1 1");
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("Geometry"))
+			{
+				ImGui::TreePop();
+			}
+			if (ImGui::TreeNode("Shading"))
+			{
+				ImGui::TreePop();
+			}
+			ImGui::TreePop();
+		}
 	});
 
 	{

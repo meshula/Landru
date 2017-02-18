@@ -136,7 +136,7 @@ namespace lab
         auto fb = _detail->dr->framebuffer("gbuffer");
 		if (!fb || !fb->textures.size())
 			return 0;
-        return fb->textures[4]->id;
+        return fb->textures[3]->id;
     }
 
     void RenderEngine::save_output_texture(std::string path)
@@ -144,7 +144,7 @@ namespace lab
         auto fb = _detail->dr->framebuffer("gbuffer");
 		if (!fb || !fb->textures.size())
 			return;
-		fb->textures[4]->save(path.c_str());
+		fb->textures[3]->save(path.c_str());
     }
 
 

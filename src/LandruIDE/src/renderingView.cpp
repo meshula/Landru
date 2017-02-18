@@ -379,8 +379,8 @@ namespace lab
 
 		auto size = gui::GetContentRegionAvail();
 
-		width = size.x;
-		height = size.y;
+		width = (int) size.x;
+		height = (int) size.y;
 
 		auto pos = gui::GetCursorScreenPos();
 		draw_view_content(fontManager, size);
