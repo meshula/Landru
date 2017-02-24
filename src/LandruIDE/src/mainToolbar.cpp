@@ -11,33 +11,33 @@ namespace lab
 {
 	namespace gui = ImGui;
 
-    enum ManipMode { Translate, Rotate, Scale, Local, Global };
-    ManipMode operationMode = ManipMode::Translate;
-    ManipMode space = ManipMode::Local;
-
 	enum PlayMode { NotStarted, Playing, Paused };
 	PlayMode playMode = PlayMode::NotStarted;
 
 	CameraRig::Mode navMode = CameraRig::Mode::TurnTableOrbit;
 
-    void toolbar(FontManager* fm)
+	EditState::ManipSpace space = EditState::ManipSpace::Local;
+
+    void toolbar(EditState & edit_state, FontManager* fm)
     {
 		SetFont f(fm->mono_font);
         float width = gui::GetContentRegionAvailWidth();
-        if (lab::ToolbarTextButton(" T ", "Translate", operationMode == ManipMode::Translate))
+		EditState::ManipulatorMode operationMode = edit_state.manipulator_mode();
+
+        if (lab::ToolbarTextButton(" T ", "Translate", operationMode == EditState::ManipulatorMode::Translate))
         {
-			operationMode = ManipMode::Translate;
+			evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);
         }
         gui::SameLine(0.0f);
-        if (lab::ToolbarTextButton(" R ", "Rotate", operationMode == ManipMode::Rotate))
+        if (lab::ToolbarTextButton(" R ", "Rotate", operationMode == EditState::ManipulatorMode::Rotate))
         {
-			operationMode = ManipMode::Rotate;
+			evt_set_manipulator_mode(EditState::ManipulatorMode::Rotate);
 		}
         gui::SameLine(0.0f);
-        if (lab::ToolbarTextButton(" S ", "Scale", operationMode == ManipMode::Scale))
+        if (lab::ToolbarTextButton(" S ", "Scale", operationMode == EditState::ManipulatorMode::Scale))
         {
-			operationMode = ManipMode::Scale;
-			space = ManipMode::Local;
+			evt_set_manipulator_mode(EditState::ManipulatorMode::Scale);
+			space = EditState::ManipSpace::Local;
         }
 
 		gui::SameLine(0.0f, 50.0f);
@@ -68,14 +68,14 @@ namespace lab
 
 
 		gui::SameLine(0.0f, 50.0f);
-		if (lab::ToolbarTextButton(" L ", "Local Coordinate System", space == ManipMode::Local))
+		if (lab::ToolbarTextButton(" L ", "Local Coordinate System", space == EditState::ManipSpace::Local))
         {
-			space = ManipMode::Local;
+			space = EditState::ManipSpace::Local;
         }
         gui::SameLine(0.0f);
-        if (lab::ToolbarTextButton(" G ", "Global Coordinate System", space == ManipMode::Global, operationMode == ManipMode::Scale))
+        if (lab::ToolbarTextButton(" G ", "Global Coordinate System", space == EditState::ManipSpace::Global, operationMode == EditState::ManipulatorMode::Scale))
         {
-			space = ManipMode::Global;
+			space = EditState::ManipSpace::Global;
         }
         gui::SameLine(0.0f, 2.f);
         gui::SameLine(width / 2.0f - 36.0f);

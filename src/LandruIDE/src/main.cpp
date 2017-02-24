@@ -131,6 +131,7 @@ int main(int, char**)
 	set_style_colors();
 
 	lab::CursorManager cursorMgr;
+	lab::EditState editState;
 
 
 	std::vector<std::unique_ptr<ImGuiDock::Dock>> _docks;
@@ -151,8 +152,8 @@ int main(int, char**)
 	});
 
 	lab::RenderingView renderingView;
-	view_dock->initialize("View", true, ImVec2(), [&fontMgr, &cursorMgr, &renderingView](ImVec2 area) {
-		renderingView.render_ui(cursorMgr, *fontMgr.get(), area);
+	view_dock->initialize("View", true, ImVec2(), [&editState, &fontMgr, &cursorMgr, &renderingView](ImVec2 area) {
+		renderingView.render_ui(editState, cursorMgr, *fontMgr.get(), area);
 	});
 
 	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [](ImVec2 area)
@@ -209,15 +210,14 @@ int main(int, char**)
 		}
 	}
 
-	lab::EditState editState;
 
-	windowMgr.update_windows(); // prime the pump
+	windowMgr.update_windows(editState); // prime the pump
 	renderingView.render_scene(); // width and height were recorded during UI rendering
 
 	while (true)
 	{
 		cursorMgr.set_cursor(ImGui::GetMouseCursor());
-		windowMgr.update_windows(); // prime the pump
+		windowMgr.update_windows(editState); // prime the pump
 		renderingView.render_scene(); // width and height were recorded during UI rendering
 
 		auto main_window = window.lock();

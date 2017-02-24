@@ -132,6 +132,16 @@ namespace lab
             lab::TestConditions::exhaustive, "main loop end");
     }
 
+	m44f RenderEngine::camera_view()
+	{
+		return _detail->camera->mount.viewTransform();
+	}
+	m44f RenderEngine::camera_projection(int width, int height)
+	{
+		return _detail->camera->optics.perspective(float(width) / float(height));
+	}
+
+
     int RenderEngine::output_texture_id()
     {
         auto fb = _detail->dr->framebuffer("gbuffer");

@@ -7,6 +7,7 @@ namespace lab {
 	event<void(float deltax, float deltay)> evt_camera_mouse;
     event<void(std::shared_ptr<Camera>)> evt_bind_view_camera;
 	event<void(CameraRig::Mode)> evt_set_camera_mode;
+	event<void(EditState::ManipulatorMode)> evt_set_manipulator_mode;
 
 
 struct EditState::_Detail
@@ -16,12 +17,19 @@ struct EditState::_Detail
         evt_camera_mouse.connect(this, &_Detail::rig_mouse_move);
         evt_bind_view_camera.connect(this, &_Detail::bind_view_camera);
 		evt_set_camera_mode.connect(this, &_Detail::set_camera_mode);
+		evt_set_manipulator_mode.connect(this, &_Detail::set_manipulator_mode);
     }
     ~_Detail()
     {
         evt_camera_mouse.disconnect(this, &_Detail::rig_mouse_move);
 		evt_bind_view_camera.disconnect(this, &_Detail::bind_view_camera);
 		evt_set_camera_mode.disconnect(this, &_Detail::set_camera_mode);
+		evt_set_manipulator_mode.disconnect(this, &_Detail::set_manipulator_mode);
+	}
+
+	void set_manipulator_mode(ManipulatorMode m)
+	{
+		mode = m;
 	}
 
 	void set_camera_mode(CameraRig::Mode mode)
@@ -42,6 +50,7 @@ struct EditState::_Detail
 
     std::shared_ptr<Camera> _currentCamera;
     CameraRig rig;
+	ManipulatorMode mode = ManipulatorMode::Translate;
 };
 
 EditState::EditState()
@@ -54,6 +63,10 @@ EditState::~EditState()
     delete _detail;
 }
 
+EditState::ManipulatorMode EditState::manipulator_mode() const
+{
+	return _detail->mode;
+}
 
 } // lab
 

@@ -6,6 +6,7 @@ namespace lab
 	class CursorManager;
 	class FontManager;
 	class RenderEngine;
+	class EditState;
 
 class RenderingView
 {
@@ -23,7 +24,7 @@ class RenderingView
 	ImVec2 previousMousePosition = { 0,0 };
 	ImVec2 initialMousePosition = { 0,0 };
 
-	void handle_camera_movement();
+	void manipulation_gizmos(lab::EditState&);
 
 	bool left_mouse = false;
 
@@ -31,7 +32,7 @@ public:
 	RenderingView();
 	~RenderingView();
 
-	void render_ui(lab::CursorManager& cursorManager, lab::FontManager&, ImVec2 area);
+	void render_ui(lab::EditState&, lab::CursorManager& cursorManager, lab::FontManager&, ImVec2 area);
 
 	void render_scene();
 };

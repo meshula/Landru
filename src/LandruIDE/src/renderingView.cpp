@@ -1,6 +1,8 @@
 
 #include "renderingView.h"
+#include "editState.h"
 #include "renderer.h"
+#include "interface/imguizmo.h"
 #include "interface/labCursorManager.h"
 #include "interface/labFontManager.h"
 #include "interface/imguimath.h"
@@ -161,247 +163,42 @@ namespace lab
 	}
 
 
-	void manipulation_gizmos()
+	void RenderingView::manipulation_gizmos(lab::EditState& edit_state)
 	{
-#if 0
-		auto input = core::get_subsystem<runtime::Input>();
-		auto es = core::get_subsystem<editor::EditState>();
-		auto& selected = es->selection_data.object;
-		auto& editor_camera = es->camera;
-		auto& operation = es->operation;
-		auto& mode = es->mode;
+		auto io = gui::GetIO();
+		const bool object_selected = true;
 
-		if (!input->is_mouse_button_down(sf::Mouse::Right) && !gui::IsAnyItemActive() && !imguizmo::is_using())
+		static float mat[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
+
+		if (object_selected)
 		{
-			if (input->is_key_pressed(sf::Keyboard::W))
+			float* snap = nullptr;
+
+			m44f view = _detail->camera_view();
+			m44f proj = _detail->camera_projection(width, height);
+
+			ImGuizmo::OPERATION operation = ImGuizmo::TRANSLATE;
+			switch (edit_state.manipulator_mode())
 			{
-				operation = imguizmo::OPERATION::TRANSLATE;
+			case EditState::ManipulatorMode::Translate: operation = ImGuizmo::TRANSLATE; break;
+			case EditState::ManipulatorMode::Rotate: operation = ImGuizmo::ROTATE; break;
+			case EditState::ManipulatorMode::Scale: operation = ImGuizmo::SCALE; break;
 			}
-			if (input->is_key_pressed(sf::Keyboard::E))
-			{
-				operation = imguizmo::OPERATION::ROTATE;
-			}
-			if (input->is_key_pressed(sf::Keyboard::R))
-			{
-				operation = imguizmo::OPERATION::SCALE;
-				mode = imguizmo::MODE::LOCAL;
-			}
-			if (input->is_key_pressed(sf::Keyboard::T))
-			{
-				mode = imguizmo::MODE::LOCAL;
-			}
-			if (input->is_key_pressed(sf::Keyboard::Y) && operation != imguizmo::OPERATION::SCALE)
-			{
-				mode = imguizmo::MODE::WORLD;
-			}
+
+			ImGuizmo::Manipulate(
+				&view.m00,
+				&proj.m00,
+				operation,
+				ImGuizmo::LOCAL,
+				mat,
+				nullptr,
+				snap);
 		}
-
-		if (selected && selected.is_type<runtime::Entity>())
-		{
-			auto sel = selected.get_value<runtime::Entity>();
-			if (sel && sel != editor_camera && sel.has_component<TransformComponent>())
-			{
-				auto p = gui::GetItemRectMin();
-				auto s = gui::GetItemRectSize();
-				imguizmo::set_view_rect(p.x, p.y, s.x, s.y);
-				auto camera_component = editor_camera.component<CameraComponent>().lock();
-				auto transform_component = sel.component<TransformComponent>().lock();
-				transform_component->resolve(true);
-				auto transform = transform_component->get_transform();
-				math::transform_t delta;
-				math::transform_t inputTransform = transform;
-				float* snap = nullptr;
-				if (input->is_key_down(sf::Keyboard::LControl))
-				{
-					if (operation == imguizmo::OPERATION::TRANSLATE)
-						snap = &es->snap_data.translation_snap[0];
-					else if (operation == imguizmo::OPERATION::ROTATE)
-						snap = &es->snap_data.rotation_degree_snap;
-					else if (operation == imguizmo::OPERATION::SCALE)
-						snap = &es->snap_data.scale_snap;
-				}
-
-				imguizmo::manipulate(
-					camera_component->get_camera().get_view(),
-					camera_component->get_camera().get_projection(),
-					operation,
-					mode,
-					transform,
-					nullptr,
-					snap);
-
-
-				transform_component->set_transform(transform);
-			}
-		}
-#endif
 	}
 
-	void RenderingView::handle_camera_movement()
+	void RenderingView::render_ui(lab::EditState& edit_state, 
+								  lab::CursorManager& cursorManager, lab::FontManager& fontManager, ImVec2 area)
 	{
-		if (!gui::IsWindowFocused())
-			return;
-
-		auto & io = gui::GetIO();
-#if 0
-&&&			switch (key) {
-			case GLFW_KEY_C: camera.mode = lab::Camera::Mode::Crane; break;
-			case GLFW_KEY_D: camera.mode = lab::Camera::Mode::Dolly; break;
-			case GLFW_KEY_T:
-			case GLFW_KEY_O: camera.mode = lab::Camera::Mode::TurnTableOrbit; break;
-#endif
-
-		ImVec2 mousePos = io.MousePos;
-		ImGuiWindow* window = gui::GetCurrentWindow();
-		mousePos = mousePos - window->Pos - window->WindowPadding;
-
-		if (io.MouseDown[0] && !left_mouse)
-		{
-			left_mouse = true;
-			previousMousePosition = mousePos;
-			initialMousePosition = mousePos;
-			printf("+ %f %f\n", (float) mousePos.x, (float) mousePos.y);
-		}
-		else if (!io.MouseDown[0] && left_mouse)
-		{
-			left_mouse = false;
-			printf("- %f %f\n", (float)mousePos.x, (float)mousePos.y);
-		}
-
-		ImVec2 delta = mousePos - previousMousePosition;
-		previousMousePosition = mousePos;
-
-		_detail->camera_interact((int) delta.x, (int) delta.y);
-
-#if 0
-
-		auto es = core::get_subsystem<editor::EditState>();
-		auto input = core::get_subsystem<runtime::Input>();
-		auto engine = core::get_subsystem<runtime::Engine>();
-
-		auto& editor_camera = es->camera;
-		auto dt = engine->get_delta_time().count();
-
-		auto transform = editor_camera.component<TransformComponent>().lock();
-		float movement_speed = 5.0f;
-		float rotation_speed = 0.2f;
-		float multiplier = 5.0f;
-		iPoint delta_move = input->get_cursor_delta_move();
-
-		if (input->is_mouse_button_down(sf::Mouse::Middle))
-		{
-			if (input->is_key_down(sf::Keyboard::LShift))
-			{
-				movement_speed *= multiplier;
-			}
-
-			if (delta_move.x != 0)
-			{
-				transform->move_local({ -1 * delta_move.x * movement_speed * dt, 0.0f, 0.0f });
-			}
-			if (delta_move.y != 0)
-			{
-				transform->move_local({ 0.0f, delta_move.y * movement_speed * dt, 0.0f });
-			}
-		}
-
-		if (input->is_mouse_button_down(sf::Mouse::Right))
-		{
-			if (input->is_key_down(sf::Keyboard::LShift))
-			{
-				movement_speed *= multiplier;
-			}
-
-			if (input->is_key_down(sf::Keyboard::W))
-			{
-				transform->move_local({ 0.0f, 0.0f, movement_speed * dt });
-			}
-
-			if (input->is_key_down(sf::Keyboard::S))
-			{
-				transform->move_local({ 0.0f, 0.0f, -movement_speed * dt });
-			}
-
-			if (input->is_key_down(sf::Keyboard::A))
-			{
-				transform->move_local({ -movement_speed * dt, 0.0f, 0.0f });
-			}
-
-			if (input->is_key_down(sf::Keyboard::D))
-			{
-				transform->move_local({ movement_speed * dt, 0.0f, 0.0f });
-			}
-			if (input->is_key_down(sf::Keyboard::Up))
-			{
-				transform->move_local({ 0.0f, 0.0f, movement_speed * dt });
-			}
-
-			if (input->is_key_down(sf::Keyboard::Down))
-			{
-				transform->move_local({ 0.0f, 0.0f, -movement_speed * dt });
-			}
-
-			if (input->is_key_down(sf::Keyboard::Left))
-			{
-				transform->move_local({ -movement_speed * dt, 0.0f, 0.0f });
-			}
-
-			if (input->is_key_down(sf::Keyboard::Right))
-			{
-				transform->move_local({ movement_speed * dt, 0.0f, 0.0f });
-			}
-
-			if (input->is_key_down(sf::Keyboard::Space))
-			{
-				transform->move_local({ 0.0f, movement_speed * dt, 0.0f });
-			}
-
-			if (input->is_key_down(sf::Keyboard::LControl))
-			{
-				transform->move_local({ 0.0f, -movement_speed * dt, 0.0f });
-			}
-
-			float x = static_cast<float>(delta_move.x);
-			float y = static_cast<float>(delta_move.y);
-
-			// Make each pixel correspond to a quarter of a degree.
-			float dx = x * rotation_speed;
-			float dy = y * rotation_speed;
-
-			transform->resolve(true);
-			transform->rotate(0.0f, dx, 0.0f);
-			transform->rotate_local(dy, 0.0f, 0.0f);
-
-
-			float delta_wheel = input->get_mouse_wheel_scroll_delta_move();
-			transform->move_local({ 0.0f, 0.0f, 14.0f * movement_speed * delta_wheel * dt });
-		}
-#endif
-	}
-
-	void RenderingView::render_ui(lab::CursorManager& cursorManager, lab::FontManager& fontManager, ImVec2 area)
-	{
-#		if 0
-			auto es = core::get_subsystem<editor::EditState>();
-			auto engine = core::get_subsystem<runtime::Engine>();
-			auto ecs = core::get_subsystem<runtime::EntityComponentSystem>();
-			auto input = core::get_subsystem<runtime::Input>();
-
-			auto window = engine->get_focused_window();
-			auto& editor_camera = es->camera;
-			auto& selected = es->selection_data.object;
-			auto& dragged = es->drag_data.object;
-
-			bool has_edit_camera = editor_camera
-				&& editor_camera.has_component<CameraComponent>()
-				&& editor_camera.has_component<TransformComponent>();
-#		endif
-
-
-#		if 0
-			if (!has_edit_camera)
-				return;
-#		endif
 
 		auto size = gui::GetContentRegionAvail();
 
@@ -413,28 +210,75 @@ namespace lab
 
 		show_statistics(fontManager, 90);// engine->get_fps());
 
-#		if 0
-			auto camera_component = editor_camera.component<CameraComponent>().lock();
-#		endif
-
 		if (size.x > 0 && size.y > 0)
 		{
-#if 0
-			camera_component->get_camera().set_viewport_pos({ static_cast<uint32_t>(pos.x), static_cast<uint32_t>(pos.y) });
-			camera_component->set_viewport_size({ static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y) });
-
-			const auto surface = camera_component->get_output_buffer();
-			gui::Image(surface, size);
-#endif
-
 			if (gui::IsItemClicked(1) || gui::IsItemClicked(2))
 			{
 				gui::SetWindowFocus();
 				cursorManager.hide();
 			}
 
-			manipulation_gizmos();
-			handle_camera_movement();
+			if (gui::IsWindowFocused())
+			{
+				auto & io = gui::GetIO();
+
+				ImVec2 mousePos = io.MousePos;
+				ImGuiWindow* window = gui::GetCurrentWindow();
+				mousePos = mousePos - window->Pos - window->WindowPadding;
+
+				if (io.MouseDown[0] && !left_mouse)
+				{
+					left_mouse = true;
+					previousMousePosition = mousePos;
+					initialMousePosition = mousePos;
+					printf("+ %f %f\n", (float)mousePos.x, (float)mousePos.y);
+				}
+				else if (!io.MouseDown[0] && left_mouse)
+				{
+					left_mouse = false;
+					printf("- %f %f\n", (float)mousePos.x, (float)mousePos.y);
+				}
+
+				ImVec2 delta = mousePos - previousMousePosition;
+				previousMousePosition = mousePos;
+
+				static bool gizmo_captured = false;
+				gizmo_captured &= io.MouseDown[0];
+				static bool camera_captured = false;
+				camera_captured &= io.MouseDown[0];
+
+				if (io.MouseDown[0])
+				{
+					if (camera_captured)
+					{
+						_detail->camera_interact((int)delta.x, (int)delta.y);
+					}
+					else if (gizmo_captured)
+					{
+						manipulation_gizmos(edit_state);
+					}
+					else
+					{
+						bool over_gizmo = ImGuizmo::IsOver();
+						bool overImGui = GImGui->HoveredWindow || over_gizmo;
+
+						if (!over_gizmo)
+						{
+							// handle mouse for world selection, moving view,...
+							camera_captured = true;
+						}
+						else if (over_gizmo)
+						{
+							gizmo_captured = true;
+						}
+					}
+				}
+			}
+			else
+			{
+				// just draw the gizmo
+				manipulation_gizmos(edit_state);
+			}
 
 			if (gui::IsWindowFocused())
 			{

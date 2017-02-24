@@ -16,6 +16,7 @@ namespace lab
 	// This is an OpenGL capable window, initialized with ImGui, and
 	// an ImGui dockspace.
 
+	class EditState;
 	class GraphicsWindowManager;
 	class FontManager;
 
@@ -31,7 +32,7 @@ namespace lab
 		GraphicsWindow(const std::string & window_name, int width, int height, std::shared_ptr<lab::FontManager>);
 
 		void frame_begin();
-		void frame_end(GraphicsWindowManager &);
+		void frame_end(lab::EditState & edit_state, GraphicsWindowManager &);
 
 	public:
 		~GraphicsWindow(); // public to avoid needing a deleter friend
@@ -59,7 +60,7 @@ namespace lab
 	public:
 		std::weak_ptr<GraphicsWindow> create_window(const std::string & window_name, int width, int height, std::shared_ptr<lab::FontManager>);
 		void close_window(std::weak_ptr<GraphicsWindow> w);
-		void update_windows();
+		void update_windows(lab::EditState& edit_state);
 
 		std::shared_ptr<GraphicsWindow> find_dragged_window();
 	};

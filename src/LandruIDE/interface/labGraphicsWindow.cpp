@@ -1,6 +1,7 @@
 
 #include "labGraphicsWindow.h"
 #include "src/mainToolbar.h"
+#include "interface/ImGuizmo.h"
 
 #include <imgui.h>
 #include <imgui_internal.h> // for ImGuiContext
@@ -76,6 +77,9 @@ namespace lab
 
 
 		ImGui_ImplGlfwGL3_NewFrame(_window);
+
+		ImGuizmo::BeginFrame();
+
 		ImGui::SetNextWindowPos(ImVec2(0, 0));
 
 		ImGui::SetNextWindowSize(ImVec2(static_cast<float>(w), static_cast<float>(h)));
@@ -102,14 +106,14 @@ namespace lab
 	};
 	static DragObject * drag_object = nullptr;
 
-	void GraphicsWindow::frame_end(GraphicsWindowManager & mgr)
+	void GraphicsWindow::frame_end(lab::EditState & edit_state, GraphicsWindowManager & mgr)
 	{
 		if (!_window)
 			return;
 
 		_activate_context();
 
-		lab::toolbar(_font_manager.get());
+		lab::toolbar(edit_state, _font_manager.get());
 
 		_dockspace.update_and_draw(ImGui::GetContentRegionAvail(), mgr);
 
@@ -252,7 +256,7 @@ namespace lab
 	}
 
 
-	void GraphicsWindowManager::update_windows()
+	void GraphicsWindowManager::update_windows(lab::EditState& edit_state)
 	{
 		ImVec4 clear_color = ImColor(1, 0, 0);
 
@@ -284,7 +288,7 @@ namespace lab
 			glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
 			glClear(GL_COLOR_BUFFER_BIT);
 
-			w->frame_end(*this);
+			w->frame_end(edit_state, *this);
 		}
 	}
 

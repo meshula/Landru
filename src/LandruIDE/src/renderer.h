@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <LabRender/MathTypes.h>
 
 namespace lab
 {
@@ -22,5 +23,7 @@ namespace lab
 		void save_output_texture(std::string path);
 
 		void camera_interact(int delta_x, int delta_y);
+		m44f camera_view();
+		m44f camera_projection(int width, int height);
 	};
 }
