@@ -20,6 +20,13 @@ class RenderingView
 	int width = 0;
 	int height = 0;
 
+	ImVec2 previousMousePosition = { 0,0 };
+	ImVec2 initialMousePosition = { 0,0 };
+
+	void handle_camera_movement();
+
+	bool left_mouse = false;
+
 public:
 	RenderingView();
 	~RenderingView();
@@ -28,5 +35,8 @@ public:
 
 	void render_scene();
 };
+
+
+
 
 } // lab

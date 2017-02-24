@@ -24,6 +24,8 @@ namespace lab
         ImGuiContext * _context = nullptr;
         GLFWwindow * _window = nullptr;
 
+		std::shared_ptr<FontManager> _font_manager;
+
 		friend class GraphicsWindowManager;
 
 		GraphicsWindow(const std::string & window_name, int width, int height, std::shared_ptr<lab::FontManager>);

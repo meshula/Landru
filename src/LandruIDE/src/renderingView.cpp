@@ -41,6 +41,7 @@ namespace gfx
 
 namespace lab
 {
+
 	namespace gui = ImGui;
 	using namespace std;
 
@@ -60,12 +61,10 @@ namespace lab
 	{
 		SetFont small(fontManager.mono_small_font);
 
-
 		ImVec2 pos = gui::GetCursorScreenPos();
 		gui::SetNextWindowPos(pos);
 		gui::SetNextWindowCollapsed(true, ImGuiSetCond_FirstUseEver);
 		if (gui::Begin("Statistics", nullptr,
-						ImGuiWindowFlags_NoMove |
 						ImGuiWindowFlags_NoResize |
 						ImGuiWindowFlags_AlwaysAutoResize))
 		{
@@ -102,13 +101,8 @@ namespace lab
 			_detail->create_scene();
         });
 
-//		auto pos = gui::GetWindowPos();
 		auto pos = gui::GetCursorScreenPos();
-//		pos.x += 20.f;
-//		pos.y += 40.f;
 		ImVec2 bounds = size;// (size.x - 40.f, size.y - 40.f);
-	//	gui::SetNextWindowPos(pos);
-		//ImGui::GetWindowDrawList()->AddRectFilled(pos, bounds + pos, ImColor(0, 0, 0, 255));
 
 		ImTextureID tex_id = (ImTextureID) uintptr_t(_detail->output_texture_id());
 		gui::Image(tex_id, bounds, ImVec2(0,1), ImVec2(1,0));
@@ -243,11 +237,43 @@ namespace lab
 #endif
 	}
 
-	void handle_camera_movement()
+	void RenderingView::handle_camera_movement()
 	{
-#if 0
 		if (!gui::IsWindowFocused())
 			return;
+
+		auto & io = gui::GetIO();
+#if 0
+&&&			switch (key) {
+			case GLFW_KEY_C: camera.mode = lab::Camera::Mode::Crane; break;
+			case GLFW_KEY_D: camera.mode = lab::Camera::Mode::Dolly; break;
+			case GLFW_KEY_T:
+			case GLFW_KEY_O: camera.mode = lab::Camera::Mode::TurnTableOrbit; break;
+#endif
+
+		ImVec2 mousePos = io.MousePos;
+		ImGuiWindow* window = gui::GetCurrentWindow();
+		mousePos = mousePos - window->Pos - window->WindowPadding;
+
+		if (io.MouseDown[0] && !left_mouse)
+		{
+			left_mouse = true;
+			previousMousePosition = mousePos;
+			initialMousePosition = mousePos;
+			printf("+ %f %f\n", (float) mousePos.x, (float) mousePos.y);
+		}
+		else if (!io.MouseDown[0] && left_mouse)
+		{
+			left_mouse = false;
+			printf("- %f %f\n", (float)mousePos.x, (float)mousePos.y);
+		}
+
+		ImVec2 delta = mousePos - previousMousePosition;
+		previousMousePosition = mousePos;
+
+		_detail->camera_interact((int) delta.x, (int) delta.y);
+
+#if 0
 
 		auto es = core::get_subsystem<editor::EditState>();
 		auto input = core::get_subsystem<runtime::Input>();

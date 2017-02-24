@@ -20,5 +20,7 @@ namespace lab
 		void render(int width, int height);
 		int output_texture_id();
 		void save_output_texture(std::string path);
+
+		void camera_interact(int delta_x, int delta_y);
 	};
 }

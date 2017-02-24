@@ -1,5 +1,6 @@
 
 #include "renderer.h"
+#include "editState.h"
 #include <LabRender/Camera.h>
 #include <LabRender/gl4.h> // temp, shouldn't be using GL directly here
 #include <LabRender/PassRenderer.h>
@@ -17,7 +18,7 @@ namespace lab
     public:
         shared_ptr<lab::PassRenderer> dr;
 		lab::DrawList drawList;
-		lab::Camera camera;
+		shared_ptr<Camera> camera;
 
 		lab::OSCServer oscServer;
 		lab::WebSocketsServer wsServer;
@@ -25,6 +26,7 @@ namespace lab
         Detail()
         : oscServer("renderingView")
         , wsServer("renderingView")
+		, camera(make_shared<Camera>())
         {
 #	ifdef _WIN32
 			lab::addPathVariable("$(ASSET_ROOT)", "C:/Projects/landru-stage/Landru/thirdparty/prereq/labrender/assets");
@@ -32,7 +34,6 @@ namespace lab
 			lab::addPathVariable("$(ASSET_ROOT)", "/Users/dp/Projects/LabRender/assets");
 #	endif
 
-			camera.mode = lab::Camera::Mode::TurnTableOrbit;
 			dr = make_shared<lab::PassRenderer>();
 			//dr->configure("$(ASSET_ROOT)/pipelines/deferred.json");
 			dr->configure("$(ASSET_ROOT)/pipelines/deferred_2_fxaa.json");
@@ -101,10 +102,10 @@ namespace lab
         meshes.push_back(cube);
 
         static float foo = 0.f;
-        _detail->camera.position = { foo, 0, -1000 };
+        _detail->camera->position = { foo, 0, -1000 };
         lab::Bounds bounds = model->localBounds();
         bounds = model->transform.transformBounds(bounds);
-        _detail->camera.frame(bounds);
+        _detail->camera->frame(bounds);
     }
 
     void RenderEngine::render(int width, int height)
@@ -114,9 +115,9 @@ namespace lab
 
         v2i fbSize = { width, height };
 
-        _detail->drawList.jacobian = _detail->camera.mount.jacobian();
-        _detail->drawList.view = _detail->camera.mount.viewTransform();
-        _detail->drawList.proj = _detail->camera.optics.perspective(float(width) / float(height));
+        _detail->drawList.jacobian = _detail->camera->mount.jacobian();
+        _detail->drawList.view = _detail->camera->mount.viewTransform();
+        _detail->drawList.proj = _detail->camera->optics.perspective(float(width) / float(height));
 
         const float time = 0.f; //=renderTime()
         const v2f mousePosition = { 0,0 }; // = mousePosition();
@@ -147,6 +148,11 @@ namespace lab
 		fb->textures[3]->save(path.c_str());
     }
 
+	void RenderEngine::camera_interact(int delta_x, int delta_y)
+	{
+		evt_bind_view_camera(_detail->camera);
+		evt_camera_mouse((float)delta_x * 0.02f, (float)delta_y * -0.02f);
+	}
 
 }
 

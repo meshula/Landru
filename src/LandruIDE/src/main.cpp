@@ -14,6 +14,7 @@
 #include "interface/imguidock.h"
 #include "interface/labCursorManager.h"
 #include "interface/labFontManager.h"
+#include "editState.h"
 #include "renderingView.h"
 
 using namespace std;
@@ -114,7 +115,12 @@ int main(int, char**)
 
 	shared_ptr<lab::FontManager> fontMgr = make_shared<lab::FontManager>();
 	lab::GraphicsWindowManager windowMgr;
-	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", 1280, 720, fontMgr);
+
+	const bool highDpi = true;
+	int w = highDpi? 2000:1280;
+	int h = highDpi? 1500:1024;
+
+	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", w, h, fontMgr);
 
     // Load Fonts
     // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -202,6 +208,8 @@ int main(int, char**)
 			dockspace.dock_with(properties_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Right, 300, true);
 		}
 	}
+
+	lab::EditState editState;
 
 	windowMgr.update_windows(); // prime the pump
 	renderingView.render_scene(); // width and height were recorded during UI rendering
