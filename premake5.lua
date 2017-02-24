@@ -93,6 +93,7 @@ project "landruIDE"
 
     files {
         "src/LandruIDE/*.h", "src/LandruIDE/*.cpp",
+        "src/LandruIDE/events/*.hpp",
         "src/LandruIDE/interface/*.h", "src/LandruIDE/interface/*.cpp",
         "src/LandruIDE/interface/imgui/*.h", "src/LandruIDE/interface/imgui/*.cpp",
         "src/LandruIDE/src/*.h", "src/LandruIDE/src/*.cpp"
