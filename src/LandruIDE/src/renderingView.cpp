@@ -222,6 +222,8 @@ namespace lab
 				cursorManager.hide();
 			}
 
+			static bool tumbling = false;
+
 			if (gui::IsWindowFocused())
 			{
 				auto & io = gui::GetIO();
@@ -235,54 +237,36 @@ namespace lab
 					left_mouse = true;
 					previousMousePosition = mousePos;
 					initialMousePosition = mousePos;
-					printf("+ %f %f\n", (float)mousePos.x, (float)mousePos.y);
+					//printf("rui CLICK %f %f\n", (float)mousePos.x, (float)mousePos.y);
 				}
 				else if (!io.MouseDown[0] && left_mouse)
 				{
 					left_mouse = false;
-					printf("- %f %f\n", (float)mousePos.x, (float)mousePos.y);
+					//printf("rui RELEASE %f %f\n", (float)mousePos.x, (float)mousePos.y);
 				}
 
 				ImVec2 delta = mousePos - previousMousePosition;
 				previousMousePosition = mousePos;
 
-				static bool gizmo_captured = false;
-				gizmo_captured &= io.MouseDown[0];
-				static bool camera_captured = false;
-				camera_captured &= io.MouseDown[0];
-
 				if (io.MouseDown[0])
 				{
-					if (camera_captured)
+					if (!tumbling && ImGuizmo::IsOver() || ImGuizmo::IsUsing())
 					{
-						_detail->camera_interact((int)delta.x, (int)delta.y);
-					}
-					else if (gizmo_captured)
-					{
-						manipulation_gizmos(edit_state);
 					}
 					else
 					{
-						bool over_gizmo = ImGuizmo::IsOver();
-						bool overImGui = GImGui->HoveredWindow || over_gizmo;
-
-						if (!over_gizmo)
-						{
-							// handle mouse for world selection, moving view,...
-							camera_captured = true;
-						}
-						else if (over_gizmo)
-						{
-							gizmo_captured = true;
-						}
+						tumbling = true;
+						_detail->camera_interact((int)delta.x, (int)delta.y);
 					}
 				}
+				else
+				{
+					tumbling = false;
+				}
 			}
-			else
-			{
-				// just draw the gizmo
-				manipulation_gizmos(edit_state);
-			}
+
+			ImGuizmo::Enable(!tumbling);
+			manipulation_gizmos(edit_state);
 
 			if (gui::IsWindowFocused())
 			{
