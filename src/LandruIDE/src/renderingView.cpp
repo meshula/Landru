@@ -174,6 +174,10 @@ namespace lab
 		{
 			float* snap = nullptr;
 
+			auto p = gui::GetItemRectMin();
+			auto s = gui::GetItemRectSize();
+			ImGuizmo::SetRect(p.x, p.y, s.x, s.y);
+
 			m44f view = _detail->camera_view();
 			m44f proj = _detail->camera_projection(width, height);
 

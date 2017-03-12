@@ -136,6 +136,7 @@ namespace lab
 	{
 		return _detail->camera->mount.viewTransform();
 	}
+
 	m44f RenderEngine::camera_projection(int width, int height)
 	{
 		return _detail->camera->optics.perspective(float(width) / float(height));
