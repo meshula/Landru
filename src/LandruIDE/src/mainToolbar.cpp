@@ -2,6 +2,7 @@
 #include "editState.h"
 #include "interface/toolbar.h"
 #include "interface/labFontManager.h"
+#include "interface/materialIconDefinitions.h"
 #include <LabRender/Camera.h>
 #include <imgui.h>
 
@@ -24,21 +25,24 @@ namespace lab
         float width = gui::GetContentRegionAvailWidth();
 		EditState::ManipulatorMode operationMode = edit_state.manipulator_mode();
 
-        if (lab::ToolbarTextButton(" T ", "Translate", operationMode == EditState::ManipulatorMode::Translate))
-        {
-			evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);
-        }
-        gui::SameLine(0.0f);
-        if (lab::ToolbarTextButton(" R ", "Rotate", operationMode == EditState::ManipulatorMode::Rotate))
-        {
-			evt_set_manipulator_mode(EditState::ManipulatorMode::Rotate);
+		{
+			SetFont icon(fm->icon_font);
+			if (lab::ToolbarTextButton(" " ICON_MD_GAMEPAD " ", "Translate", operationMode == EditState::ManipulatorMode::Translate))
+			{
+				evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);
+			}
+			gui::SameLine(0.0f);
+			if (lab::ToolbarTextButton(" " ICON_MD_SYNC " ", "Rotate", operationMode == EditState::ManipulatorMode::Rotate))
+			{
+				evt_set_manipulator_mode(EditState::ManipulatorMode::Rotate);
+			}
+			gui::SameLine(0.0f);
+			if (lab::ToolbarTextButton(" " ICON_MD_ZOOM_OUT_MAP " ", "Scale", operationMode == EditState::ManipulatorMode::Scale))
+			{
+				evt_set_manipulator_mode(EditState::ManipulatorMode::Scale);
+				space = EditState::ManipSpace::Local;
+			}
 		}
-        gui::SameLine(0.0f);
-        if (lab::ToolbarTextButton(" S ", "Scale", operationMode == EditState::ManipulatorMode::Scale))
-        {
-			evt_set_manipulator_mode(EditState::ManipulatorMode::Scale);
-			space = EditState::ManipSpace::Local;
-        }
 
 		gui::SameLine(0.0f, 50.0f);
 		if (lab::ToolbarTextButton(" O ", "Orbit", navMode == CameraRig::Mode::TurnTableOrbit))
@@ -79,24 +83,27 @@ namespace lab
         }
         gui::SameLine(0.0f, 2.f);
         gui::SameLine(width / 2.0f - 36.0f);
-		if (lab::ToolbarTextButton(" << ", "Rewind", playMode != PlayMode::Playing, playMode != PlayMode::Playing))
 		{
-			playMode = PlayMode::Paused;
+			SetFont icon(fm->icon_font);
+			if (lab::ToolbarTextButton(" " ICON_MD_REPLAY " ", "Rewind", playMode != PlayMode::Playing, playMode != PlayMode::Playing))
+			{
+				playMode = PlayMode::Paused;
+			}
+			gui::SameLine(0.0f, 2.f);
+			if (lab::ToolbarTextButton(" " ICON_MD_PLAY_ARROW " ", "Play", playMode != PlayMode::Playing, playMode != PlayMode::Playing)) // selected, enabled
+			{
+				playMode = PlayMode::Playing;
+			}
+			gui::SameLine(0.0f, 2.f);
+			if (lab::ToolbarTextButton(" " ICON_MD_PAUSE " ", "Pause", playMode == PlayMode::Playing, playMode == PlayMode::Playing))
+			{
+				playMode = PlayMode::Paused;
+			}
+			gui::SameLine(0.0f, 2.f);
+			if (lab::ToolbarTextButton(" " ICON_MD_SKIP_NEXT " ", "Step", playMode != PlayMode::Playing, playMode != PlayMode::Playing))
+			{
+			}
 		}
-		gui::SameLine(0.0f, 2.f);
-		if (lab::ToolbarTextButton(" > ", "Play", playMode != PlayMode::Playing, playMode != PlayMode::Playing)) // selected, enabled
-        {
-			playMode = PlayMode::Playing;
-        }
-        gui::SameLine(0.0f, 2.f);
-        if (lab::ToolbarTextButton(" || ", "Pause", playMode == PlayMode::Playing, playMode == PlayMode::Playing))
-        {
-			playMode = PlayMode::Paused;
-		}
-        gui::SameLine(0.0f, 2.f);
-        if (lab::ToolbarTextButton(" >| ", "Step", playMode != PlayMode::Playing, playMode != PlayMode::Playing))
-        {
-        }
-    }
+	}
 
 } // lab

@@ -3,10 +3,11 @@
 #include <stdint.h>
 #include "interface/imgui/roboto_regular.ttf.h"
 #include "interface/imgui/robotomono_regular.ttf.h"
+#include "interface/materialIconDefinitions.h"
 
 namespace lab {
 
-FontManager::FontManager()
+FontManager::FontManager(const fs::path & resource_dir)
 {
 
     //io.Fonts->AddFontDefault();
@@ -30,6 +31,14 @@ FontManager::FontManager()
 	regular_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoRegularTtf, sizeof(s_robotoRegularTtf), 28, &config);
 	mono_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), 28.0f, &config);
 	mono_small_font = io.Fonts->AddFontFromMemoryTTF((void*)s_robotoMonoRegularTtf, sizeof(s_robotoMonoRegularTtf), 20.f, &config);
+
+	static const ImWchar iconFontRanges[] = { ICON_MIN_MD, ICON_MAX_MD, 0 };
+	ImFontConfig iconFontCfg; 
+//	iconFontCfg.MergeMode = true; 
+	iconFontCfg.PixelSnapH = true;
+
+	icon_font = io.Fonts->AddFontFromFileTTF((resource_dir / "material_icons.ttf").string().c_str(), 32, &iconFontCfg, iconFontRanges);
+
 	io.Fonts->GetTexDataAsRGBA32(&data, &width, &height);
 
 	/*
