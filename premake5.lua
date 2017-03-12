@@ -82,7 +82,11 @@ project "landruIDE"
     kind "ConsoleApp"
     language "C++"
 
+    defines { "BUILD_COMPONENT_SRC_PREFIX=\"\"",
+              "BUILD_OPTLEVEL_DEV", "TF_NO_GNU_EXT", "NOMINMAX" }
+
     includedirs {
+        "C:/Python27/include",
         "thirdparty/include",
         "thirdparty/local/include",
         "thirdparty/prereq/LabText/src",
@@ -100,13 +104,16 @@ project "landruIDE"
     }
 
     libdirs {
+        "C:/Python27/libs",
         "thirdparty/prereq/LabJson/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/prereq/LabText/bin/%{cfg.platform}/%{cfg.buildcfg}",
         "thirdparty/lib/%{cfg.platform}/%{cfg.buildcfg}"
     }
 
     links { "Landru", "LabJson", "LabText", "LabRender", "LabCmd",
-            "glfw3", "glew", "opengl32" }
+            "LabAcme",
+            "arch", "sdf", "tf", "usd",
+            "python27", "glfw3", "glew", "opengl32" }
 
 project "landru_gl"
     kind "SharedLib"

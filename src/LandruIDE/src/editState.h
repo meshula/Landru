@@ -5,6 +5,8 @@
 #include <LabRender/Camera.h>
 #include <memory>
 
+#include <pxr/usd/usd/stage.h>
+
 namespace lab {
 
 	class Camera;
@@ -22,6 +24,8 @@ namespace lab {
         ~EditState();
 
 		ManipulatorMode manipulator_mode() const;
+
+		UsdStageRefPtr stage();
     };
 
     extern event<void(float deltax, float deltay)> evt_camera_mouse;

@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #include "landruConsole.h"
 #include "interface/labGraphicsWindow.h"
@@ -16,6 +17,11 @@
 #include "interface/labFontManager.h"
 #include "editState.h"
 #include "renderingView.h"
+#include <LabAcme/LabAcme.h>
+
+#include <pxr/base/tf/hashset.h>
+#include <pxr/usd/usd/stage.h>
+#include <pxr/usd/usd/treeIterator.h>
 
 using namespace std;
 
@@ -105,15 +111,145 @@ void set_style_colors()
 	style.Colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.10f, 0.10f, 0.10f, 0.55f);
 }
 
+constexpr auto build_name = "able";
 
-int main(int, char**)
+void banner(const lab::fs::path & app_path, const lab::fs::path & resource_path)
+{
+	cout << "------------------------------------------------------------------" << endl;
+	cout << " Lab {" << build_name << "}" << endl;
+	cout << "   " << app_path << endl;
+	cout << "   " << resource_path << endl;
+	cout << "------------------------------------------------------------------" << endl;
+}
+
+// Gathers information about a layer used as a subLayer, including its
+// position in the layerStack hierarchy.
+class SubLayerInfo
+{
+public:
+	SubLayerInfo(SdfLayerHandle sublayer, SdfLayerOffset offset, SdfLayerHandle containingLayer, int depth)
+		: layer(sublayer), offset(offset), parentLayer(containingLayer), depth(depth) {}
+
+	SdfLayerHandle layer;
+	SdfLayerHandle parentLayer;
+	SdfLayerOffset offset;
+	int depth;
+
+	string GetOffsetString()
+	{
+		auto o = offset.GetOffset();
+		auto s = offset.GetScale();
+		if (o == 0)
+		{
+			if (s == 1)
+				return "";
+			else
+				return "(scale = " + to_string(s) + ")";
+		}
+		if (s == 1)
+			return "(offset = " + to_string(o) + ")";
+
+		return "(offset = " + to_string(o) + "; scale = " + to_string(s) + ")";
+	}
+};
+
+static void _add_sub_layers(SdfLayerHandle layer, SdfLayerOffset & layerOffset,
+	SdfLayerHandle parentLayer, vector<SubLayerInfo> & layers, int depth)
+{
+	const SdfLayerOffsetVector &offsets = layer->GetSubLayerOffsets();
+	layers.push_back(SubLayerInfo(layer, layerOffset, parentLayer, depth));
+	const vector<string> &sublayers = layer->GetSubLayerPaths();
+	const SdfLayerOffsetVector &sublayerOffsets = layer->GetSubLayerOffsets();
+	for (size_t i = 0, numSublayers = sublayers.size(); i<numSublayers; i++)
+	{
+		SdfLayerOffset offset;
+		if (sublayerOffsets.size())
+		{
+			offset = sublayerOffsets[i];
+		}
+		auto sublayer = SdfLayer::FindRelativeToLayer(layer, sublayers[i]);
+		if (sublayer)
+		{
+			_add_sub_layers(sublayer, offset, layer, layers, depth + 1);
+		}
+	}
+}
+	
+	
+void outline_state(UsdStageRefPtr stage)
+{
+	static vector<SubLayerInfo> layers;
+
+	static std::once_flag once;
+	auto layersPtr = &layers;
+	std::call_once(once, [&stage, layersPtr]()
+	{
+		auto layer = stage->GetRootLayer();
+		SdfLayerOffset layerOffset; // time scale and offset per layer
+		SdfLayerHandle parentLayer;
+		_add_sub_layers(layer, layerOffset, parentLayer, *layersPtr, 0);
+	});
+
+	if (ImGui::TreeNode("root"))
+	{
+		auto it = layers.begin();
+		int pop_depth = 0;
+
+		while (it != layers.end())
+		{
+			int depth = (*it).depth;
+			bool open = ImGui::TreeNode((*it).layer->GetDisplayName().c_str());
+			++it;
+			if (open)
+			{
+				++pop_depth;
+
+				if (it == layers.end())
+					break;
+
+				if ((*it).depth == depth)
+				{
+					ImGui::TreePop();
+					--pop_depth;
+				}
+				else if ((*it).depth < depth)
+					for (int i = (*it).depth; i < depth; ++i)
+					{
+						ImGui::TreePop();
+						--pop_depth;
+					}
+			}
+			else
+			{
+				// scan past children if level was closed
+				while (it != layers.end() && (*it).depth > depth)
+					++it;
+			}
+		}
+		while (pop_depth)
+		{
+			ImGui::TreePop();
+			--pop_depth;
+		}
+
+		ImGui::TreePop(); // root node
+	}
+}
+
+
+int main(int, char** argv)
 {
     // Setup window
     glfwSetErrorCallback(error_callback);
     if (!glfwInit())
         return 1;
 
-	shared_ptr<lab::FontManager> fontMgr = make_shared<lab::FontManager>();
+	lab::fs::path app_path = lab::application_executable_path(argv[0]);
+	lab::fs::path resource_path = lab::application_resource_path(argv[0]);
+
+	banner(app_path, resource_path);
+
+	shared_ptr<lab::FontManager> fontMgr = make_shared<lab::FontManager>(resource_path);
 	lab::GraphicsWindowManager windowMgr;
 
 	const bool highDpi = true;
@@ -139,11 +275,13 @@ int main(int, char**)
 	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
+	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 
 	auto& console_dock = _docks[0];
 	auto& view_dock = _docks[1];
 	auto& outliner_dock = _docks[2];
 	auto& properties_dock = _docks[3];
+	auto& timeline_dock = _docks[4];
 
 	LandruConsole console(fontMgr);
 	console_dock->initialize("Console", true, ImVec2(400, 200), [&console](ImVec2 area)
@@ -156,26 +294,12 @@ int main(int, char**)
 		renderingView.render_ui(editState, cursorMgr, *fontMgr.get(), area);
 	});
 
-	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [](ImVec2 area)
+	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [&editState](ImVec2 area)
 	{
-		if (ImGui::TreeNode("Scene"))
-		{
-			if (ImGui::TreeNode("Cameras"))
-			{
-				ImGui::Text("Interactive");
-				ImGui::TreePop();
-			}
-			if (ImGui::TreeNode("/"))
-			{
-				ImGui::Text("  ShaderBall");
-				ImGui::Text("  Sky");
-				ImGui::TreePop();
-			}
-			ImGui::TreePop();
-		}
+		outline_state(editState.stage());
 	});
 
-	properties_dock->initialize("Properties", true, ImVec2(100, 100), [](ImVec2 area)
+	properties_dock->initialize("Properties", true, ImVec2(100, 100), [&editState](ImVec2 area)
 	{
 		if (ImGui::TreeNode("ShaderBall"))
 		{
@@ -198,13 +322,21 @@ int main(int, char**)
 		}
 	});
 
+	timeline_dock->initialize("Timeline", true, ImVec2(100, 100), [](ImVec2 area)
+	{
+		ImGui::Text("this is the timeline");
+	});
+
 	{
 		shared_ptr<lab::GraphicsWindow> w = window.lock();
 		if (w)
 		{
 			auto& dockspace = w->get_dockspace();
 			dockspace.dock(view_dock.get(), ImGuiDock::DockSlot::None, 300, true);
+
 			dockspace.dock(console_dock.get(), ImGuiDock::DockSlot::Bottom, 300, true);
+			dockspace.dock_with(timeline_dock.get(), console_dock.get(), ImGuiDock::DockSlot::Tab, 250, true);
+
 			dockspace.dock_with(outliner_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Left, 300, true);
 			dockspace.dock_with(properties_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Right, 300, true);
 		}

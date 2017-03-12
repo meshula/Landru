@@ -1,6 +1,8 @@
 
 #include "editState.h"
 #include <LabRender/Camera.h>
+#include <pxr/usd/usd/stage.h>
+#include <pxr/base/arch/nap.h>
 
 namespace lab {
 
@@ -51,16 +53,29 @@ struct EditState::_Detail
     std::shared_ptr<Camera> _currentCamera;
     CameraRig rig;
 	ManipulatorMode mode = ManipulatorMode::Translate;
+
+	UsdStageRefPtr _stage;
 };
 
 EditState::EditState()
 : _detail(new _Detail())
 {
+	_detail->_stage = UsdStage::Open("C:/Projects/assets/k142/MrRayLayers.usd");
+	if (!_detail->_stage)
+	{
+		ArchSleep(1);
+		_detail->_stage = UsdStage::Open("C:/Projects/assets/k142/MrRayLayers.usd");
+	}
 }
 
 EditState::~EditState()
 {
     delete _detail;
+}
+
+UsdStageRefPtr EditState::stage()
+{
+	return _detail->_stage;
 }
 
 EditState::ManipulatorMode EditState::manipulator_mode() const
