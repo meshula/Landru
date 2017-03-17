@@ -1,5 +1,6 @@
 
 #include "labGraphicsWindow.h"
+#include "interface/labCursorManager.h"
 #include "src/mainToolbar.h"
 #include "interface/ImGuizmo.h"
 
@@ -19,8 +20,9 @@ namespace lab
 
 
 	GraphicsWindow::GraphicsWindow(const std::string & window_name, int width, int height,
+		std::shared_ptr<lab::CursorManager> cm,
 		shared_ptr<lab::FontManager> fm)
-			: _dockspace(this, fm)
+			: _dockspace(this, cm, fm)
 		, _font_manager(fm)
         {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -66,7 +68,6 @@ namespace lab
 		glfwMakeContextCurrent(_window);
 
 		_activate_context();
-		glfwPollEvents();
 
 		int w, h;
 		glfwGetFramebufferSize(_window, &w, &h);
@@ -74,7 +75,6 @@ namespace lab
 		auto& io = ImGui::GetIO();
 		// Setup display size (every frame to accommodate for window resizing)
 		io.DisplaySize = ImVec2(static_cast<float>(w), static_cast<float>(h));
-
 
 		ImGui_ImplGlfwGL3_NewFrame(_window);
 
@@ -96,15 +96,6 @@ namespace lab
 	}
 
 
-	static const int drag_button = 0;
-
-	struct DragObject {
-		void * data;
-		string name;
-		void unselect() {}
-		void drop() {}
-	};
-	static DragObject * drag_object = nullptr;
 
 	void GraphicsWindow::frame_end(lab::EditState & edit_state, GraphicsWindowManager & mgr)
 	{
@@ -113,32 +104,7 @@ namespace lab
 
 		_activate_context();
 
-		lab::toolbar(edit_state, _font_manager.get());
-
-		_dockspace.update_and_draw(ImGui::GetContentRegionAvail(), mgr);
-
-		if (ImGui::IsMouseDragging(drag_button) && drag_object)
-		{
-			ImGui::SetTooltip(drag_object->name.c_str());
-
-//				if (ImGui::GetMouseCursor() == ImGuiMouseCursor_Arrow)
-//					ImGui::SetMouseCursor(ImGuiMouseCursor_NotAllowed);
-		}
-
-		if (!ImGui::IsAnyItemActive() && !ImGui::IsAnyItemHovered())
-		{
-/* for when there is imguizmo
-			if (ImGui::IsMouseDoubleClicked(0) && !imguizmo::is_over() && drag_object)
-			{
-				drag_object->unselect();
-				drag_object->drop();
-			}
-			*/
-		}
-		if (ImGui::IsMouseReleased(drag_button))
-		{
-			drag_object->drop();
-		}
+		ui(edit_state, mgr);
 
 		ImGui::End(); // end the main window
 		ImGui::Render();
@@ -218,14 +184,6 @@ namespace lab
 	}
 
 
-	std::weak_ptr<GraphicsWindow> GraphicsWindowManager::create_window(const std::string & window_name, int width, int height,
-		shared_ptr<FontManager> fm)
-	{
-		shared_ptr<GraphicsWindow> w(new GraphicsWindow(window_name, width, height, fm));
-		_windows.push_back(w);
-		return w;
-	}
-
 	void GraphicsWindowManager::close_window(std::weak_ptr<GraphicsWindow> w)
 	{
 		auto window = w.lock();
@@ -258,6 +216,8 @@ namespace lab
 
 	void GraphicsWindowManager::update_windows(lab::EditState& edit_state)
 	{
+		glfwWaitEventsTimeout(0.1f);
+
 		ImVec4 clear_color = ImColor(1, 0, 0);
 
 		vector < weak_ptr<GraphicsWindow>> windows;

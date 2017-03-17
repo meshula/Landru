@@ -27,6 +27,24 @@ namespace lab
 
 		{
 			SetFont icon(fm->icon_font);
+
+			if (lab::ToolbarTextButton(" " ICON_MD_CREATE_NEW_FOLDER " ", "New", false))
+			{
+				evt_new_stage();
+			}
+			gui::SameLine(0.0f);
+			if (lab::ToolbarTextButton(" " ICON_MD_CLOUD_DOWNLOAD " ", "Open", false))
+			{
+//				evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);
+			}
+			gui::SameLine(0.0f);
+			if (lab::ToolbarTextButton(" " ICON_MD_CLOUD_UPLOAD " ", "Save", false))
+			{
+				//				evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);
+			}
+
+
+			gui::SameLine(0.0f, 50.0f);
 			if (lab::ToolbarTextButton(" " ICON_MD_GAMEPAD " ", "Translate", operationMode == EditState::ManipulatorMode::Translate))
 			{
 				evt_set_manipulator_mode(EditState::ManipulatorMode::Translate);

@@ -5,6 +5,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imguidock.h"
 #include "labFontManager.h"
+#include "labCursorManager.h"
 #include "labGraphicsWindow.h"
 #include <imgui_internal.h> // for ImRect
 #include <memory>
@@ -15,8 +16,10 @@ namespace ImGuiDock
 	
 	using namespace std;
 
-	Dockspace::Dockspace(lab::GraphicsWindow* owner, shared_ptr<lab::FontManager> fm) : owner(owner)
+	Dockspace::Dockspace(lab::GraphicsWindow* owner, shared_ptr<lab::CursorManager> cm,
+		shared_ptr<lab::FontManager> fm) : owner(owner)
 	{
+		cursorManager = cm;
 		fontManager = fm;
 	}
 
@@ -474,9 +477,17 @@ namespace ImGuiDock
 
 					_current_dock_to->container = nullptr;
 					_current_dock_to->dragging = true;
+
+
+
+
+					// @TODO
+					// going to need a floating panel window with ui implemented to render the dockspace within the floating panel
+
+					// a floating panel is almost like an appwindow except without owning edit state, or having the global tool bar
 					
-					auto w = mgr.create_window(_current_dock_to->title,
-						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y, fontManager);
+					auto w = mgr.create_window<lab::GraphicsWindow>(_current_dock_to->title,
+						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y, cursorManager, fontManager);
 
 					auto guiWindow = w.lock();
 					guiWindow->get_dockspace().dock(_current_dock_to, DockSlot::Tab, 0, true);

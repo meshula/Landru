@@ -7,6 +7,9 @@
 #include <LabRender/UtilityModel.h>
 #include <LabRender/Utils.h>
 #include <LabCmd/FFI.h>
+
+#include "interface/ImGuizmo.h"
+
 #include <memory>
 
 namespace lab
@@ -29,7 +32,7 @@ namespace lab
 		, camera(make_shared<Camera>())
         {
 #	ifdef _WIN32
-			lab::addPathVariable("$(ASSET_ROOT)", "C:/Projects/landru-stage/Landru/thirdparty/prereq/labrender/assets");
+			lab::addPathVariable("$(ASSET_ROOT)", "C:/Projects/assets");
 #	else
 			lab::addPathVariable("$(ASSET_ROOT)", "/Users/dp/Projects/LabRender/assets");
 #	endif
@@ -48,7 +51,21 @@ namespace lab
             const int PORT_NUM = 9109;
             oscServer.start(PORT_NUM);
             wsServer.start(PORT_NUM + 1);
+
+			evt_set_manipulated_matrix.connect(this, &Detail::set_manipulated_matrix);
         }
+
+		~Detail()
+		{
+			evt_set_manipulated_matrix.connect(this, &Detail::set_manipulated_matrix);
+		}
+
+		void set_manipulated_matrix(const EditState::float16 & m)
+		{
+			float t[4], r[4], s[4];
+			ImGuizmo::DecomposeMatrixToComponents(m, t, r, s);
+			drawList.deferredMeshes[0]->transform.setTRS({ t[0], t[1], t[2] }, { r[0], r[1], r[2] }, { s[0], s[1],s[2] });
+		}
 
 		void render_start(lab::PassRenderer::RenderLock& rl, double time, v2i fbOffset, v2i fbSize)
 		{
@@ -93,8 +110,8 @@ namespace lab
     void RenderEngine::create_scene()
     {
         std::vector<std::shared_ptr<lab::ModelBase>>& meshes = _detail->drawList.deferredMeshes;
-        //shared_ptr<lab::ModelBase> model = lab::Model::loadMesh("$(ASSET_ROOT)/models/starfire.25.obj");
-        shared_ptr<lab::ModelBase> model = lab::Model::loadMesh("$(ASSET_ROOT)/models/ShaderBall/shaderBallNoCrease/shaderBall.obj");
+        shared_ptr<lab::ModelBase> model = lab::Model::loadMesh("$(ASSET_ROOT)/models/starfire.25.obj");
+        //shared_ptr<lab::ModelBase> model = lab::Model::loadMesh("$(ASSET_ROOT)/models/ShaderBall/shaderBallNoCrease/shaderBall.obj");
         meshes.push_back(model);
 
         shared_ptr<lab::UtilityModel> cube = make_shared<lab::UtilityModel>();
@@ -110,6 +127,9 @@ namespace lab
 
     void RenderEngine::render(int width, int height)
     {
+		if (!width || !height)
+			return;
+
         lab::checkError(lab::ErrorPolicy::onErrorLog,
             lab::TestConditions::exhaustive, "main loop start");
 

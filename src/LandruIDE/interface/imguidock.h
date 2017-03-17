@@ -9,7 +9,7 @@
 #include <memory>
 #include <imgui.h>
 
-namespace lab { class GraphicsWindow; class GraphicsWindowManager; class FontManager; }
+namespace lab { class GraphicsWindow; class GraphicsWindowManager; class CursorManager;  class FontManager; }
 
 namespace ImGuiDock
 {
@@ -75,7 +75,8 @@ namespace ImGuiDock
 	class Dockspace
 	{
 	public:
-		Dockspace(lab::GraphicsWindow* owner, std::shared_ptr<lab::FontManager> fm);
+		Dockspace(lab::GraphicsWindow* owner, std::shared_ptr<lab::CursorManager> cm,
+			std::shared_ptr<lab::FontManager> fm);
 		~Dockspace();
 
 		bool dock(Dock* dock, DockSlot dockSlot, float size = 0, bool active = false);
@@ -90,6 +91,7 @@ namespace ImGuiDock
 	protected:
 		friend class lab::GraphicsWindow;
 
+		std::shared_ptr<lab::CursorManager> cursorManager;
 		std::shared_ptr<lab::FontManager> fontManager;
 
 		DockSlot render_dock_slot_preview(const ImVec2& mousePos, const ImVec2& cPos, const ImVec2& cSize);

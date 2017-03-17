@@ -1,27 +1,20 @@
 // ImGui - standalone example application for Glfw + OpenGL 3, using programmable pipeline
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 
+#include <LabAcme/LabAcme.h>
+#include "labAppWindow.h"
+#include "interface/labFontManager.h"
+#include "interface/labCursorManager.h"
+
 #include <imgui.h>
 #include <imgui_impl_glfw_gl3.h>
 #include <stdio.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <vector>
-#include <memory>
+
 #include <iostream>
-
-#include "landruConsole.h"
-#include "interface/labGraphicsWindow.h"
-#include "interface/imguidock.h"
-#include "interface/labCursorManager.h"
-#include "interface/labFontManager.h"
-#include "editState.h"
-#include "renderingView.h"
-#include <LabAcme/LabAcme.h>
-
-#include <pxr/base/tf/hashset.h>
-#include <pxr/usd/usd/stage.h>
-#include <pxr/usd/usd/treeIterator.h>
+#include <memory>
 
 using namespace std;
 
@@ -122,120 +115,6 @@ void banner(const lab::fs::path & app_path, const lab::fs::path & resource_path)
 	cout << "------------------------------------------------------------------" << endl;
 }
 
-// Gathers information about a layer used as a subLayer, including its
-// position in the layerStack hierarchy.
-class SubLayerInfo
-{
-public:
-	SubLayerInfo(SdfLayerHandle sublayer, SdfLayerOffset offset, SdfLayerHandle containingLayer, int depth)
-		: layer(sublayer), offset(offset), parentLayer(containingLayer), depth(depth) {}
-
-	SdfLayerHandle layer;
-	SdfLayerHandle parentLayer;
-	SdfLayerOffset offset;
-	int depth;
-
-	string GetOffsetString()
-	{
-		auto o = offset.GetOffset();
-		auto s = offset.GetScale();
-		if (o == 0)
-		{
-			if (s == 1)
-				return "";
-			else
-				return "(scale = " + to_string(s) + ")";
-		}
-		if (s == 1)
-			return "(offset = " + to_string(o) + ")";
-
-		return "(offset = " + to_string(o) + "; scale = " + to_string(s) + ")";
-	}
-};
-
-static void _add_sub_layers(SdfLayerHandle layer, SdfLayerOffset & layerOffset,
-	SdfLayerHandle parentLayer, vector<SubLayerInfo> & layers, int depth)
-{
-	const SdfLayerOffsetVector &offsets = layer->GetSubLayerOffsets();
-	layers.push_back(SubLayerInfo(layer, layerOffset, parentLayer, depth));
-	const vector<string> &sublayers = layer->GetSubLayerPaths();
-	const SdfLayerOffsetVector &sublayerOffsets = layer->GetSubLayerOffsets();
-	for (size_t i = 0, numSublayers = sublayers.size(); i<numSublayers; i++)
-	{
-		SdfLayerOffset offset;
-		if (sublayerOffsets.size())
-		{
-			offset = sublayerOffsets[i];
-		}
-		auto sublayer = SdfLayer::FindRelativeToLayer(layer, sublayers[i]);
-		if (sublayer)
-		{
-			_add_sub_layers(sublayer, offset, layer, layers, depth + 1);
-		}
-	}
-}
-	
-	
-void outline_state(UsdStageRefPtr stage)
-{
-	static vector<SubLayerInfo> layers;
-
-	static std::once_flag once;
-	auto layersPtr = &layers;
-	std::call_once(once, [&stage, layersPtr]()
-	{
-		auto layer = stage->GetRootLayer();
-		SdfLayerOffset layerOffset; // time scale and offset per layer
-		SdfLayerHandle parentLayer;
-		_add_sub_layers(layer, layerOffset, parentLayer, *layersPtr, 0);
-	});
-
-	if (ImGui::TreeNode("root"))
-	{
-		auto it = layers.begin();
-		int pop_depth = 0;
-
-		while (it != layers.end())
-		{
-			int depth = (*it).depth;
-			bool open = ImGui::TreeNode((*it).layer->GetDisplayName().c_str());
-			++it;
-			if (open)
-			{
-				++pop_depth;
-
-				if (it == layers.end())
-					break;
-
-				if ((*it).depth == depth)
-				{
-					ImGui::TreePop();
-					--pop_depth;
-				}
-				else if ((*it).depth < depth)
-					for (int i = (*it).depth; i < depth; ++i)
-					{
-						ImGui::TreePop();
-						--pop_depth;
-					}
-			}
-			else
-			{
-				// scan past children if level was closed
-				while (it != layers.end() && (*it).depth > depth)
-					++it;
-			}
-		}
-		while (pop_depth)
-		{
-			ImGui::TreePop();
-			--pop_depth;
-		}
-
-		ImGui::TreePop(); // root node
-	}
-}
-
 
 int main(int, char** argv)
 {
@@ -256,7 +135,9 @@ int main(int, char** argv)
 	int w = highDpi? 2000:1280;
 	int h = highDpi? 1500:1024;
 
-	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window("Landru IDE", w, h, fontMgr);
+	shared_ptr<lab::CursorManager> cursorMgr = make_shared<lab::CursorManager>();
+
+	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window<lab::AppWindow>("Landru IDE", w, h, cursorMgr, fontMgr);
 
     // Load Fonts
     // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -266,91 +147,31 @@ int main(int, char** argv)
 
 	set_style_colors();
 
-	lab::CursorManager cursorMgr;
-	lab::EditState editState;
+	lab::evt_new_stage();
 
-
-	std::vector<std::unique_ptr<ImGuiDock::Dock>> _docks;
-	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-	_docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
-
-	auto& console_dock = _docks[0];
-	auto& view_dock = _docks[1];
-	auto& outliner_dock = _docks[2];
-	auto& properties_dock = _docks[3];
-	auto& timeline_dock = _docks[4];
-
-	LandruConsole console(fontMgr);
-	console_dock->initialize("Console", true, ImVec2(400, 200), [&console](ImVec2 area)
+	lab::AppWindow * appWindow = nullptr;
+	lab::EditState * editState = nullptr;
 	{
-		console.draw_contents();
-	});
-
-	lab::RenderingView renderingView;
-	view_dock->initialize("View", true, ImVec2(), [&editState, &fontMgr, &cursorMgr, &renderingView](ImVec2 area) {
-		renderingView.render_ui(editState, cursorMgr, *fontMgr.get(), area);
-	});
-
-	outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [&editState](ImVec2 area)
-	{
-		outline_state(editState.stage());
-	});
-
-	properties_dock->initialize("Properties", true, ImVec2(100, 100), [&editState](ImVec2 area)
-	{
-		if (ImGui::TreeNode("ShaderBall"))
-		{
-			if (ImGui::TreeNode("Transform"))
-			{
-				ImGui::Text("Translate: 0 0 0");
-				ImGui::Text("Rotate: 0 0 0");
-				ImGui::Text("Scale: 1 1 1");
-				ImGui::TreePop();
-			}
-			if (ImGui::TreeNode("Geometry"))
-			{
-				ImGui::TreePop();
-			}
-			if (ImGui::TreeNode("Shading"))
-			{
-				ImGui::TreePop();
-			}
-			ImGui::TreePop();
-		}
-	});
-
-	timeline_dock->initialize("Timeline", true, ImVec2(100, 100), [](ImVec2 area)
-	{
-		ImGui::Text("this is the timeline");
-	});
-
-	{
-		shared_ptr<lab::GraphicsWindow> w = window.lock();
-		if (w)
-		{
-			auto& dockspace = w->get_dockspace();
-			dockspace.dock(view_dock.get(), ImGuiDock::DockSlot::None, 300, true);
-
-			dockspace.dock(console_dock.get(), ImGuiDock::DockSlot::Bottom, 300, true);
-			dockspace.dock_with(timeline_dock.get(), console_dock.get(), ImGuiDock::DockSlot::Tab, 250, true);
-
-			dockspace.dock_with(outliner_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Left, 300, true);
-			dockspace.dock_with(properties_dock.get(), view_dock.get(), ImGuiDock::DockSlot::Right, 300, true);
-		}
+		shared_ptr<lab::GraphicsWindow> wp = window.lock();
+		appWindow = dynamic_cast<lab::AppWindow*>(wp.get());
+		editState = &appWindow->editState();
 	}
 
+	// UI fully initialized
+	lab::evt_stage_created(editState->stage());
 
-	windowMgr.update_windows(editState); // prime the pump
-	renderingView.render_scene(); // width and height were recorded during UI rendering
+	windowMgr.update_windows(*editState); // prime the pump
 
 	while (true)
 	{
-		cursorMgr.set_cursor(ImGui::GetMouseCursor());
-		windowMgr.update_windows(editState); // prime the pump
-		renderingView.render_scene(); // width and height were recorded during UI rendering
+		cursorMgr->set_cursor(ImGui::GetMouseCursor());
+		windowMgr.update_windows(*editState); // prime the pump
+		{
+			shared_ptr<lab::GraphicsWindow> wp = window.lock();
+			lab::AppWindow * appW = dynamic_cast<lab::AppWindow*>(wp.get());
+			if (appW)
+				appW->render_scene(); // width and height were recorded during UI rendering
+		}
 
 		auto main_window = window.lock();
 		if (!main_window || main_window->should_close())
