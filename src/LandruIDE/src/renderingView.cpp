@@ -168,8 +168,6 @@ namespace lab
 		auto io = gui::GetIO();
 		const bool object_selected = true;
 
-		static float mat[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
-
 		if (object_selected)
 		{
 			float* snap = nullptr;
@@ -189,14 +187,26 @@ namespace lab
 			case EditState::ManipulatorMode::Scale: operation = ImGuizmo::SCALE; break;
 			}
 
+			float source_matrix[16];
+			float edit_matrix[16];
+			memcpy(source_matrix, edit_state.manipulated_matrix(), sizeof(float[16]));
+			memcpy(edit_matrix, source_matrix, sizeof(float[16]));
+
 			ImGuizmo::Manipulate(
 				&view.m00,
 				&proj.m00,
 				operation,
 				ImGuizmo::LOCAL,
-				mat,
+				edit_matrix,
 				nullptr,
 				snap);
+
+			bool changed = false;
+			for (int i = 0; i < 16 && !changed; ++i)
+				changed |= source_matrix[i] != edit_matrix[i];
+
+			if (changed)
+				evt_set_manipulated_matrix(edit_matrix);
 		}
 	}
 
