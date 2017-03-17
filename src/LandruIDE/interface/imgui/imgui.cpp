@@ -659,7 +659,8 @@
 
 static void             LogRenderedText(const ImVec2& ref_pos, const char* text, const char* text_end = NULL);
 
-static void             PushMultiItemsWidths(int components, float w_full = 0.0f);
+/// @dp added with_label
+static void             PushMultiItemsWidths(int components, bool with_label, float w_full = 0.0f);
 static float            GetDraggedColumnOffset(int column_index);
 
 static bool             IsKeyPressedMap(ImGuiKey key, bool repeat = true);
@@ -4589,12 +4590,16 @@ void ImGui::PushItemWidth(float item_width)
     window->DC.ItemWidthStack.push_back(window->DC.ItemWidth);
 }
 
-static void PushMultiItemsWidths(int components, float w_full)
+static void PushMultiItemsWidths(int components, bool withLabel, float w_full)
 {
     ImGuiWindow* window = ImGui::GetCurrentWindow();
     const ImGuiStyle& style = GImGui->Style;
     if (w_full <= 0.0f)
         w_full = ImGui::CalcItemWidth();
+
+	if (!withLabel && components > 1)
+		w_full *= float(components) / float(components - 1);
+
     const float w_item_one  = ImMax(1.0f, (float)(int)((w_full - (style.ItemInnerSpacing.x) * (components-1)) / (float)components));
     const float w_item_last = ImMax(1.0f, (float)(int)(w_full - (w_item_one + style.ItemInnerSpacing.x) * (components-1)));
     window->DC.ItemWidthStack.push_back(w_item_last);
@@ -6737,7 +6742,7 @@ bool ImGui::SliderFloatN(const char* label, float* v, int components, float v_mi
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
+    PushMultiItemsWidths(components, strlen(label) > 0);
     for (int i = 0; i < components; i++)
     {
         PushID(i);
@@ -6779,7 +6784,7 @@ bool ImGui::SliderIntN(const char* label, int* v, int components, int v_min, int
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
+    PushMultiItemsWidths(components, strlen(label) > 0);
     for (int i = 0; i < components; i++)
     {
         PushID(i);
@@ -6959,7 +6964,7 @@ bool ImGui::DragFloatN(const char* label, float* v, int components, float v_spee
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
+    PushMultiItemsWidths(components, strlen(label) > 0);
     for (int i = 0; i < components; i++)
     {
         PushID(i);
@@ -7000,7 +7005,7 @@ bool ImGui::DragFloatRange2(const char* label, float* v_current_min, float* v_cu
     ImGuiContext& g = *GImGui;
     PushID(label);
     BeginGroup();
-    PushMultiItemsWidths(2);
+    PushMultiItemsWidths(2, strlen(label) > 0);
 
     bool value_changed = DragFloat("##min", v_current_min, v_speed, (v_min >= v_max) ? -FLT_MAX : v_min, (v_min >= v_max) ? *v_current_max : ImMin(v_max, *v_current_max), display_format, power);
     PopItemWidth();
@@ -7037,7 +7042,7 @@ bool ImGui::DragIntN(const char* label, int* v, int components, float v_speed, i
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
+    PushMultiItemsWidths(components, strlen(label) > 0);
     for (int i = 0; i < components; i++)
     {
         PushID(i);
@@ -7078,7 +7083,7 @@ bool ImGui::DragIntRange2(const char* label, int* v_current_min, int* v_current_
     ImGuiContext& g = *GImGui;
     PushID(label);
     BeginGroup();
-    PushMultiItemsWidths(2);
+    PushMultiItemsWidths(2, strlen(label) > 0);
 
     bool value_changed = DragInt("##min", v_current_min, v_speed, (v_min >= v_max) ? INT_MIN : v_min, (v_min >= v_max) ? *v_current_max : ImMin(v_max, *v_current_max), display_format);
     PopItemWidth();
@@ -8326,8 +8331,9 @@ bool ImGui::InputFloatN(const char* label, float* v, int components, int decimal
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
-    for (int i = 0; i < components; i++)
+	PushMultiItemsWidths(components, strlen(label) > 0);
+
+	for (int i = 0; i < components; i++)
     {
         PushID(i);
         value_changed |= InputFloat("##v", &v[i], 0, 0, decimal_precision, extra_flags);
@@ -8337,8 +8343,11 @@ bool ImGui::InputFloatN(const char* label, float* v, int components, int decimal
     }
     PopID();
 
-    window->DC.CurrentLineTextBaseOffset = ImMax(window->DC.CurrentLineTextBaseOffset, g.Style.FramePadding.y);
-    TextUnformatted(label, FindRenderedTextEnd(label));
+	if (strlen(label))
+	{
+		window->DC.CurrentLineTextBaseOffset = ImMax(window->DC.CurrentLineTextBaseOffset, g.Style.FramePadding.y);
+		TextUnformatted(label, FindRenderedTextEnd(label));
+	}
     EndGroup();
 
     return value_changed;
@@ -8369,7 +8378,7 @@ bool ImGui::InputIntN(const char* label, int* v, int components, ImGuiInputTextF
     bool value_changed = false;
     BeginGroup();
     PushID(label);
-    PushMultiItemsWidths(components);
+    PushMultiItemsWidths(components, strlen(label) > 0);
     for (int i = 0; i < components; i++)
     {
         PushID(i);
