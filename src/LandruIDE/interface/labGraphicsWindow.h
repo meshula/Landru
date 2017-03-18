@@ -21,6 +21,17 @@ namespace lab
 	class CursorManager;
 	class FontManager;
 
+	class GraphicsRootWindow
+	{
+		GLFWwindow * _window = nullptr;
+
+	public:
+		GraphicsRootWindow();
+		~GraphicsRootWindow();
+
+		GLFWwindow * window() const { return _window;  }
+	};
+
     class GraphicsWindow
     {
 	protected:
@@ -28,17 +39,17 @@ namespace lab
         GLFWwindow * _window = nullptr;
 
 		std::shared_ptr<FontManager> _font_manager;
+		std::shared_ptr<GraphicsRootWindow> _root;
 
 		friend class GraphicsWindowManager;
-
-		GraphicsWindow(const std::string & window_name, int width, int height, 
-			std::shared_ptr<lab::CursorManager> cm,
-			std::shared_ptr<lab::FontManager>);
-
 		void frame_begin();
 		void frame_end(lab::EditState & edit_state, GraphicsWindowManager &);
 
 	public:
+		GraphicsWindow(std::shared_ptr<GraphicsRootWindow>, const std::string & window_name, int width, int height,
+			std::shared_ptr<lab::CursorManager> cm,
+			std::shared_ptr<lab::FontManager>);
+
 		virtual ~GraphicsWindow(); // public to avoid needing a deleter friend
 
 		void request_focus();
@@ -49,38 +60,55 @@ namespace lab
 		void get_position(int & x, int & y);
 		void set_position(int x, int y);
 
-    	ImGuiDock::Dockspace & get_dockspace() { return _dockspace; }
-
 		virtual void ui(lab::EditState&, GraphicsWindowManager & mgr) {}
 
     protected:
-    	ImGuiDock::Dockspace _dockspace;
 
         void _activate_context();
     };
 
+	class DockingWindow : public GraphicsWindow
+	{
+	public:
+		DockingWindow(std::shared_ptr<GraphicsRootWindow>,
+			const std::string & window_name, int width, int height,
+			std::shared_ptr<lab::CursorManager> cm,
+			std::shared_ptr<lab::FontManager> fm);
+
+		virtual ~DockingWindow() {}
+
+    	ImGuiDock::Dockspace & get_dockspace() { return _dockspace; }
+
+	protected:
+    	ImGuiDock::Dockspace _dockspace;
+	};
+
 	class GraphicsWindowManager
 	{
 		std::vector<std::shared_ptr<GraphicsWindow>> _windows;
+		std::shared_ptr<GraphicsRootWindow> _root;
 
 	public:
 
-		template <typename WindowType>
-		std::weak_ptr<GraphicsWindow> create_window(
-			const std::string & window_name,
-			int width, int height,
-			std::shared_ptr<lab::CursorManager> cm,
-			std::shared_ptr<FontManager> fm)
+		GraphicsWindowManager();
+
+		void add_window(std::shared_ptr<GraphicsWindow> w)
 		{
-			std::shared_ptr<GraphicsWindow> w(new WindowType(window_name, width, height, cm, fm));
-			_windows.push_back(w);
-			return w;
+			if (w)
+				_windows.push_back(w);
+		}
+
+		std::shared_ptr<GraphicsRootWindow> graphics_root_window()
+		{ 
+			if (!_root)
+				_root = std::make_shared<GraphicsRootWindow>();
+			return _root; 
 		}
 
 		void close_window(std::weak_ptr<GraphicsWindow> w);
 		void update_windows(lab::EditState& edit_state);
 
-		std::shared_ptr<GraphicsWindow> find_dragged_window();
+		std::shared_ptr<DockingWindow> find_dragged_window();
 	};
 
 

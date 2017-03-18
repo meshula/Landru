@@ -10,20 +10,49 @@
 #include <GLFW/glfw3.h>
 #include <imgui_impl_glfw_gl3.h>
 #include <string>
+#include <iostream>
 
 namespace lab
 {
-
 	class FontManager;
-
 	using namespace std;
 
+	GraphicsRootWindow::GraphicsRootWindow()
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#if __APPLE__
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-	GraphicsWindow::GraphicsWindow(const std::string & window_name, int width, int height,
+		_window = glfwCreateWindow(16, 16, "Root graphics context", NULL, NULL);
+		glfwMakeContextCurrent(_window);
+
+		// start GLEW extension handler
+		glewExperimental = GL_TRUE;
+		glewInit(); // create GLEW after the context has been created
+
+					// get version info
+		const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
+		const GLubyte* version = glGetString(GL_VERSION); // version as a string
+		cout << "Graphics Root context created" << endl;
+		printf("Renderer: %s\n", renderer);
+		printf("OpenGL version supported %s\n", version);
+	}
+
+	GraphicsRootWindow::~GraphicsRootWindow()
+	{
+		if (_window)
+			glfwDestroyWindow(_window);
+	}
+
+	GraphicsWindow::GraphicsWindow(std::shared_ptr<GraphicsRootWindow> root, const std::string & window_name, int width, int height,
 		std::shared_ptr<lab::CursorManager> cm,
 		shared_ptr<lab::FontManager> fm)
-			: _dockspace(this, cm, fm)
-		, _font_manager(fm)
+		: _font_manager(fm)
+		, _root(root)
         {
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -31,22 +60,12 @@ namespace lab
         #if __APPLE__
             glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         #endif
-            _window = glfwCreateWindow(width, height, window_name.c_str(), NULL, NULL);
+			glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+			
+			_window = glfwCreateWindow(width, height, window_name.c_str(), NULL, root->window());
             glfwMakeContextCurrent(_window);
 
-        #ifdef _WIN32
-            // start GLEW extension handler
-            glewExperimental = GL_TRUE;
-            glewInit(); // create GLEW after the context has been created
-
-                        // get version info
-            const GLubyte* renderer = glGetString(GL_RENDERER); // get renderer string
-            const GLubyte* version = glGetString(GL_VERSION); // version as a string
-            printf("Renderer: %s\n", renderer);
-            printf("OpenGL version supported %s\n", version);
-        #endif
-
-            // Setup ImGui binding
+            // bind the glfw keyboard and mouse callbacks for this window so ImGui gets called
             ImGui_ImplGlfwGL3_Init(_window, true);
 
             _context = ImGui::CreateContext();
@@ -184,6 +203,12 @@ namespace lab
 	}
 
 
+	GraphicsWindowManager::GraphicsWindowManager()
+	{
+
+	}
+
+
 	void GraphicsWindowManager::close_window(std::weak_ptr<GraphicsWindow> w)
 	{
 		auto window = w.lock();
@@ -197,16 +222,19 @@ namespace lab
 		}
 	}
 
-
-	shared_ptr<GraphicsWindow> GraphicsWindowManager::find_dragged_window()
+	shared_ptr<DockingWindow> GraphicsWindowManager::find_dragged_window()
 	{
 		for (auto window : _windows)
 		{
-			auto& dockspace = window->get_dockspace();
+			auto dw = dynamic_pointer_cast<DockingWindow>(window);
+			if (!dw)
+				continue;
+
+			auto& dockspace = dw->get_dockspace();
 			if (dockspace.node.splits[0] && dockspace.node.splits[0]->active_dock)
 			{
 				if (dockspace.node.splits[0]->active_dock->dragging)
-					return window;
+					return dw;
 			}
 		}
 
@@ -252,6 +280,14 @@ namespace lab
 		}
 	}
 
+	DockingWindow::DockingWindow(std::shared_ptr<GraphicsRootWindow> grw,
+			const std::string & window_name, int width, int height,
+			std::shared_ptr<lab::CursorManager> cm,
+			shared_ptr<lab::FontManager> fm)
+	: GraphicsWindow(grw, window_name, width, height, cm, fm)
+	, _dockspace(this, cm, fm)
+	{
+	}
 
 
 } // lab
