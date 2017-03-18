@@ -215,6 +215,8 @@ namespace lab
 		virtual void ui(EditState & es, GraphicsWindowManager & mgr, ImGuiDock::Dockspace & dockspace) override
 		{
 			lab::toolbar(es, fontMgr.get());
+
+			// @TODO the dockingwindow owns the dockspace it's really fishy that it's passed in here
 			dockspace.update_and_draw(ImGui::GetContentRegionAvail(), mgr);
 
 			if (ImGui::IsMouseDragging(drag_button) && drag_object)

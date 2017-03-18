@@ -478,14 +478,6 @@ namespace ImGuiDock
 					_current_dock_to->container = nullptr;
 					_current_dock_to->dragging = true;
 
-
-
-
-					// @TODO
-					// going to need a floating panel window with ui implemented to render the dockspace within the floating panel
-
-					// a floating panel is almost like an appwindow except without owning edit state, or having the global tool bar
-					
 					auto dw = std::make_shared<lab::DockingWindow>(
 						mgr.graphics_root_window(),
 						_current_dock_to->title,

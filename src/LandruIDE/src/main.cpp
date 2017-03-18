@@ -165,7 +165,7 @@ int main(int, char** argv)
 	{
 		cursorMgr->set_cursor(ImGui::GetMouseCursor());
 		windowMgr.update_windows(*editState);
-		modeMgr.update();
+		modeMgr.update(*windowMgr.graphics_root_window().get());
 
 		if (appWindow->should_close())
 			break;

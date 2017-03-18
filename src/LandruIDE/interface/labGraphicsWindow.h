@@ -30,6 +30,7 @@ namespace lab
 		~GraphicsRootWindow();
 
 		GLFWwindow * window() const { return _window;  }
+		void make_current();
 	};
 
     class GraphicsWindow
@@ -78,6 +79,7 @@ namespace lab
 		virtual ~DockingWindow() {}
 
     	ImGuiDock::Dockspace & get_dockspace() { return _dockspace; }
+		virtual void ui(lab::EditState&, GraphicsWindowManager & mgr) override;
 
 	protected:
     	ImGuiDock::Dockspace _dockspace;

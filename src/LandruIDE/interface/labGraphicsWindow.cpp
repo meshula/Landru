@@ -48,6 +48,11 @@ namespace lab
 			glfwDestroyWindow(_window);
 	}
 
+	void GraphicsRootWindow::make_current()
+	{
+		glfwMakeContextCurrent(_window);
+	}
+
 	GraphicsWindow::GraphicsWindow(std::shared_ptr<GraphicsRootWindow> root, const std::string & window_name, int width, int height,
 		std::shared_ptr<lab::CursorManager> cm,
 		shared_ptr<lab::FontManager> fm)
@@ -202,6 +207,11 @@ namespace lab
 		ImGui::SetCurrentContext(_context);
 	}
 
+
+	void DockingWindow::ui(EditState & es, GraphicsWindowManager & mgr)
+	{
+		_dockspace.update_and_draw(ImGui::GetContentRegionAvail(), mgr);
+	}
 
 	GraphicsWindowManager::GraphicsWindowManager()
 	{

@@ -13,10 +13,10 @@ namespace lab
         _majorModes[m->name()] = m;
     }
 
-	void ModeManager::update()
+	void ModeManager::update(lab::GraphicsRootWindow & grw)
 	{
 		for (auto i : _minorModes)
-			i.second->update();
+			i.second->update(grw);
 	}
 
 }

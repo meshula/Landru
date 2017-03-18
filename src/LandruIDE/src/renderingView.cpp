@@ -415,8 +415,9 @@ namespace lab
 		}
 	}
 
-	void RenderingView::update()
+	void RenderingView::update(lab::GraphicsRootWindow & grw)
 	{
+		grw.make_current();
 		_detail->render(width, height);
 	}
 

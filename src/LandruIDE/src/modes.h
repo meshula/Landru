@@ -30,7 +30,7 @@ namespace lab
 			lab::FontManager& fontManager,
 			float width, float height) {}
 
-		virtual void update() {}
+		virtual void update(lab::GraphicsRootWindow&) {}
 	};
 
 	class ModeManager
@@ -42,7 +42,7 @@ namespace lab
 		void add_mode(std::shared_ptr<MinorMode>);
 		void add_mode(std::shared_ptr<MajorMode>);
 
-		void update();
+		void update(lab::GraphicsRootWindow&);
 	};
 
 }

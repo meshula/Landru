@@ -38,7 +38,7 @@ public:
 		lab::FontManager& fontManager,
 		float width, float height) override;
 
-	virtual void update() override;
+	virtual void update(lab::GraphicsRootWindow&) override;
 
 	virtual const char * name() const override { return "renderer";  }
 };
