@@ -16,7 +16,7 @@ namespace ImGuiDock
 	
 	using namespace std;
 
-	Dockspace::Dockspace(lab::GraphicsWindow* owner, shared_ptr<lab::CursorManager> cm,
+	Dockspace::Dockspace(lab::DockingWindow* owner, shared_ptr<lab::CursorManager> cm,
 		shared_ptr<lab::FontManager> fm) : owner(owner)
 	{
 		cursorManager = cm;
@@ -256,7 +256,7 @@ namespace ImGuiDock
 		return false;
 	}
 
-	void updateDrag(lab::GraphicsWindow * window)
+	void updateDrag(lab::DockingWindow * window)
 	{
 		auto& dockspace = window->get_dockspace();
 		auto& split = dockspace.node.splits[0];
@@ -339,7 +339,7 @@ namespace ImGuiDock
 
 				ImGui::EndChild();
 
-				lab::GraphicsWindow* draggedWindow = is_any_window_dragged(mgr);
+				lab::DockingWindow* draggedWindow = is_any_window_dragged(mgr);
 				if (draggedWindow != nullptr && draggedWindow->get_dockspace().node.splits[0]->active_dock != container->active_dock)
 				{
 					auto mousePos = io.MousePos;
@@ -486,19 +486,21 @@ namespace ImGuiDock
 
 					// a floating panel is almost like an appwindow except without owning edit state, or having the global tool bar
 					
-					auto w = mgr.create_window<lab::GraphicsWindow>(_current_dock_to->title,
+					auto dw = std::make_shared<lab::DockingWindow>(
+						mgr.graphics_root_window(),
+						_current_dock_to->title,
 						(int)_current_dock_to->last_size.x, (int)_current_dock_to->last_size.y, cursorManager, fontManager);
+					mgr.add_window(dw);
 
-					auto guiWindow = w.lock();
-					guiWindow->get_dockspace().dock(_current_dock_to, DockSlot::Tab, 0, true);
+					dw->get_dockspace().dock(_current_dock_to, DockSlot::Tab, 0, true);
 
 					auto pos = io.MousePos;
 
 					int x, y;
 					owner->get_position(x, y);
 
-					guiWindow->set_position(x + (int) pos.x, y + (int) pos.y);
-					guiWindow->request_focus();
+					dw->set_position(x + (int) pos.x, y + (int) pos.y);
+					dw->request_focus();
 				}
 			}
 			else if (_current_dock_action == eDrag)
@@ -550,7 +552,7 @@ namespace ImGuiDock
 		return false;
 	}
 
-	lab::GraphicsWindow *Dockspace::is_any_window_dragged(lab::GraphicsWindowManager & mgr)
+	lab::DockingWindow *Dockspace::is_any_window_dragged(lab::GraphicsWindowManager & mgr)
 	{
 		auto window = mgr.find_dragged_window();
 		if (!window)

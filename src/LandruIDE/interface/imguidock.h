@@ -9,7 +9,7 @@
 #include <memory>
 #include <imgui.h>
 
-namespace lab { class GraphicsWindow; class GraphicsWindowManager; class CursorManager;  class FontManager; }
+namespace lab { class DockingWindow; class GraphicsWindowManager; class CursorManager;  class FontManager; }
 
 namespace ImGuiDock
 {
@@ -56,7 +56,7 @@ namespace ImGuiDock
 		//Container *parent = nullptr;
 		Node* container = nullptr;
 		Dockspace* redock_from = nullptr;
-		lab::GraphicsWindow* redock_from_window = nullptr;
+		lab::DockingWindow* redock_from_window = nullptr;
 		Dock* redock_to = nullptr;
 
 		DockSlot redock_slot = DockSlot::None;
@@ -75,7 +75,7 @@ namespace ImGuiDock
 	class Dockspace
 	{
 	public:
-		Dockspace(lab::GraphicsWindow* owner, std::shared_ptr<lab::CursorManager> cm,
+		Dockspace(lab::DockingWindow* owner, std::shared_ptr<lab::CursorManager> cm,
 			std::shared_ptr<lab::FontManager> fm);
 		~Dockspace();
 
@@ -89,7 +89,7 @@ namespace ImGuiDock
 		Node node;
 		std::vector<Node*> nodes;
 	protected:
-		friend class lab::GraphicsWindow;
+		friend class lab::DockingWindow;
 
 		std::shared_ptr<lab::CursorManager> cursorManager;
 		std::shared_ptr<lab::FontManager> fontManager;
@@ -97,7 +97,7 @@ namespace ImGuiDock
 		DockSlot render_dock_slot_preview(const ImVec2& mousePos, const ImVec2& cPos, const ImVec2& cSize);
 		void render_tab_bar(Node* container, const ImVec2& size, float height, const ImVec2& cursorPos);
 		bool get_min_size(Node* container, ImVec2& min);
-		lab::GraphicsWindow* is_any_window_dragged(lab::GraphicsWindowManager&);
+		lab::DockingWindow* is_any_window_dragged(lab::GraphicsWindowManager&);
 
 		enum DockToAction
 		{
@@ -107,6 +107,6 @@ namespace ImGuiDock
 		Dock* _current_dock_to = nullptr;
 		DockToAction _current_dock_action = eNull;
 	public:
-		lab::GraphicsWindow* owner = nullptr;
+		lab::DockingWindow* owner = nullptr;
 	};
 };

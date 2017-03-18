@@ -3,9 +3,12 @@
 
 #include "interface/labFontManager.h"
 #include "interface/imguidock.h"
+#include "landruConsole.h"
 #include "mainToolbar.h"
+#include "modes.h"
 #include "outliner.h"
 #include "propertyPanel.h"
+#include "renderingView.h"
 
 
 using namespace std;
@@ -25,13 +28,6 @@ namespace lab
 
 	event<void(const std::string&)> evt_set_major_mode;
 
-
-	class MajorMode
-	{
-	public:
-		virtual void ui(EditState & es, GraphicsWindowManager & mgr, ImGuiDock::Dockspace & dockspace) = 0;
-	};
-
 	class Login_MajorMode : public MajorMode
 	{
 	public:
@@ -40,19 +36,65 @@ namespace lab
 			fontMgr = fm;
 		}
 
+		virtual const char * name() const override { return "login"; }
+
 		virtual void ui(EditState & es, GraphicsWindowManager & mgr, ImGuiDock::Dockspace & dockspace) override
 		{
 			lab::SetFont sf(fontMgr->regular_font);
 
-			static char user[256];
-			ImGui::InputText("User", user, 256);
-			static char pass[256];
-			ImGui::InputText("Auth", pass, 256, ImGuiInputTextFlags_Password);
+			ImGui::Columns(2);
 			ImGui::Separator();
-			if (ImGui::Button("OK", ImVec2(120, 0)))
+			ImGui::SetColumnOffset(1, 100);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+
+			ImVec4 col{ 0.3f,0.3f,0.3f,1 };
+			ImGui::PushStyleColor(ImGuiCol_FrameBg, col);
+
+
+			ImGui::Text("Server"); ImGui::NextColumn();
+			static char server[256] = "localhost:2323";
+			ImGui::PushID(1);
+			ImGui::InputText("", server, 256); ImGui::NextColumn();
+			ImGui::PopID();
+			ImGui::Text("User"); ImGui::NextColumn();
+			static char user[256];
+			ImGui::PushID(2);
+			ImGui::InputText("", user, 256); ImGui::NextColumn();
+			ImGui::PopID();
+			ImGui::Text("Auth"); ImGui::NextColumn();
+			static char pass[256];
+			ImGui::PushID(3);
+			ImGui::InputText("", pass, 256, ImGuiInputTextFlags_Password); ImGui::NextColumn();
+			ImGui::PopID();
+
+			ImGui::PopStyleColor();
+			ImGui::PopStyleVar();
+
+			ImGui::Columns(1);
+
+			ImGui::Separator();
+			static char show[256];
+			if (ImGui::BeginMenu("Shows"))
 			{
-				evt_set_major_mode("chooseProject");
+				if (ImGui::MenuItem("Sample"))
+				{
+					strcpy(show, "Sample");
+				}
+				if (ImGui::MenuItem("Dune"))
+				{
+					strcpy(show, "Dune");
+				}
+				ImGui::EndMenu();
 			}
+			ImGui::SameLine();
+			ImGui::Text(show);
+			if (strlen(show) && ImGui::Button("Start", ImVec2(120, 0)))
+			{
+				evt_set_major_mode("edit");
+			}
+
+
 		}
 
 		std::shared_ptr<lab::FontManager> fontMgr;
@@ -66,6 +108,9 @@ namespace lab
 			fontMgr = fm;
 		}
 
+		virtual const char * name() const override { return "chooseProject"; }
+
+
 		virtual void ui(EditState & es, GraphicsWindowManager & mgr, ImGuiDock::Dockspace & dockspace) override
 		{
 			lab::SetFont sf(fontMgr->regular_font);
@@ -78,7 +123,7 @@ namespace lab
 			static char show[256];
 			if (ImGui::BeginMenu("Shows"))
 			{
-				if (ImGui::MenuItem("Sample")) 
+				if (ImGui::MenuItem("Sample"))
 				{
 					strcpy(show, "Sample");
 				}
@@ -102,7 +147,7 @@ namespace lab
     class Edit_MajorMode : public MajorMode
     {
     public:
-        Edit_MajorMode(shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
+        Edit_MajorMode(shared_ptr<RenderingView> rpv, shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
         {
 			fontMgr = fm;
 
@@ -125,10 +170,9 @@ namespace lab
                 this->console->draw_contents();
             });
 
-			lab::RenderingView * rpv = &renderingView;
 			lab::EditState * es = &editState;
             view_dock->initialize("View", true, ImVec2(), [es, fm, cm, rpv](ImVec2 area) {
-                rpv->render_ui(*es, *cm.get(), *fm.get(), area);
+                rpv->ui(*es, *cm.get(), *fm.get(), area.x, area.y);
             });
 
 			Outliner * op = outliner;
@@ -153,6 +197,9 @@ namespace lab
             delete console;
             delete outliner;
         }
+
+		virtual const char * name() const override { return "edit"; }
+
 
 		void dock(ImGuiDock::Dockspace & dockspace)
 		{
@@ -199,7 +246,6 @@ namespace lab
 		LandruConsole * console = nullptr;
 		Outliner * outliner = nullptr;
 
-		lab::RenderingView renderingView;
 		lab::EditState editState;
 
 		std::shared_ptr<FontManager> fontMgr;
@@ -217,12 +263,20 @@ namespace lab
     {
     public:
 
-        Detail(shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
-        : edit_majorMode(cm, fm)
-		, login_majorMode(cm, fm)
-		, chooseProject_majorMode(cm, fm)
+        Detail(lab::ModeManager & mm, shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
         {
+			view_minorMode = std::make_shared<RenderingView>();
+			edit_majorMode = std::make_shared<Edit_MajorMode>(view_minorMode, cm, fm);
+			login_majorMode = std::make_shared<Login_MajorMode>(cm, fm);
+			chooseProject_majorMode = std::make_shared<ChooseProject_MajorMode>(cm, fm);
+
+			mm.add_mode(edit_majorMode);
+			mm.add_mode(login_majorMode);
+			mm.add_mode(chooseProject_majorMode);
+			mm.add_mode(view_minorMode);
+
 			evt_set_major_mode.connect(this, &AppWindow::Detail::set_major_mode);
+			majorMode = login_majorMode.get();
         }
 
 		~Detail()
@@ -232,25 +286,29 @@ namespace lab
 		void set_major_mode(const std::string& name)
 		{
 			if (name == "edit")
-				majorMode = &edit_majorMode;
+				majorMode = edit_majorMode.get();
 			else if (name == "chooseProject")
-				majorMode = &chooseProject_majorMode;
+				majorMode = chooseProject_majorMode.get();
 		}
 
-		MajorMode * majorMode = &login_majorMode;
-        Edit_MajorMode edit_majorMode;
-		Login_MajorMode login_majorMode;
-		ChooseProject_MajorMode chooseProject_majorMode;
+		MajorMode * majorMode = nullptr;
+        std::shared_ptr<Edit_MajorMode> edit_majorMode;
+		std::shared_ptr<Login_MajorMode> login_majorMode;
+		std::shared_ptr<ChooseProject_MajorMode> chooseProject_majorMode;
+
+		std::shared_ptr<RenderingView> view_minorMode;
 	};
 
-	AppWindow::AppWindow(const std::string & window_name, int width, int height,
+	AppWindow::AppWindow(std::shared_ptr<GraphicsRootWindow> grw,
+		const std::string & window_name, int width, int height,
+		lab::ModeManager & mm,
 		std::shared_ptr<lab::CursorManager> cm,
 		std::shared_ptr<lab::FontManager> fm)
-		: GraphicsWindow(window_name, width, height, cm, fm)
-		, _detail(new Detail(cm, fm))
+		: DockingWindow(grw, window_name, width, height, cm, fm)
+		, _detail(new Detail(mm, cm, fm))
 	{
 		ImGuiDock::Dockspace & dockspace = get_dockspace();
-        _detail->edit_majorMode.dock(dockspace);
+        _detail->edit_majorMode->dock(dockspace);
 	}
 
 	AppWindow::~AppWindow()
@@ -258,15 +316,9 @@ namespace lab
 		delete _detail;
 	}
 
-	void AppWindow::render_scene()
-	{
-		if (_detail->majorMode == &_detail->edit_majorMode)
-			_detail->edit_majorMode.renderingView.render_scene(); // width and height were recorded during UI rendering
-	}
-
 	lab::EditState & AppWindow::editState()
 	{
-		return _detail->edit_majorMode.editState;
+		return _detail->edit_majorMode->editState;
 	}
 
 	void AppWindow::ui(EditState & es, GraphicsWindowManager & mgr)

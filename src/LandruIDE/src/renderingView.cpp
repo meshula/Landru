@@ -210,9 +210,12 @@ namespace lab
 		}
 	}
 
-	void RenderingView::render_ui(lab::EditState& edit_state, 
-								  lab::CursorManager& cursorManager, lab::FontManager& fontManager, ImVec2 area)
+	void RenderingView::ui(lab::EditState& edit_state,
+		lab::CursorManager& cursorManager,
+		lab::FontManager& fontManager,
+		float width_, float height_)
 	{
+		ImVec2 area{ width_, height_ };
 
 		auto size = gui::GetContentRegionAvail();
 
@@ -412,7 +415,7 @@ namespace lab
 		}
 	}
 
-	void RenderingView::render_scene()
+	void RenderingView::update()
 	{
 		_detail->render(width, height);
 	}

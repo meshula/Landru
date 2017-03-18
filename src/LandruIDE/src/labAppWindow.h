@@ -3,22 +3,25 @@
 
 #include "interface/labGraphicsWindow.h"
 #include "editState.h"
-#include "renderingView.h"
-#include "landruConsole.h"
 #include <string>
 
 namespace lab
 {
+	class ModeManager;
 
-	class AppWindow : public GraphicsWindow
+	class AppWindow : public DockingWindow
 	{
 		class Detail;
 		Detail * _detail = nullptr;
 
 	public:
-		AppWindow(const std::string & window_name, int width, int height, 
+		AppWindow(
+			std::shared_ptr<GraphicsRootWindow>,
+			const std::string & window_name, int width, int height,
+			lab::ModeManager & mm,
 			std::shared_ptr<lab::CursorManager> cm,
 			std::shared_ptr<lab::FontManager>);
+
 		virtual ~AppWindow();
 
 		virtual void ui(EditState&, GraphicsWindowManager & mgr) override;

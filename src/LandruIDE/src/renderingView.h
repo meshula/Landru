@@ -1,4 +1,5 @@
 
+#include "modes.h"
 #include <imgui.h>
 
 namespace lab
@@ -8,7 +9,7 @@ namespace lab
 	class RenderEngine;
 	class EditState;
 
-class RenderingView
+class RenderingView : public MinorMode
 {
 	bool ui_show_gbuffer = false;
 	bool ui_more_stats = false;
@@ -32,9 +33,14 @@ public:
 	RenderingView();
 	~RenderingView();
 
-	void render_ui(lab::EditState&, lab::CursorManager& cursorManager, lab::FontManager&, ImVec2 area);
+	virtual void ui(lab::EditState& edit_state,
+		lab::CursorManager& cursorManager,
+		lab::FontManager& fontManager,
+		float width, float height) override;
 
-	void render_scene();
+	virtual void update() override;
+
+	virtual const char * name() const override { return "renderer";  }
 };
 
 

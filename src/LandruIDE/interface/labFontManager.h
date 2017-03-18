@@ -2,6 +2,9 @@
 #include <imgui.h>
 #include <filesystem>
 
+// documentation on the material.io icon font is here
+// https://material.io/icons/
+
 namespace lab {
 
 	namespace fs = std::experimental::filesystem;

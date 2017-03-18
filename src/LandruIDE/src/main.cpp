@@ -3,6 +3,7 @@
 
 #include <LabAcme/LabAcme.h>
 #include "labAppWindow.h"
+#include "modes.h"
 #include "interface/labFontManager.h"
 #include "interface/labCursorManager.h"
 
@@ -137,7 +138,12 @@ int main(int, char** argv)
 
 	shared_ptr<lab::CursorManager> cursorMgr = make_shared<lab::CursorManager>();
 
-	weak_ptr<lab::GraphicsWindow> window = windowMgr.create_window<lab::AppWindow>("Landru IDE", w, h, cursorMgr, fontMgr);
+	lab::ModeManager modeMgr;
+
+	auto appWindow = make_shared<lab::AppWindow>(windowMgr.graphics_root_window(),
+		"Landru IDE", w, h, modeMgr, cursorMgr, fontMgr);
+	lab::EditState * editState = &appWindow->editState();
+	windowMgr.add_window(appWindow);
 
     // Load Fonts
     // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
@@ -149,13 +155,6 @@ int main(int, char** argv)
 
 	lab::evt_new_stage();
 
-	lab::AppWindow * appWindow = nullptr;
-	lab::EditState * editState = nullptr;
-	{
-		shared_ptr<lab::GraphicsWindow> wp = window.lock();
-		appWindow = dynamic_cast<lab::AppWindow*>(wp.get());
-		editState = &appWindow->editState();
-	}
 
 	// UI fully initialized
 	lab::evt_stage_created(editState->stage());
@@ -165,16 +164,10 @@ int main(int, char** argv)
 	while (true)
 	{
 		cursorMgr->set_cursor(ImGui::GetMouseCursor());
-		windowMgr.update_windows(*editState); // prime the pump
-		{
-			shared_ptr<lab::GraphicsWindow> wp = window.lock();
-			lab::AppWindow * appW = dynamic_cast<lab::AppWindow*>(wp.get());
-			if (appW)
-				appW->render_scene(); // width and height were recorded during UI rendering
-		}
+		windowMgr.update_windows(*editState);
+		modeMgr.update();
 
-		auto main_window = window.lock();
-		if (!main_window || main_window->should_close())
+		if (appWindow->should_close())
 			break;
 	}
 
