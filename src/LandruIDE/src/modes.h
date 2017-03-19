@@ -10,27 +10,41 @@
 namespace lab
 {
 
-	class MajorMode
+	class Mode
+	{
+		bool _suspended = false;
+	public:
+		virtual ~Mode() {}
+
+		virtual const char * name() const = 0;
+
+		virtual void update(lab::GraphicsRootWindow&) {}
+
+		virtual void activate() {}
+		virtual void suspend(bool s) { _suspended = s; }
+		virtual bool suspended() const { return _suspended; }
+		virtual void deactivate() {}
+	};
+
+	class MajorMode : public Mode
 	{
 	public:
 		virtual ~MajorMode() {}
-		virtual void ui(EditState & es, GraphicsWindowManager & mgr, ImGuiDock::Dockspace & dockspace) = 0;
-		virtual const char * name() const = 0;
+		virtual void ui(EditState & es, 
+			GraphicsWindowManager & mgr, 
+			ImGuiDock::Dockspace & dockspace) = 0;
 	};
 
-	class MinorMode
+	class MinorMode : public Mode
 	{
 	public:
 		virtual ~MinorMode() {}
-		virtual const char * name() const = 0;
 		virtual bool is_singleton() const { return true; }
 
 		virtual void ui(lab::EditState& edit_state,
 			lab::CursorManager& cursorManager,
 			lab::FontManager& fontManager,
 			float width, float height) {}
-
-		virtual void update(lab::GraphicsRootWindow&) {}
 	};
 
 	class ModeManager

@@ -417,6 +417,9 @@ namespace lab
 
 	void RenderingView::update(lab::GraphicsRootWindow & grw)
 	{
+		if (suspended())
+			return;
+
 		grw.make_current();
 		_detail->render(width, height);
 	}

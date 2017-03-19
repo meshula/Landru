@@ -9,6 +9,7 @@
 #include "outliner.h"
 #include "propertyPanel.h"
 #include "renderingView.h"
+#include "timeline.h"
 
 
 using namespace std;
@@ -153,6 +154,8 @@ namespace lab
 
             outliner = new Outliner();
 			console = new LandruConsole(fm);
+			timeline = new Timeline();
+
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
@@ -186,9 +189,10 @@ namespace lab
                 property_panel();
             });
 
-            timeline_dock->initialize("Timeline", true, ImVec2(100, 100), [](ImVec2 area)
+			Timeline * tp = timeline;
+            timeline_dock->initialize("Timeline", true, ImVec2(100, 100), [es, fm, cm, tp](ImVec2 area)
             {
-                ImGui::Text("this is the timeline");
+				tp->ui(*es, *cm.get(), *fm.get(), area.x, area.y);
             });
         }
 
@@ -247,6 +251,7 @@ namespace lab
 
 		LandruConsole * console = nullptr;
 		Outliner * outliner = nullptr;
+		Timeline * timeline = nullptr;
 
 		lab::EditState editState;
 
@@ -257,6 +262,8 @@ namespace lab
 		ImGuiDock::Dock * outliner_dock;
 		ImGuiDock::Dock * properties_dock;
 		ImGuiDock::Dock * timeline_dock;
+
+
 
         std::vector<std::unique_ptr<ImGuiDock::Dock>> docks;
     };
