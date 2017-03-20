@@ -22,6 +22,7 @@
 
 namespace lab {
 
+	class AnimationTrack;
 	class Camera;
 
     class EditState
@@ -32,7 +33,7 @@ namespace lab {
     public:
 		enum ManipulatorMode { Translate, Rotate, Scale };
 		enum ManipSpace { Local, Global };
-		
+
 		EditState();
         ~EditState();
 
@@ -42,6 +43,8 @@ namespace lab {
 
 		typedef float float16[16];
 		const float16 & manipulated_matrix() const;
+
+		AnimationTrack & animation_root();
     };
 
 	// camera

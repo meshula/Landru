@@ -275,18 +275,19 @@ namespace lab
         Detail(lab::ModeManager & mm, shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
         {
 			view_minorMode = std::make_shared<RenderingView>();
-			edit_majorMode = std::make_shared<Edit_MajorMode>(view_minorMode, cm, fm);
-			login_majorMode = std::make_shared<Login_MajorMode>(cm, fm);
-			chooseProject_majorMode = std::make_shared<ChooseProject_MajorMode>(cm, fm);
+			major_modes.emplace_back(std::make_shared<Login_MajorMode>(cm, fm));
+			major_modes.emplace_back(std::make_shared<Edit_MajorMode>(view_minorMode, cm, fm));
+			edit_major_mode = dynamic_cast<Edit_MajorMode*>(major_modes[1].get());
+			major_modes.emplace_back(std::make_shared<ChooseProject_MajorMode>(cm, fm));
 
-			mm.add_mode(edit_majorMode);
-			mm.add_mode(login_majorMode);
-			mm.add_mode(chooseProject_majorMode);
+			for (auto & m : major_modes)
+				mm.add_mode(m);
+
 			mm.add_mode(view_minorMode);
 
 			evt_set_major_mode.connect(this, &AppWindow::Detail::set_major_mode);
-			majorMode = login_majorMode.get();
-        }
+			major_mode = major_modes[0].get();
+		}
 
 		~Detail()
 		{
@@ -294,21 +295,21 @@ namespace lab
 
 		void set_major_mode(const std::string& name)
 		{
-			if (name == "edit")
-				majorMode = edit_majorMode.get();
-			else if (name == "chooseProject")
-				majorMode = chooseProject_majorMode.get();
+			for (auto & m : major_modes)
+				if (name == m->name()) {
+					major_mode = m.get();
+					break;
+				}
 		}
 
-		MajorMode * majorMode = nullptr;
-        std::shared_ptr<Edit_MajorMode> edit_majorMode;
-		std::shared_ptr<Login_MajorMode> login_majorMode;
-		std::shared_ptr<ChooseProject_MajorMode> chooseProject_majorMode;
-
+		MajorMode * major_mode = nullptr;
+		Edit_MajorMode * edit_major_mode = nullptr;
+		vector<shared_ptr<MajorMode>> major_modes;
 		std::shared_ptr<RenderingView> view_minorMode;
 	};
 
-	AppWindow::AppWindow(std::shared_ptr<GraphicsRootWindow> grw,
+	AppWindow::AppWindow(
+		std::shared_ptr<GraphicsRootWindow> grw,
 		const std::string & window_name, int width, int height,
 		lab::ModeManager & mm,
 		std::shared_ptr<lab::CursorManager> cm,
@@ -317,7 +318,7 @@ namespace lab
 		, _detail(new Detail(mm, cm, fm))
 	{
 		ImGuiDock::Dockspace & dockspace = get_dockspace();
-        _detail->edit_majorMode->dock(dockspace);
+		_detail->edit_major_mode->dock(dockspace);
 	}
 
 	AppWindow::~AppWindow()
@@ -327,12 +328,12 @@ namespace lab
 
 	lab::EditState & AppWindow::editState()
 	{
-		return _detail->edit_majorMode->editState;
+		return _detail->edit_major_mode->editState;
 	}
 
 	void AppWindow::ui(EditState & es, GraphicsWindowManager & mgr)
 	{
-		_detail->majorMode->ui(es, mgr, get_dockspace());
+		_detail->major_mode->ui(es, mgr, get_dockspace());
 	}
 
 

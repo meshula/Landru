@@ -19,4 +19,16 @@ namespace lab
 			i.second->update(grw);
 	}
 
+	Mode * ModeManager::find_mode(const std::string & m)
+	{
+		auto maj = _majorModes.find(m);
+		if (maj != _majorModes.end())
+			return maj->second.get();
+		auto mnr = _minorModes.find(m);
+		if (mnr != _minorModes.end())
+			return mnr->second.get();
+		return nullptr;
+	}
+
+
 }

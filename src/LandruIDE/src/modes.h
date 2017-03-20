@@ -57,6 +57,15 @@ namespace lab
 		void add_mode(std::shared_ptr<MajorMode>);
 
 		void update(lab::GraphicsRootWindow&);
+
+		Mode * find_mode(const std::string &);
+
+		template <typename T>
+		T * find(const std::string & m)
+		{
+			Mode * m = find_mode(m);
+			return dynamic_cast<T*>(m);
+		}
 	};
 
 }

@@ -32,7 +32,7 @@ namespace lab
 		static float b1 = 10;
 		static float b2 = 78;
         ImGui::TimelineEvent("Curry", b1, b2);
-		
+
 		ImGui::NextColumn();
 		ImGui::Text("Mental");
 		ImGui::NextColumn();
@@ -40,7 +40,6 @@ namespace lab
 		static float c1 = 52;
 		static float c2 = 175;
 		ImGui::TimelineEvent("Mental", c1, c2);
-//		ImGui::NextColumn();
 
         ImGui::EndTimeline();
     }
