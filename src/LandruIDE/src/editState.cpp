@@ -1,5 +1,6 @@
 
 #include "editState.h"
+#include "interface/animation.h"
 #include "interface/boxer.h"
 #include <imgui.h>
 #include <LabRender/Camera.h>
@@ -50,7 +51,15 @@ struct EditState::_Detail
 		evt_new_stage.connect(this, &_Detail::new_stage);
 		evt_new_layer.connect(this, &_Detail::new_layer);
 
-    }
+		animation_root.name = "root";
+		animation_root.append_block("Cherry", 0, 20);
+		animation_root.append_block("Mint", 10, 50);
+		animation_root.append_block("Chocolate", 100, 150);
+		animation_root.append_block("Bubblegum", 110, 150);
+		animation_root.append_block("Doublemint", 150, 250);
+		animation_root.append_block("Asparagus", 75, 125);
+		animation_root.append_block("Cabbage", 50, 100);
+	}
     ~_Detail()
     {
         evt_camera_mouse.disconnect(this, &_Detail::rig_mouse_move);
@@ -128,6 +137,8 @@ struct EditState::_Detail
 	float manipulator_matrix[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 
 	UsdStageRefPtr _stage;
+
+	AnimationTrack animation_root;
 };
 
 EditState::EditState()
@@ -138,6 +149,11 @@ EditState::EditState()
 EditState::~EditState()
 {
     delete _detail;
+}
+
+AnimationTrack & EditState::animation_root()
+{
+	return _detail->animation_root;
 }
 
 UsdStageRefPtr EditState::stage()

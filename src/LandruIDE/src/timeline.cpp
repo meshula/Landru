@@ -1,6 +1,7 @@
 
 
 #include "timeline.h"
+#include "interface/animation.h"
 #include "interface/timeline.h"
 
 namespace lab
@@ -11,38 +12,25 @@ namespace lab
         lab::FontManager& fontManager,
         float width, float height)
     {
-		constexpr float column_x = 160.f;
+		static float column_x = 160.f;
+		static double visible_time_in = 0;
+		static double visible_time_out = 1;
 
-        ImGui::BeginTimeline("Foo", column_x, 123.f);
+		AnimationTrack & root = edit_state.animation_root();
 
-		ImGui::Columns(2);
-		ImGui::SetColumnOffset(1, column_x);
+		//static ImVec2 offset_scale = { 0, 1 };
+		//ImGui::BeginTimeline("foo", 150.f, 5, 0, &offset_scale);
+		ImGui::BeginTimeline("Foo", column_x, 150.f, &visible_time_in, &visible_time_out);
 
-		ImGui::Text("Raisins");
-		ImGui::NextColumn();
-
-		static float a1 = 0;
-		static float a2 = 50;
-        ImGui::TimelineEvent("Raisins", a1, a2);
-
-		ImGui::NextColumn();
-		ImGui::Text("Curry");
-		ImGui::NextColumn();
-
-		static float b1 = 10;
-		static float b2 = 78;
-        ImGui::TimelineEvent("Curry", b1, b2);
-
-		ImGui::NextColumn();
-		ImGui::Text("Mental");
-		ImGui::NextColumn();
-
-		static float c1 = 52;
-		static float c2 = 175;
-		ImGui::TimelineEvent("Mental", c1, c2);
-
-        ImGui::EndTimeline();
-    }
+		// @TODO recursive drawing goes here
+		for (auto & t : root.blocks)
+		{
+			ImGui::TimelineEvent(t.name.c_str(), t.clip->in_time, t.clip->out_time);
+		}
+		ImU32 timeline_running_color = 0xff00ffff;
+		ImGui::EndTimeline(5, 100.f, timeline_running_color);
+		//ImGui::EndTimeline(10, 22.5f, timeline_running_color);
+	}
 
 }
 

@@ -9,6 +9,7 @@ namespace lab {
 	{
 	public:
 		virtual const char * name() const override { return "timeline"; }
+
 		virtual void ui(lab::EditState& edit_state,
 			lab::CursorManager& cursorManager,
 			lab::FontManager& fontManager,
