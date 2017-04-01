@@ -4,6 +4,7 @@
 #include <LabAcme/LabAcme.h>
 #include "labAppWindow.h"
 #include "modes.h"
+#include "timingMode.h"
 #include "interface/labFontManager.h"
 #include "interface/labCursorManager.h"
 
@@ -141,7 +142,10 @@ int main(int, char** argv)
 	lab::ModeManager modeMgr;
 
 	auto appWindow = make_shared<lab::AppWindow>(windowMgr.graphics_root_window(),
-		"Landru IDE", w, h, modeMgr, cursorMgr, fontMgr);
+		                                         "Landru IDE", w, h, modeMgr, cursorMgr, fontMgr);
+
+	modeMgr.add_mode(std::make_shared<lab::TimingMode>());
+
 	lab::EditState * editState = &appWindow->editState();
 	windowMgr.add_window(appWindow);
 
@@ -154,7 +158,6 @@ int main(int, char** argv)
 	set_style_colors();
 
 	lab::evt_new_stage();
-
 
 	// UI fully initialized
 	lab::evt_stage_created(editState->stage());

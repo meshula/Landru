@@ -3,6 +3,7 @@
 #include "interface/toolbar.h"
 #include "interface/labFontManager.h"
 #include "interface/materialIconDefinitions.h"
+#include "timeline.h"
 #include <LabRender/Camera.h>
 #include <imgui.h>
 
@@ -12,7 +13,6 @@ namespace lab
 {
 	namespace gui = ImGui;
 
-	enum PlayMode { NotStarted, Playing, Paused };
 	PlayMode playMode = PlayMode::NotStarted;
 
 	CameraRig::Mode navMode = CameraRig::Mode::TurnTableOrbit;
@@ -105,16 +105,19 @@ namespace lab
 			SetFont icon(fm->icon_font);
 			if (lab::ToolbarTextButton(" " ICON_MD_REPLAY " ", "Rewind", playMode != PlayMode::Playing, playMode != PlayMode::Playing))
 			{
+				evt_timeline_rewind();
 				playMode = PlayMode::Paused;
 			}
 			gui::SameLine(0.0f, 2.f);
 			if (lab::ToolbarTextButton(" " ICON_MD_PLAY_ARROW " ", "Play", playMode != PlayMode::Playing, playMode != PlayMode::Playing)) // selected, enabled
 			{
+				evt_timeline_play();
 				playMode = PlayMode::Playing;
 			}
 			gui::SameLine(0.0f, 2.f);
 			if (lab::ToolbarTextButton(" " ICON_MD_PAUSE " ", "Pause", playMode == PlayMode::Playing, playMode == PlayMode::Playing))
 			{
+				evt_timeline_pause();
 				playMode = PlayMode::Paused;
 			}
 			gui::SameLine(0.0f, 2.f);

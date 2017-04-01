@@ -254,7 +254,7 @@ namespace lab
 
 	void GraphicsWindowManager::update_windows(lab::EditState& edit_state)
 	{
-		glfwWaitEventsTimeout(0.1f);
+		glfwWaitEventsTimeout(1.f/24.f);
 
 		ImVec4 clear_color = ImColor(1, 0, 0);
 
