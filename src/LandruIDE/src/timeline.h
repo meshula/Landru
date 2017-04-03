@@ -35,6 +35,5 @@ namespace lab {
 	extern event<void()> evt_timeline_play;
 	extern event<void()> evt_timeline_pause;
 	extern event<void()> evt_timeline_rewind;
-	extern event<void(std::chrono::steady_clock::time_point&)> evt_timeline_update;
 
 } // lab

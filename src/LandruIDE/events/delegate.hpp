@@ -1,3 +1,7 @@
+
+// from https://github.com/volcoma/EtherealEngine
+// licensed under BSD 2-clause
+
 #ifndef DELEGATE_HPP
 #define DELEGATE_HPP
 #pragma once

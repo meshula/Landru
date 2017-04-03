@@ -1,3 +1,7 @@
+
+// from https://github.com/volcoma/EtherealEngine
+// licensed under BSD 2-clause
+
 #pragma once
 #ifndef SIGNAL_HPP
 #define SIGNAL_HPP
@@ -11,13 +15,13 @@ template <class Slot>
 struct signal
 {
 private:
-	
+
 	typedef signal<Slot> this_type;
-	
+
 public:
-	
+
 	typedef Slot slot_type;
-	
+
 	/// Connects a slot to the signal
 	/// \param args The arguments you wish to construct the slot with to connect to the signal
 	template <typename... Args>
@@ -25,7 +29,7 @@ public:
 	{
 		_slots.emplace_back(std::forward<Args>(args)...);
 	}
-	
+
 	/// Disconnects a slot from the signal
 	/// \param args The arguments you wish to construct a slot with
 	template <typename... Args>
@@ -47,7 +51,7 @@ public:
 			slot(std::forward<Args>(args)...);
 		}
 	}
-	
+
 	/// Emits events you wish to send to call-backs
 	/// \param args The arguments to emit to the slots connected to the signal
 	/// \note
@@ -57,20 +61,20 @@ public:
 	{
 		emit(std::forward<Args>(args)...);
 	}
-	
+
 	// comparision operators for sorting and comparing
-	
+
 	bool operator==(const this_type& signal) const
 	{ return _slots == signal._slots; }
-	
+
 	bool operator!=(const this_type& signal) const
 	{ return !operator==(signal); }
-	
+
 private:
-	
+
 	/// defines an array of slots
 	typedef std::vector<slot_type> slot_array;
-	
+
 	/// The slots connected to the signal
 	slot_array _slots;
 };

@@ -1,4 +1,8 @@
-﻿#pragma once
+﻿
+// from https://github.com/volcoma/EtherealEngine
+// licensed under BSD 2-clause
+
+#pragma once
 #ifndef EVENT_HPP
 #define EVENT_HPP
 

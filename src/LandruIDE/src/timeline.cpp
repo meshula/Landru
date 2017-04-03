@@ -1,6 +1,7 @@
 
 
 #include "timeline.h"
+#include "timingMode.h"
 #include "interface/animation.h"
 #include "interface/timeline.h"
 
@@ -9,14 +10,13 @@ namespace lab
 	event<void()> evt_timeline_play;
 	event<void()> evt_timeline_pause;
 	event<void()> evt_timeline_rewind;
-	event<void(std::chrono::steady_clock::time_point&)> evt_timeline_update;
 
 	Timeline::Timeline()
 	{
 		evt_timeline_play.connect(this, &Timeline::play);
 		evt_timeline_pause.connect(this, &Timeline::pause);
 		evt_timeline_rewind.connect(this, &Timeline::rewind);
-		evt_timeline_update.connect(this, &Timeline::update);
+		evt_timing_update.connect(this, &Timeline::update);
 	}
 
 	Timeline::~Timeline()
@@ -24,7 +24,7 @@ namespace lab
 		evt_timeline_play.disconnect(this, &Timeline::play);
 		evt_timeline_pause.disconnect(this, &Timeline::pause);
 		evt_timeline_rewind.disconnect(this, &Timeline::rewind);
-		evt_timeline_update.disconnect(this, &Timeline::update);
+		evt_timing_update.disconnect(this, &Timeline::update);
 	}
 
 	void Timeline::pause()

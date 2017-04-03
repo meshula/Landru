@@ -9,6 +9,7 @@ namespace lab
     using namespace std::chrono_literals;
     constexpr std::chrono::nanoseconds timestep(16ms);
 
+	event<void(std::chrono::steady_clock::time_point&)> evt_timing_update;
 
     void TimingMode::update(lab::GraphicsRootWindow&)
     {
@@ -23,7 +24,7 @@ namespace lab
         while (lag >= timestep)
         {
             lag -= timestep;
-			evt_timeline_update(time_start);
+			evt_timing_update(time_start);
             time_start += timestep;
         }
 
