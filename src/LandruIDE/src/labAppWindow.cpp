@@ -6,6 +6,7 @@
 #include "landruConsole.h"
 #include "mainToolbar.h"
 #include "modes.h"
+#include "graphMode.h"
 #include "outliner.h"
 #include "propertyPanel.h"
 #include "renderingView.h"
@@ -155,18 +156,21 @@ namespace lab
             outliner = new Outliner();
 			console = new LandruConsole(fm);
 			timeline = new Timeline();
+			graph = new GraphMode();
 
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
+			docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
 
             console_dock = docks[0].get();
 			view_dock = docks[1].get();
 			outliner_dock = docks[2].get();
 			properties_dock = docks[3].get();
 			timeline_dock = docks[4].get();
+			graph_dock = docks[5].get();
 
             console_dock->initialize("Console", true, ImVec2(400, 200), [this](ImVec2 area)
             {
@@ -177,6 +181,11 @@ namespace lab
             view_dock->initialize("View", true, ImVec2(), [es, fm, cm, rpv](ImVec2 area) {
                 rpv->ui(*es, *cm.get(), *fm.get(), area.x, area.y);
             });
+
+			GraphMode * gm = graph;
+			graph_dock->initialize("Graph", true, ImVec2(), [es, fm, cm, gm](ImVec2 area) {
+				gm->ui(*es, *cm.get(), *fm.get(), area.x, area.y);
+			});
 
 			Outliner * op = outliner;
             outliner_dock->initialize("Outliner", true, ImVec2(100, 100), [op, es, fm](ImVec2 area)
@@ -200,6 +209,8 @@ namespace lab
         {
             delete console;
             delete outliner;
+			delete timeline;
+			delete graph;
         }
 
 		virtual const char * name() const override { return "edit"; }
@@ -207,7 +218,8 @@ namespace lab
 
 		void dock(ImGuiDock::Dockspace & dockspace)
 		{
-			dockspace.dock(view_dock, ImGuiDock::DockSlot::None, 300, true);
+			dockspace.dock(graph_dock, ImGuiDock::DockSlot::None, 300, true);
+			dockspace.dock_with(view_dock, graph_dock, ImGuiDock::DockSlot::Tab, 250, true);
 
 			dockspace.dock(console_dock, ImGuiDock::DockSlot::Bottom, 300, true);
 			dockspace.dock_with(timeline_dock, console_dock, ImGuiDock::DockSlot::Tab, 250, true);
@@ -252,6 +264,7 @@ namespace lab
 		LandruConsole * console = nullptr;
 		Outliner * outliner = nullptr;
 		Timeline * timeline = nullptr;
+		GraphMode * graph = nullptr;
 
 		lab::EditState editState;
 
@@ -259,6 +272,7 @@ namespace lab
 
 		ImGuiDock::Dock * console_dock;
 		ImGuiDock::Dock * view_dock;
+		ImGuiDock::Dock * graph_dock;
 		ImGuiDock::Dock * outliner_dock;
 		ImGuiDock::Dock * properties_dock;
 		ImGuiDock::Dock * timeline_dock;
