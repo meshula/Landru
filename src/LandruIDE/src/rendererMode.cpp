@@ -1,5 +1,5 @@
 
-#include "renderer.h"
+#include "rendererMode.h"
 #include "editState.h"
 #include <LabRender/Camera.h>
 #include <LabRender/gl4.h> // temp, shouldn't be using GL directly here
@@ -16,7 +16,7 @@ namespace lab
 {
 	using namespace std;
 
-    class RenderEngine::Detail
+    class RendererMode::Detail
     {
     public:
         shared_ptr<lab::PassRenderer> dr;
@@ -41,7 +41,6 @@ namespace lab
 			//dr->configure("$(ASSET_ROOT)/pipelines/deferred.json");
 			dr->configure("$(ASSET_ROOT)/pipelines/deferred_2_fxaa.json");
 			//dr->configure("$(ASSET_ROOT)/pipelines/shadertoy.json");
-			dr->self = dr;
 
             //shared_ptr<lab::Command> command = make_shared<PingCommand>();
             //oscServer.registerCommand(command);
@@ -97,17 +96,17 @@ namespace lab
 		}
     };
 
-	RenderEngine::RenderEngine()
+	RendererMode::RendererMode()
     : _detail(new Detail())
     {
     }
 
-	RenderEngine::~RenderEngine()
+	RendererMode::~RendererMode()
     {
         delete _detail;
     }
 
-    void RenderEngine::create_scene()
+    void RendererMode::create_scene()
     {
         std::vector<std::shared_ptr<lab::ModelBase>>& meshes = _detail->drawList.deferredMeshes;
         shared_ptr<lab::ModelBase> model = lab::Model::loadMesh("$(ASSET_ROOT)/models/starfire.25.obj");
@@ -125,7 +124,7 @@ namespace lab
         _detail->camera->frame(bounds);
     }
 
-    void RenderEngine::render(int width, int height)
+    void RendererMode::render(int width, int height)
     {
 		if (!width || !height)
 			return;
@@ -142,7 +141,7 @@ namespace lab
         const float time = 0.f; //=renderTime()
         const v2f mousePosition = { 0,0 }; // = mousePosition();
 
-        lab::PassRenderer::RenderLock rl(_detail->dr->self.lock(), time, mousePosition);
+        lab::PassRenderer::RenderLock rl(_detail->dr, time, mousePosition);
         v2i fbOffset = {0,0};
         _detail->render_start(rl, time, fbOffset, fbSize);
         _detail->dr->render(rl, fbSize, _detail->drawList);
@@ -152,18 +151,18 @@ namespace lab
             lab::TestConditions::exhaustive, "main loop end");
     }
 
-	m44f RenderEngine::camera_view()
+	m44f RendererMode::camera_view()
 	{
 		return _detail->camera->mount.viewTransform();
 	}
 
-	m44f RenderEngine::camera_projection(int width, int height)
+	m44f RendererMode::camera_projection(int width, int height)
 	{
 		return _detail->camera->optics.perspective(float(width) / float(height));
 	}
 
 
-    int RenderEngine::output_texture_id()
+    int RendererMode::output_texture_id()
     {
         auto fb = _detail->dr->framebuffer("gbuffer");
 		if (!fb || !fb->textures.size())
@@ -171,7 +170,7 @@ namespace lab
         return fb->textures[3]->id;
     }
 
-    void RenderEngine::save_output_texture(std::string path)
+    void RendererMode::save_output_texture(std::string path)
     {
         auto fb = _detail->dr->framebuffer("gbuffer");
 		if (!fb || !fb->textures.size())
@@ -179,7 +178,7 @@ namespace lab
 		fb->textures[3]->save(path.c_str());
     }
 
-	void RenderEngine::camera_interact(int delta_x, int delta_y)
+	void RendererMode::camera_interact(int delta_x, int delta_y)
 	{
 		evt_bind_view_camera(_detail->camera);
 		evt_camera_mouse((float)delta_x * 0.02f, (float)delta_y * -0.02f);

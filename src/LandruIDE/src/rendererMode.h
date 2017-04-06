@@ -2,6 +2,7 @@
 
 #include <string>
 #include <LabRender/MathTypes.h>
+#include "modes.h"
 
 namespace lab
 {
@@ -9,14 +10,17 @@ namespace lab
     class DrawList;
     class Camera;
 
-    class RenderEngine
+    class RendererMode : public MinorMode
 	{
         class Detail;
         Detail * _detail = nullptr;
 
 	public:
-		RenderEngine();
-        ~RenderEngine();
+		RendererMode();
+        ~RendererMode();
+
+		virtual const char * name() const override { return "renderer"; }
+
 		void create_scene();
 		void render(int width, int height);
 		int output_texture_id();

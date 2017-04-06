@@ -6,18 +6,18 @@ namespace lab
 {
 	class CursorManager;
 	class FontManager;
-	class RenderEngine;
+	class RendererMode;
 	class EditState;
 
 class RenderingView : public MinorMode
 {
-	bool ui_show_gbuffer = false;
 	bool ui_more_stats = false;
 
 	void show_statistics(lab::FontManager& fontManager, const unsigned int frameRate);
 	void draw_view_content(lab::FontManager& fontManager, const ImVec2& size);
 
-	RenderEngine * _detail = nullptr;
+	std::shared_ptr<Mode> _rendererModePtr;
+	RendererMode * _rendererMode = nullptr;
 
 	int width = 0;
 	int height = 0;
@@ -30,7 +30,7 @@ class RenderingView : public MinorMode
 	bool left_mouse = false;
 
 public:
-	RenderingView();
+	RenderingView(ModeManager &);
 	~RenderingView();
 
 	virtual void ui(lab::EditState& edit_state,

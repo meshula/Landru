@@ -40,8 +40,6 @@ namespace lab {
 								gfx::setDebug(BGFX_DEBUG_NONE);
 								*/
 			}
-			gui::Separator();
-			gui::Checkbox("Show G-Buffer", &ui_show_gbuffer);
 		}
 		gui::End();
 	}

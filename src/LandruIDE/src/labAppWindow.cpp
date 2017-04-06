@@ -288,7 +288,7 @@ namespace lab
 
         Detail(lab::ModeManager & mm, shared_ptr<lab::CursorManager> cm, std::shared_ptr<lab::FontManager> fm)
         {
-			view_minorMode = std::make_shared<RenderingView>();
+			view_minorMode = std::make_shared<RenderingView>(mm);
 			major_modes.emplace_back(std::make_shared<Login_MajorMode>(cm, fm));
 			major_modes.emplace_back(std::make_shared<Edit_MajorMode>(view_minorMode, cm, fm));
 			edit_major_mode = dynamic_cast<Edit_MajorMode*>(major_modes[1].get());

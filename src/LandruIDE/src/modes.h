@@ -30,9 +30,9 @@ namespace lab
 	{
 	public:
 		virtual ~MajorMode() {}
-		virtual void ui(EditState & es, 
-			GraphicsWindowManager & mgr, 
-			ImGuiDock::Dockspace & dockspace) = 0;
+		virtual void ui(EditState & es,
+			GraphicsWindowManager & mgr,
+			ImGuiDock::Dockspace & dockspace) {}
 	};
 
 	class MinorMode : public Mode
@@ -53,18 +53,17 @@ namespace lab
 		std::map < std::string, std::shared_ptr<MajorMode> > _majorModes;
 
 	public:
-		void add_mode(std::shared_ptr<MinorMode>);
-		void add_mode(std::shared_ptr<MajorMode>);
+		void add_mode(std::shared_ptr<Mode>);
 
 		void update(lab::GraphicsRootWindow&);
 
-		Mode * find_mode(const std::string &);
+		std::shared_ptr<Mode> find_mode(const std::string &);
 
 		template <typename T>
 		T * find(const std::string & m)
 		{
-			Mode * m = find_mode(m);
-			return dynamic_cast<T*>(m);
+			auto m = find_mode(m);
+			return dynamic_cast<T*>(m.get());
 		}
 	};
 
