@@ -469,7 +469,7 @@ void NodeGraphEditor::render()
     if (!inited) inited=true;
     static const ImVec4 transparent = ImVec4(1,1,1,0);
 
-    const ImGuiIO io = ImGui::GetIO();
+    const ImGuiIO & io = ImGui::GetIO();
 
     // Draw a list of nodes on the left side
     bool open_context_menu = false,open_delete_only_context_menu = false;
@@ -1525,7 +1525,7 @@ void NodeGraphEditor::render()
             /*if (ImGui::MenuItem("Add ExampleNode")) {
                 addNode(ExampleNode::Create(scene_pos,0.5f, ImColor(100,100,200)));
             }*/
-            ImGui::Text("%s","Add Node Menu");
+            ImGui::Text("%s","Create Node");
             ImGui::Separator();
             if (nodeFactoryFunctionPtr) {
                 if (sourceCopyNode && sourceCopyNode->canBeCopied()) {

@@ -18,34 +18,7 @@ namespace lab
 
         Detail(std::shared_ptr<GraphNodeFactory> gnf)
         : node_factory(gnf) {}
-
-        void render()
-        {
-            if (nge.isInited())
-            {
-                // This adds entries to the "add node" context menu
-                // last 2 args can be used to add only a subset of nodes (or to sort their order inside the context menu)
-                nge.registerNodeTypes(node_factory->node_type_names(), (int) node_factory->node_type_name_count(),
-                                      node_factory->node_factory(), nullptr, -1);
-
-                // restrict the count of output nodes to one
-				auto limits = node_factory->node_limits();
-				for (auto i : limits)
-	                nge.registerNodeTypeMaxAllowedInstances(i.first, i.second);
-
-                nge.show_style_editor = false;
-                nge.show_load_save_buttons = false;
-                //--------------------------------------------------------------------------------
-            }
-            nge.render();
-        }
     };
-
-	GraphMode::GraphMode()
-	{
-		auto gnf = std::make_shared<Sample_GraphNodeFactory>();
-		_detail = new Detail(gnf);
-	}
 
 	GraphMode::GraphMode(const std::string & name, std::shared_ptr<GraphNodeFactory> gnf)
     : _detail(new Detail(gnf))
@@ -63,7 +36,49 @@ namespace lab
         lab::FontManager& fontManager,
         float width, float height)
     {
-		_detail->render();
+		if (_detail->nge.isInited())
+		{
+			auto nf = _detail->node_factory;
+			auto & nge = _detail->nge;
+
+			// This adds entries to the "add node" context menu
+			// last 2 args can be used to add only a subset of nodes (or to sort their order inside the context menu)
+			nge.registerNodeTypes(nf->node_type_names(), (int)nf->node_type_name_count(),
+			                      nf->node_factory(), nullptr, -1);
+
+			// restrict the count of output nodes to one
+			auto limits = nf->node_limits();
+			for (auto i : limits)
+				nge.registerNodeTypeMaxAllowedInstances(i.first, i.second);
+
+			nge.show_style_editor = false;
+			nge.show_load_save_buttons = false;
+		}
+
+		auto size = ImGui::GetContentRegionAvail();
+		auto pos = ImGui::GetCursorScreenPos();
+		ImGui::SetNextWindowPos(pos);
+		ImGui::SetNextWindowSize(size);
+
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings |
+			ImGuiWindowFlags_MenuBar;
+
+		if (ImGui::Begin("graph editor", nullptr, size, -1, flags))
+		{
+			if (ImGui::BeginMenuBar())
+			{
+				if (ImGui::BeginMenu(name()))
+				{
+					if (ImGui::MenuItem("Close")) {}
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+
+			_detail->nge.render();
+			ImGui::End();
+		}
 	}
 
 } // lab

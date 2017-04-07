@@ -1,6 +1,7 @@
 
 #include "interface/graph/graphNode.h"
 #include "labrender_graphNodeFactory.h"
+#include <string>
 
 constexpr int PassNodeId = 1;
 
@@ -20,7 +21,7 @@ constexpr int PassNodeId = 1;
 
 namespace lab
 {
-
+	using namespace std;
 
 	class PassNode : public GraphNode
 	{
@@ -49,17 +50,49 @@ namespace lab
 
 	public:
 
+		enum class PassType { Generic, Geometry, PostProcess };
+		PassType passType = PassType::Generic;
+		string passTypeName;
+
 		// create:
 		static ThisClass* Create(const ImVec2& pos)
 		{
 			ThisClass * node = new_node<ThisClass>();
 			node->init("Render Pass", pos, "in1;in2;in3", "out1;out2", TYPE);
+			node->set_passType(PassType::Generic);
 			return node;
+		}
+
+		void set_passType(PassType pt)
+		{
+			passType = pt;
+			switch (pt)
+			{
+			case PassType::Generic: passTypeName = "Generic Pass"; break;
+			case PassType::Geometry: passTypeName = "Geometry Pass"; break;
+			case PassType::PostProcess: passTypeName = "Post Processing Pass"; break;
+			}
 		}
 
 		virtual bool render(float /*nodeWidth*/) override
 		{
-			ImGui::Text("There can be a single\ninstance of this class.\nTry and see if it's true!");
+			if (ImGui::BeginMenu(passTypeName.c_str()))
+			{
+				if (ImGui::MenuItem("Generic Pass"))
+				{
+					set_passType(PassType::Generic);
+				}
+				if (ImGui::MenuItem("Geometry Pass"))
+				{
+					set_passType(PassType::Geometry);
+				}
+				if (ImGui::MenuItem("Post Processing Pass"))
+				{
+					set_passType(PassType::PostProcess);
+				}
+				ImGui::EndMenu();
+			}
+
 			return false;
 		}
 	};
@@ -102,7 +135,7 @@ namespace lab
 	std::vector<std::pair<int, int>> LabRender_GraphNodeFactory::node_limits()
 	{
 		std::vector<std::pair<int, int>> ret;
-		ret.push_back({ (int) RenderNodeTypes::Pass, 1 });
+		//ret.push_back({ (int) RenderNodeTypes::Pass, 1 });
 		return ret;
 	}
 

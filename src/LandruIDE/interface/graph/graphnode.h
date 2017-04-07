@@ -21,7 +21,8 @@ namespace lab
 			return node;
 		}
 
-
+		ImVec2 GetRenderedPos();
+		ImVec2 GetRenderedSize();
     };
 
 } // lab

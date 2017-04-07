@@ -7,6 +7,7 @@
 #include "mainToolbar.h"
 #include "modes.h"
 #include "graphMode.h"
+#include "labRender_graphNodeFactory.h"
 #include "outliner.h"
 #include "propertyPanel.h"
 #include "renderingView.h"
@@ -156,7 +157,7 @@ namespace lab
             outliner = new Outliner();
 			console = new LandruConsole(fm);
 			timeline = new Timeline();
-			graph = new GraphMode();
+			graph = new GraphMode("LabRender", make_shared<LabRender_GraphNodeFactory>());
 
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());
             docks.emplace_back(std::make_unique<ImGuiDock::Dock>());

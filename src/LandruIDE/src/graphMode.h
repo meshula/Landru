@@ -28,7 +28,6 @@ namespace lab {
 		std::string _name;
 
 	public:
-		GraphMode(); // make a sample graph editor
 		GraphMode(const std::string & name, std::shared_ptr<GraphNodeFactory> gnf);
 		virtual ~GraphMode();
 
