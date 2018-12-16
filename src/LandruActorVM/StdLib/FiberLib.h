@@ -19,17 +19,17 @@ namespace Landru {
         public:
             static void registerLib(Library& l);
             
-            static void eval(FnContext& run);
-            static void add(FnContext& run);
-            static void sub(FnContext& run);
-            static void mul(FnContext& run);
-            static void div(FnContext& run);
-            static void min(FnContext& run);
-            static void max(FnContext& run);
-            static void toInt(FnContext& run);
-            static void sqrt(FnContext& run);
-            static void toggle(FnContext& run);
-            static void newFn(FnContext& run);
+            static RunState eval(FnContext& run);
+            static RunState add(FnContext& run);
+            static RunState sub(FnContext& run);
+            static RunState mul(FnContext& run);
+            static RunState div(FnContext& run);
+            static RunState min(FnContext& run);
+            static RunState max(FnContext& run);
+            static RunState toInt(FnContext& run);
+            static RunState sqrt(FnContext& run);
+            static RunState toggle(FnContext& run);
+            static RunState newFn(FnContext& run);
         };
         
     } // Std

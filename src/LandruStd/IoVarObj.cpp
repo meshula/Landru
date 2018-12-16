@@ -131,10 +131,10 @@ namespace Landru {
                 Landru::VarObjArray locals("locals");
                 
                 RealVarObj* vo = new RealVarObj("real");
-                vo->set(xy.first);
+                vo->set((float) xy.first);
                 locals.add(std::shared_ptr<VarObj>(vo));
                 vo = new RealVarObj("real");
-                vo->set(xy.second);
+                vo->set((float) xy.second);
                 locals.add(std::shared_ptr<VarObj>(vo));
 
                 Landru::RunContext rc;

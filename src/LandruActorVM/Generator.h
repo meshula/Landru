@@ -11,7 +11,7 @@
 namespace Landru {
     
     class Fiber;
-    class FnContext;
+    struct FnContext;
     class VMContext;
     
     class Generator {

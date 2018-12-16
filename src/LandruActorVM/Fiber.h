@@ -21,12 +21,14 @@
 
 namespace Landru {
 
-    struct InvalidId {
+    struct InvalidId
+    {
         constexpr InvalidId() {}
     };
 
     // Id class inspired by libcaf's node_id
-    class Id : caf::detail::comparable<Id>, caf::detail::comparable<Id, InvalidId> {
+    class Id : caf::detail::comparable<Id>, caf::detail::comparable<Id, InvalidId>
+    {
         uint32_t _pid;
         unsigned char _uuid[16];
 
@@ -49,27 +51,49 @@ namespace Landru {
         int compare(const InvalidId&) const;
     };
 
-    class Fiber {
-        Id _id;
+    class Fiber
+    {
+		Id _id;
+		int scopeLevel = 1;	// In the future, 0 will mean continuations at machine scope, specified outside of a state
+							// higher levels will indicate within hierarchies of states
+
+        const char * _currentState = nullptr; // this will always point to a string in the machine definition
 
     public:
-        Fiber(std::shared_ptr<MachineDefinition> m, VMContext& vm);
+        Fiber(std::shared_ptr<MachineDefinition> m, VMContext *);
         ~Fiber();
 
         const Id& id() const { return _id; }
 
-        void gotoState(FnContext& run, const char* name) {
-            auto mainState = machineDefinition->states.find(name);
-            if (mainState == machineDefinition->states.end())
-                VM_RAISE("main not found on machine");
+		const char * id_str() const { return "@TODO"; }
 
-            run.run(mainState->second->instructions);
+        void gotoState(FnContext& run, const char* name, bool raiseIfStateNotFound)
+		{
+            auto state = machineDefinition->states.find(name);
+			if (state == machineDefinition->states.end()) {
+				if (raiseIfStateNotFound) {
+					VM_RAISE("main not found on machine");
+                }
+				return;
+			}
+
+            _currentState = state->first.c_str();
+
+			run.clearContinuations(this, scopeLevel);
+            run.run(state->second->instructions);
+        }
+
+        const char * currentState() const
+        {
+            return _currentState;
         }
 
         template <typename T>
-        T top() {
-            if (stack.empty() || stack.back().empty())
+        T top()
+		{
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back().back();
             if (data->type() != typeid(T))
                 return 0;
@@ -77,19 +101,24 @@ namespace Landru {
             return val->value();
         }
 
-        std::shared_ptr<Wires::TypedData> topVar() const {
-            if (stack.empty() || stack.back().empty())
+        std::shared_ptr<Wires::TypedData> topVar() const
+		{
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             return stack.back().back();
         }
 
         template <typename T>
-        T pop() {
-            if (stack.empty() || stack.back().empty())
+        T pop()
+		{
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back().back();
-            if (!data)
+            if (!data) {
                 VM_RAISE("nullptr on stack (variable not found?)");
+            }
             if (data->type() == typeid(T)) {
                 Wires::Data<T>* val = reinterpret_cast<Wires::Data<T>*>(data.get());
                 T result = val->value();
@@ -97,16 +126,18 @@ namespace Landru {
                 return result;
             }
             Wires::Data<T>* val = dynamic_cast<Wires::Data<T>*>(data.get());
-            if (!val)
+            if (!val) {
                 VM_RAISE("Wrong type on stack to pop");
+            }
             T result= val->value();
             stack.back().pop_back();
             return result;
         }
 
         std::shared_ptr<Wires::TypedData> popVar() {
-            if (stack.empty() || stack.back().empty())
+            if (stack.empty() || stack.back().empty()) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData> result = stack.back().back();
             stack.back().pop_back();
             return result;
@@ -114,11 +145,13 @@ namespace Landru {
 
         template <typename T>
         T back(int i) {
-            if (stack.empty())
+            if (stack.empty()) {
                 VM_RAISE("stack underflow");
+            }
             int sz = (int) stack.back().size();
-            if (sz + i < 0)
+            if (sz + i < 0) {
                 VM_RAISE("stack underflow");
+            }
             std::shared_ptr<Wires::TypedData>& data = stack.back()[sz + i];
             if (data->type() != typeid(T))
                 return T(0);
@@ -135,9 +168,23 @@ namespace Landru {
             stack.back().push_back(v);
         }
 
+		std::shared_ptr<Wires::TypedData> push_local(const std::string & name, const std::string & type,
+												     std::shared_ptr<Wires::TypedData> v)
+		{
+			locals.push_back(std::move(std::make_shared<Property>(name, type, v)));
+			return (*locals.rbegin())->data;
+		}
+
+		void pop_local() {
+			locals.pop_back();
+		}
+
         std::shared_ptr<MachineDefinition> machineDefinition;
-        std::map<std::string, Property*> properties;
-        std::vector<std::shared_ptr<Wires::TypedData>> locals;
+
+        //std::map<std::string, std::shared_ptr<Property>> properties;
+
+		// vector, because local scopes push back their local variables, and pop them on exit
+		std::vector<std::shared_ptr<Property>> locals;
 
         typedef std::vector<std::shared_ptr<Wires::TypedData>> Stack;
         std::vector<Stack> stack;

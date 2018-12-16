@@ -35,7 +35,7 @@ const bool verboseTrace = true;
 # define STACKMON printf("%d [%d]\n", rc->pc, LStackDepth(rc->stack));
 #else
 const bool verboseTrace = false;
-# define VERBOSE(fmt, args...)
+# define VERBOSE(fmt, ...)
 # define TRACE(f, pc, op)
 # define STACKMON
 #endif
@@ -684,7 +684,7 @@ namespace Landru {
         p->stack->pop();
 
 		float val1 = voa->getReal(-1);
-        pushInt(p, val1);
+        pushInt(p, (int) val1);
     }
 
 	LANDRU_DECL_FN(Fiber, sqrt)

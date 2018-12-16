@@ -71,7 +71,7 @@ namespace Landru {
     {
 		FileVarObj* o = (FileVarObj*) p->vo.get();
         p->stack->pop();
-        pushInt(p, o->detail->bufferSize);
+        pushInt(p, (int) o->detail->bufferSize);
     }
 
     LANDRU_DECL_TABLE_BEGIN(FileVarObj)

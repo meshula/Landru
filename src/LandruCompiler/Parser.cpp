@@ -10,6 +10,7 @@
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruCompiler/Parser.h"
 #include "LandruCompiler/ParseExpression.h"
+#include "LandruCompiler/Tokens.h"
 #include "LabJson/LabJson.h"
 
 #include <iostream>
@@ -20,54 +21,54 @@ using namespace Landru;
 
 void parseAssignment(CurrPtr& curr, EndPtr end);
 void parseLandruBlock(CurrPtr&, EndPtr);
-void parseLandruVar(CurrPtr&, EndPtr);
+void parseLandruVarDeclaration(CurrPtr&, EndPtr, ASTNode *& currNode);
 void parseElse(CurrPtr& curr, EndPtr end);
 void parseFor(CurrPtr& curr, EndPtr end);
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end);
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseGoto(CurrPtr& curr, EndPtr end);
 void parseStatement(CurrPtr& curr, EndPtr end);
 void parseParamList(CurrPtr& curr, EndPtr end);
 void parseParam(CurrPtr& curr, EndPtr end);
-void parseStatements(CurrPtr&, EndPtr);
+void parseStatements(CurrPtr&, EndPtr, ASTNode *& currNode);
 void parseConditional(CurrPtr& curr, EndPtr end);
-void parseState(CurrPtr& curr, EndPtr end);
-void parseDeclare(CurrPtr& curr, EndPtr end);
-void parseLocals(CurrPtr& curr, EndPtr end);
-void parseMachine(CurrPtr& curr, EndPtr end);
+void parseState(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
+void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
+void parseLocals(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
+void parseMachine(CurrPtr& curr, EndPtr end, ASTNode *& currNode);
 void parseOn(CurrPtr& curr, EndPtr end);
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId);
 bool peekIsLiteral(CurrPtr& curr, EndPtr end);
-void parseLiteral(CurrPtr& curr, EndPtr end);
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode *& currNode, TokenId conversionType);
 
 
 namespace Landru {
 
     static const char kTerminalChar = ';';
     TokenId tokenize(const char* str, size_t length);
-		
+
 	struct Token
 	{
 		TokenId token;
 		const char* name;
 	};
-	
+
 #ifdef TOKEN_DECL
 #undef TOKEN_DECL
 #endif
 #define TOKEN_DECL(a, b) kToken##a, b,
-	
+
 	Token tokens[] =
 	{
 		#include "LandruCompiler/TokenDefs.h"
 	};
-	
+
 #undef TOKEN_DECL
-	
+
 	TokenId tokenize(const char* str, size_t length)
 	{
 		for (int i = 0; i < sizeof(tokens)/sizeof(Token); ++i)
 		{
-            int l = strlen(tokens[i].name);
+            size_t l = strlen(tokens[i].name);
             if (l != length)
                 continue;
 			if (!strncmp(str, tokens[i].name, length))
@@ -80,23 +81,23 @@ namespace Landru {
     {
         if (curr >= end)
             return false;
-        
+
         curr = tsSkipCommentsAndWhitespace(curr, end);
         return (curr != end) && !lcCurrentError();
     }
-        
+
     char peekChar(CurrPtr& curr, EndPtr end)
     {
         more(curr, end);
         return *curr;
     }
-    
+
     bool peekChar(char c, CurrPtr& curr, EndPtr end)
     {
         more(curr, end);
         return c == *curr;
     }
-    
+
     char getChar(CurrPtr& curr, EndPtr end)
     {
         more(curr, end);
@@ -104,12 +105,12 @@ namespace Landru {
         ++curr;
         return ret;
     }
-    
+
     TokenId getToken(CurrPtr& curr, EndPtr end)
     {
         more(curr, end);
         TokenId tokenId = kTokenUnknown;
-        
+
         char const* tokenStr = curr;
         uint32_t length = 0;
         if (!strncmp(tokenStr, "<=0", 3)) {
@@ -148,24 +149,24 @@ namespace Landru {
             tokenId = kTokenOpenBracket;
             length = 1;
         }
-        
+
         if (tokenId != kTokenUnknown)
         {
             curr += length;
             return tokenId;
         }
-        
+
         const char* next = tsGetTokenAlphaNumeric(curr, end, &tokenStr, &length);
-        
-        if (next == end)
-            return kTokenUnknown;
-        
+
+//&&& why was this check here?        if (next == end)
+//            return kTokenUnknown;
+
         curr = next;
-        
+
         tokenId = tokenize(tokenStr, length);
         return tokenId;
     }
-        
+
     TokenId peekToken(CurrPtr curr_, EndPtr end)
     {
         char const* curr = curr_;
@@ -176,42 +177,42 @@ namespace Landru {
     {
         if (peekToken(curr, end) != token)
             return false;
-        
+
         getToken(curr, end);
         return true;
     }
-    
+
     bool getChar(char c, CurrPtr& curr, EndPtr end)
     {
         if (!more(curr, end))
             return false;
-        
+
         if (peekChar(curr, end) != c)
             return false;
-        
+
         getChar(curr, end);
         return true;
     }
-    
-    
+
+
     TokenId getNameSpacedToken(CurrPtr& curr, EndPtr end)
     {
         more(curr, end);
-        
+
         char const* tokenStr;
         uint32_t length;
         const char* next = tsGetNameSpacedTokenAlphaNumeric(curr, end, '.', &tokenStr, &length);
-        
+
         if (next == end)
             return kTokenUnknown;
-        
+
         if (next == curr)
         {
             lcRaiseError("Syntax Error", curr, 32);
             return kTokenUnknown;
         }
         curr = next;
-        
+
         TokenId token = tokenize(tokenStr, length);
         return token;
     }
@@ -324,8 +325,8 @@ bool getSemiColon(CurrPtr& curr, EndPtr end)
  ;
  */
 
-void parseLocals(CurrPtr& curr, EndPtr end) {
-	if (getToken(curr, end) != kTokenLocal) {
+void parseLocals(CurrPtr& curr, EndPtr end, ASTNode *& currNode) {
+	if (getToken(curr, end) != kTokenDeclare) {
 		lcRaiseError("Expected 'local'", curr, 32);
 		return;
 	}
@@ -333,7 +334,7 @@ void parseLocals(CurrPtr& curr, EndPtr end) {
 	if (!getColon(curr, end))
 		return;
 
-	ASTNode* ast = new ASTNode(kTokenLocal, "");
+	ASTNode* ast = new ASTNode(kTokenLocalVariable, "");
 	currNode->addChild(ast);
 	ASTNode* pop = currNode;
 	currNode = ast;
@@ -343,30 +344,30 @@ void parseLocals(CurrPtr& curr, EndPtr end) {
 			++curr;
 			break;
 		}
-		parseLandruVar(curr, end);
+		parseLandruVarDeclaration(curr, end, currNode);
 	}
 
 	currNode = pop;
 }
 
 /*
- lDeclareBlock 
-	 :	
-	 DECLARE COLON 
+ lDeclareBlock
+	 :
+	 DECLARE COLON
 	 landruVar+
 	 SEMICOLON
 	 -> ^(DECLARE landruVar+)
 	 ;
  */
 
-void parseDeclare(CurrPtr& curr, EndPtr end)
+void parseDeclare(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	if (getToken(curr, end) != kTokenDeclare)
 	{
 		lcRaiseError("Expected 'declare'", curr, 32);
 		return;
 	}
-	
+
 	if (!getColon(curr, end))
 		return;
 
@@ -382,48 +383,70 @@ void parseDeclare(CurrPtr& curr, EndPtr end)
 			++curr;
 			break;
 		}
-		
-		parseLandruVar(curr, end);
+
+		parseLandruVarDeclaration(curr, end, currNode);
 	}
-	
+
 	currNode = pop;
 }
 
-/* 
+/*
  landruVar
-	 :   
-	 landruType declarator 	
+	 :
+	 landruType declarator
 	 -> ^(TokenVariable landruType declarator) |
      SHARED LandruType declarator
 	 -> ^(TokenSharedVariable landruType declarator) |
 	 ;
  landruType
-	 :  
+	 :
 	 ID (DOT landruType)*
 	 -> ^(TokenType ID+)
 	 ;
  */
 
-void parseLandruVar(CurrPtr& curr, EndPtr end)
+void parseLandruVarDeclaration(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	bool sharedToken = peekToken(curr, end) == kTokenShared;
-	if (sharedToken)
+	bool paramToken = !sharedToken && peekToken(curr, end) == kTokenParam;
+	if (sharedToken || paramToken)
 		getToken(curr, end);
-	
+
 	char varType[256];
 	getType(curr, end, varType);
 
     if (!strlen(varType))
-        lcRaiseError("Expected variable type", curr, 32);
-    
+        lcRaiseError("Expected variable type, found:", curr, 32);
+
+	TokenId declaredType = peekToken(varType, varType+sizeof(varType));
+
 	char name[256];
 	getDeclarator(curr, end, name);
-    
+
     if (!strlen(name))
-        lcRaiseError("Expected variable name", curr, 32);
-    
-	currNode->addChild(new ASTNode(sharedToken ? kTokenSharedVariable : kTokenLocalVariable,
-						           varType, name));
+        lcRaiseError("Expected variable name, found:", curr, 32);
+
+	auto token = kTokenLocalVariable;
+	if (sharedToken)
+		token = kTokenSharedVariable;
+	else if (paramToken)
+		token = kTokenParam;
+
+	ASTNode * variableNode = new ASTNode(token, varType, name);
+	currNode->addChild(variableNode);
+
+	token = peekToken(curr, end);
+	if (token == kTokenEq) {
+		getToken(curr, end); // consume assignment operator
+		ASTNode * pop = currNode;
+		if (sharedToken)
+			currNode = new ASTNode(kTokenInitialAssignment, name);
+		else
+			currNode = new ASTNode(kTokenAssignment, name);
+		variableNode->addChild(currNode);
+		parseLiteral(curr, end, currNode, declaredType); // and put the assigned value in the tree
+		currNode = pop;
+	}
 }
 
 
@@ -434,16 +457,16 @@ void parseLandruVar(CurrPtr& curr, EndPtr end)
 //-----------------------------------------------------------------------
 
 /*
-	lStateBlock 
+	lStateBlock
 	:
-	STATE declarator COLON 
+	STATE declarator COLON
 	landruStatements*
 	SEMICOLON
 	-> ^(STATE ^(declarator) landruStatements*)
 	;
  */
 
-void parseState(CurrPtr& curr, EndPtr end)
+void parseState(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	if (getToken(curr, end) != kTokenState)
 	{
@@ -452,7 +475,7 @@ void parseState(CurrPtr& curr, EndPtr end)
 
 	char name[256];
 	getDeclarator(curr, end, name);
-	
+
 	if (!getColon(curr, end))
 		return;
 
@@ -462,9 +485,9 @@ void parseState(CurrPtr& curr, EndPtr end)
 	currNode = ast;
 
 	// landruStatements*
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
-	
+
 	currNode = pop;
 }
 
@@ -472,20 +495,20 @@ void parseState(CurrPtr& curr, EndPtr end)
  landruStatements* ;
  */
 
-void parseStatements(CurrPtr& curr, EndPtr end)
+void parseStatements(CurrPtr& curr, EndPtr end, ASTNode *& currNode)
 {
 	ASTNode* pop = currNode;
 	ASTNode* ast = new ASTNode(kTokenStatements);
 	pop->addChild(ast);
 	currNode = ast;
-	
+
 	while (more(curr, end))
 	{
 		if (*curr == kTerminalChar) // ; at the end of the block of statements
 		{
 			break;
 		}
-		
+
 		parseStatement(curr, end);
 	}
 	currNode = pop;
@@ -493,21 +516,21 @@ void parseStatements(CurrPtr& curr, EndPtr end)
 
 /*
  landruStatements
-	 : (lVariable EQ) => lAssignment 
+	 : (lVariable EQ) => lAssignment
 	 | lConditional
 	 | lOn
 	 | lProcedural
 	 | lGoto
 	 | lFunction
-	 ; 
+	 ;
  */
 
 void parseStatement(CurrPtr& curr, EndPtr end)
 {
 	TokenId token = peekToken(curr, end);
 	switch (token) {
-        case kTokenLocal:
-            parseLocals(curr, end);
+        case kTokenDeclare:
+            parseLocals(curr, end, currNode);
             break;
 
 		case kTokenUnknown: {
@@ -542,19 +565,19 @@ void parseStatement(CurrPtr& curr, EndPtr end)
 		case kTokenOn:
 			parseOn(curr, end);
 			break;
-			
+
         case kTokenFor:
             parseFor(curr, end);
             break;
-						
+
 		case kTokenIf:
 			parseConditional(curr, end);
 			break;
-									
+
 		case kTokenLaunch:
             parseFunction(curr, end, kTokenLaunch);
 			break;
-            
+
         default:
             lcRaiseError("Expected token", curr, 32);
             break;
@@ -562,9 +585,9 @@ void parseStatement(CurrPtr& curr, EndPtr end)
 }
 
 /*
-lGoto	:	
-	GOTO ID 
-	-> ^(GOTO ID) 
+lGoto	:
+	GOTO ID
+	-> ^(GOTO ID)
 	;
 */
 
@@ -580,13 +603,13 @@ void parseGoto(CurrPtr& curr, EndPtr end) {
  lAssignment
 	:   lVariable EQ NEW LPAREN STRING_LITERAL RPAREN
 	-> ^(TokenAssign lVariable ^(NEW STRING_LITERAL))
-	;	
+	;
  */
 
 void parseAssignment(CurrPtr& curr, EndPtr end) {
 	char buff[256];
 	getNameSpacedDeclarator(curr, end, buff);
-	
+
 	ASTNode* ast = new ASTNode(kTokenAssignment, buff);
 	currNode->addChild(ast);
 	ASTNode* pop = currNode;
@@ -597,16 +620,16 @@ void parseAssignment(CurrPtr& curr, EndPtr end) {
 		lcRaiseError("Expected '='", curr, 32);
 		return;
 	}
-	
+
 	// fetch right hand side
 	parseParam(curr, end);
-	
+
 	currNode = pop;
 }
 
 /*
 lConditional
-	:	
+	:
 	IF lCondition lParamList? COLON
 	landruStatements*
 	SEMICOLON
@@ -627,7 +650,7 @@ void parseConditional(CurrPtr& curr, EndPtr end) {
         tokenId = kTokenNotEq0;
     else
         tokenId = getToken(curr, end);
-	
+
 	ASTNode* pop = currNode;
 	ASTNode* astIf = new ASTNode(kTokenIf);
 	currNode->addChild(astIf);
@@ -639,19 +662,19 @@ void parseConditional(CurrPtr& curr, EndPtr end) {
 
 	if (peekChar(curr, end) == '(')
 		parseParamList(curr, end);
-	
+
 	currNode = astIf;
-	
+
 	if (!getColon(curr, end))
 		return;
-	
-	parseStatements(curr, end);
+
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	tokenId = peekToken(curr, end);
 	if (tokenId == kTokenElse)
 		parseElse(curr, end);
-	
+
 	currNode = pop;
 }
 
@@ -668,12 +691,12 @@ void parseElse(CurrPtr& curr, EndPtr end) {
 
 	if (!getColon(curr, end))
 		return;
-		
+
 	ASTNode* pop = currNode;
 	currNode = new ASTNode(kTokenElse);
 	pop->addChild(currNode);
 
-	parseStatements(curr, end);
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
@@ -694,7 +717,7 @@ void parseFor(CurrPtr& curr, EndPtr end) {
     if (tokenId != kTokenFor) {
         lcRaiseError("Expected 'for'", "parseFor", 0);
     }
-	
+
 	char name[256];
 	name[0] = '\0';
 	TokenId what = peekToken(curr, end);
@@ -708,39 +731,39 @@ void parseFor(CurrPtr& curr, EndPtr end) {
 	else {
         lcRaiseError("Expected a placeholder variable name", "parseFor", 0);
 	}
-    
+
     ASTNode* pop = currNode;
 	ASTNode* forNode = new ASTNode(kTokenFor, name);
 	currNode->addChild(forNode);
 	currNode = forNode;
-    
+
     tokenId = getToken(curr, end);
     if (tokenId != kTokenIn) {
         lcRaiseError("Expected 'in'", "parseFor", 0);
     }
-    
+
     parseFunction(curr, end, kTokenFunction);
-    
+
 	if (!getColon(curr, end)) {
         lcRaiseError("Expected ':'", "parseFor", 0);
 		return;
     }
-	
-	parseStatements(curr, end);
+
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
-    
+
 	currNode = pop;
 }
 
 /*
  lOn
-	 : 
+	 :
 	 ON lOnType lParamList? COLON
 	 landruStatements*
-	 SEMICOLON 
+	 SEMICOLON
 	 -> ^(ON ^(lOnType lParamList?) landruStatements*)
 	 ;
- fragment lOnType	
+ fragment lOnType
 	: COLLISION
 	| MESSAGE
 	| TICK
@@ -749,7 +772,7 @@ void parseFor(CurrPtr& curr, EndPtr end) {
 
 void parseOn(CurrPtr& curr, EndPtr end) {
 	getToken(curr, end); // consume on
-	
+
 	char name[256];
 	name[0] = '\0';
 	TokenId what = peekToken(curr, end);
@@ -764,7 +787,7 @@ void parseOn(CurrPtr& curr, EndPtr end) {
 	else {
 		getToken(curr, end);
 	}
-    
+
     ASTNode* pop = currNode;
 	ASTNode* onNode = new ASTNode(kTokenOn);
 	currNode->addChild(onNode);
@@ -778,35 +801,35 @@ void parseOn(CurrPtr& curr, EndPtr end) {
         parseParamList(curr, end);
 
 	currNode = onNode;
-		
+
 	if (!getColon(curr, end))
 		return;
-	
-	parseStatements(curr, end);
+
+	parseStatements(curr, end, currNode);
 	getSemiColon(curr, end);
 
 	currNode = pop;
 }
 
 /*
- lFunction 
+ lFunction
 	: declarator lParamList
 	-> ^(TokenFunction declarator lParamList) ;
- 
+
  functions can be chained with '.' ie foo().bar().baz()
  */
 
 void parseFunction(CurrPtr& curr, EndPtr end, TokenId token) {
 	char buff[256];
 	getNameSpacedDeclarator(curr, end, buff);   // get function name
-	
+
 	ASTNode* pop = currNode;
 	currNode = new ASTNode(token, buff);
 	pop->addChild(currNode);
 
     parseParamList(curr, end);
     currNode = pop;
-    
+
     more(curr, end);
     if (peekChar(curr, end) == '.') {
         // chained functions assume that the previous function left something on the stack
@@ -814,14 +837,14 @@ void parseFunction(CurrPtr& curr, EndPtr end, TokenId token) {
         ++curr;
         currNode->addChild(new ASTNode(kTokenDotChain, buff));
         parseFunction(curr, end, kTokenFunction);
-    }    
+    }
 }
 
 
 /*
  lParamList
- :  	
- LPAREN (lParam (COMMA? lParam)*)? RPAREN 
+ :
+ LPAREN (lParam (COMMA? lParam)*)? RPAREN
  -> ^(TokenParams lParam*) ;
  */
 
@@ -831,20 +854,20 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
 		lcRaiseError("Expecting a parameter list, no opening parenthesis found", curr, 32);
 		return;
 	}
-	
+
     std::vector<std::string> paramList;
     parseExpression(curr, end, paramList);
-    
+
     // closing paren
     if (peekChar(curr, end) == ')')
         getChar(curr, end);  // consume ')'
 	else
 		lcRaiseError("Expected closing parenthesis, found", curr, 32);
-    
+
     ASTNode* popNode = currNode;
-    
+
     std::vector<ASTNode*> nodeStack; // this is where the things that get parameters go
-    
+
     ASTNode* paramNode = 0;
     for (auto i = paramList.begin(); i != paramList.end(); ++i) {
         const std::string& s = *i;
@@ -863,7 +886,7 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
         else if (*(strend - 1) == '#') {
             if (!paramNode)
                 lcRaiseError("Missing parameters for function", curr, 32);
-            
+
             std::string funcName;
             funcName = s.substr(0, s.size() - 1);
             ASTNode* functionNode = new ASTNode(kTokenFunction, funcName.c_str());
@@ -872,7 +895,7 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
             currNode->addChild(functionNode);
         }
         else if (peekIsLiteral(strstart, strend))
-            parseLiteral(strstart, strend);
+            parseLiteral(strstart, strend, currNode, kTokenNullLiteral);
         else if (s == "*")
             currNode->addChild(new ASTNode(kTokenOpMultiply));
         else if (s == "+")
@@ -891,7 +914,9 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
             currNode->addChild(new ASTNode(kTokenOpLessThan));
         //else if (s == "=")
         //    pushAssign();
-        else
+        else if (s[0] == '@')
+			currNode->addChild(new ASTNode(kTokenGetVariableReference, strstart+1));
+		else
             currNode->addChild(new ASTNode(kTokenGetVariable, strstart));
     }
     if (!nodeStack.empty() || !paramNode)
@@ -908,7 +933,7 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
 	|   lLiteral
 	|   lVariable
 	;
- 
+
  lVariable
 	:   ID (DOT lVariable)*
 	-> ^(TokenName ID+)
@@ -918,12 +943,12 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
 void parseParam(CurrPtr& curr, EndPtr end) {
 	if (peekChar(curr, end) == ')')
 		return;
-	
+
 	if (peekIsLiteral(curr, end)) {
-		parseLiteral(curr, end);
+		parseLiteral(curr, end, currNode, kTokenNullLiteral);
 		return;
 	}
-	
+
 	char buff[256];
 	char const* tokenStr;
 	uint32_t length;
@@ -938,9 +963,11 @@ void parseParam(CurrPtr& curr, EndPtr end) {
 		parseParamList(curr, end);
 		currNode = pop;
 	}
+	else if (peekChar(curr, end) == '@')
+		currNode->addChild(new ASTNode(kTokenGetVariableReference, buff+1));
 	else
 		currNode->addChild(new ASTNode(kTokenGetVariable, buff));
-    
+
 	more(curr, end);
 }
 
@@ -964,11 +991,11 @@ bool peekIsLiteral(CurrPtr& curr, EndPtr end) {
 	char c = peekChar(curr, end);
 	if (c == '"' || tsIsNumeric(c) || c == '#' || c == '<')
 		return true;
-    
+
     CurrPtr c2 = curr + 1;
     if (c == '-' && tsIsNumeric(peekChar(c2, end)))
         return true;
-	
+
 	TokenId token = peekToken(curr, end);
 	return token == kTokenFalse || token == kTokenTrue;
 }
@@ -981,9 +1008,9 @@ int literalLength(CurrPtr& curr, EndPtr end) {
 	bool numeric = tsIsNumeric(c) || c == '-';
 	bool rangedRandom = c == '<';
 	bool hex = c == '#';
-    
+
     const char* start = curr;
-	
+
 	if (gotString) {
 		// parsing a string
 		curr = tsGetString(curr, end, true, &tokenStr, &length);
@@ -1016,12 +1043,14 @@ int literalLength(CurrPtr& curr, EndPtr end) {
 	else
 		getToken(curr, end);
 
-    int len = curr - start;
+    ptrdiff_t len = curr - start;
 	more(curr, end);
-    return len;
+    return (int) len;
 }
 
-void parseLiteral(CurrPtr& curr, EndPtr end) {
+// parse a literal and add it to the current node
+void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode*& currNode, TokenId conversionType)
+{
 	char buff[256];
 	char const* tokenStr;
 	uint32_t length;
@@ -1030,7 +1059,7 @@ void parseLiteral(CurrPtr& curr, EndPtr end) {
 	bool numeric = tsIsNumeric(c) || c == '-';
 	bool rangedRandom = c == '<';
 	bool hex = c == '#';
-	
+
 	if (gotString) {
 		// parsing a string
 		curr = tsGetString(curr, end, true, &tokenStr, &length);
@@ -1041,7 +1070,10 @@ void parseLiteral(CurrPtr& curr, EndPtr end) {
 	else if (numeric) {
 		float floatVal;
 		curr = tsGetFloat(curr, end, &floatVal);
-		currNode->addChild(new ASTNode(kTokenFloatLiteral, floatVal));
+		if (conversionType == kTokenIntLiteral)
+			currNode->addChild(new ASTNode(kTokenIntLiteral, (int)floatVal));
+		else
+			currNode->addChild(new ASTNode(kTokenFloatLiteral, floatVal));
 	}
 	else if (rangedRandom) {
 		float floatVal;
@@ -1058,7 +1090,7 @@ void parseLiteral(CurrPtr& curr, EndPtr end) {
 		if (peekChar(curr, end) != '>')
 			lcRaiseError("Syntax Error", curr, 32);
 		getChar(curr, end); // consume '>'
-		
+
 		currNode->addChild(new ASTNode(kTokenRangedLiteral, floatVal, maxFloatVal));
 	}
 	else if (hex) {
@@ -1087,13 +1119,13 @@ public:
         currNode->addChild(newNode);
         currNode = newNode;
     }
-    
+
     virtual void endArray()
     {
         currNode = nodestack.back();
         nodestack.pop_back();
     }
-    
+
     virtual void startObject()
     {
         nodestack.push_back(currNode);
@@ -1101,7 +1133,7 @@ public:
         currNode->addChild(newNode);
         currNode = newNode;
     }
-    
+
     virtual void nameValue(char const*const name, int len)
     {
         nodestack.push_back(currNode);
@@ -1112,13 +1144,13 @@ public:
         currNode->addChild(newNode);
         currNode = newNode;
     }
-    
+
     virtual void endValue()
     {
         currNode = nodestack.back();
         nodestack.pop_back();
     }
-    
+
     virtual void endObject()
     {
         currNode = nodestack.back();
@@ -1129,12 +1161,12 @@ public:
     {
        currNode->addChild(new ASTNode(kTokenDataNullLiteral));
     }
-                           
+
     virtual void boolVal(bool b)
     {
         currNode->addChild(new ASTNode(kTokenDataIntLiteral, b ? 1 : 0));
     }
-                           
+
     virtual void strVal(char const*const str, int len)
     {
         char temp[256];
@@ -1152,37 +1184,45 @@ public:
     {
         lcRaiseError("Problem parsing JSON", curr, len);
     }
-    
+
     std::vector<ASTNode*> nodestack;
 };
 
-/* 
+/*
  globalVarDecls
  declarator EQUAL require LPAREN string RPAREN
  -> ^(TokenGlobalVariable declarator string)
+
+or declare: vars ;
  */
 
 // assign-+
 //  |     |
 //  name  library
 
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
-    char name[256];
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
+	bool declareBlock = peekToken(curr, end) == kTokenDeclare;
+	if (declareBlock) {
+		parseDeclare(curr, end, currNode);
+		return;
+	}
+
+	char name[256];
     char require[256];
     getDeclarator(curr, end, name);
-    
+
     CurrPtr t = curr;
     if (!getToken(kTokenEq, curr, end)) {
         lcRaiseError("Missing = after global declaration. Eg: \nio = require(\"io\")\n", curr, 32);
     }
-    
+
     ASTNode* globVar = new ASTNode(kTokenGlobalVariable, name);
     currNode->addChild(globVar);
-                                  
+
     if (peekChar('{', curr, end) || peekChar('[', curr, end)) {
-        
+
         const char* jsonStart = curr;
-        
+
         // Parse a JSON block.
         JSONCallback jsonCallback;
         ASTNode* pop = currNode;
@@ -1190,15 +1230,15 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
         globVar->addChild(currNode);
         if (!Lab::Json::parseJsonValue(curr, end, &jsonCallback))
             lcRaiseError("Poorly formed JSON chunk", curr, 32);
-        
+
         const char* jsonEnd = curr;
-        
+
         Json::Reader reader;
         Json::Value* root = new Json::Value();
         reader.parse(jsonStart, jsonEnd, *root, false); // false = ignore comments
-        
+
         jsonVars->push_back(std::pair<std::string, Json::Value*>(name, root));
-        
+
         currNode = pop;
     }
 	else if (getToken(kTokenRequire, curr, end)) {
@@ -1216,7 +1256,7 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
                 lcRaiseError("Poorly formed require", curr, 32);
             }
         }
-        globVar->addChild(new ASTNode(kTokenRequire, require)); 
+        globVar->addChild(new ASTNode(kTokenRequire, require));
     }
     else {
         curr = t;
@@ -1228,15 +1268,14 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, std::vector<std::pair<std::s
 
 /*
  landruBlock
- : lDeclareBlock | lLocalBlock | lStateBlock ;
+ : lDeclareBlock | lStateBlock ;
  */
 
 void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 	TokenId token = peekToken(curr, end);
 	switch (token) {
-		case kTokenDeclare:  parseDeclare(curr, end);                    break;
-        case kTokenLocal:    parseLocals(curr, end);                     break;
-		case kTokenState:    parseState(curr, end);                      break;
+		case kTokenDeclare:  parseDeclare(curr, end, currNode);          break;
+		case kTokenState:    parseState(curr, end, currNode);            break;
 		default:             lcRaiseError("Only declare, local, or state valid here. Found", curr, 32);    break;
 	}
 }
@@ -1244,29 +1283,29 @@ void parseLandruBlock(CurrPtr& curr, EndPtr end) {
 
 /*
  A machine is a declarator followed by a number of blocks
- 
+
  machine
- : MACHINE declarator COLON landruBlock+ SEMICOLON   
+ : MACHINE declarator COLON landruBlock+ SEMICOLON
  -> ^(MACHINE declarator landruBlock+) ;
  */
 
-void parseMachine(CurrPtr& curr, EndPtr end) {
+void parseMachine(CurrPtr& curr, EndPtr end, ASTNode* & currNode) {
 	TokenId token = getToken(curr, end);
 	if (token != kTokenMachine) {
 		lcRaiseError("Expected 'machine'", curr, 32);
 		return;
 	}
-	
+
 	char declarator[256];
 	getDeclarator(curr, end, declarator);
 	if (!getColon(curr, end))
 		return;
-	
+
 	ASTNode* ast = new ASTNode(kTokenMachine, declarator);
 	currNode->addChild(ast);
 	ASTNode* pop = currNode;
 	currNode = ast;
-	
+
 	++curr;
 	while (more(curr, end))
 	{
@@ -1277,7 +1316,7 @@ void parseMachine(CurrPtr& curr, EndPtr end) {
 		}
 		parseLandruBlock(curr, end);
 	}
-	
+
 	currNode = pop;
 }
 
@@ -1289,28 +1328,28 @@ void parseMachine(CurrPtr& curr, EndPtr end) {
 
 /*
     zero or more(machine, globals)
- */	
+ */
 
 
 extern "C"
-void landruParseProgram(void* rootNode, 
+void landruParseProgram(void* rootNode,
                         std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
                         char const* buff, size_t len)
-{	
+{
 	currNode = (Landru::ASTNode*) rootNode;
-	
+
 	char const*const end = buff + len;
 	char const* curr = buff;
-	
+
 	while (more(curr, end)) {
 		TokenId token = peekToken(curr, end);
 		switch (token) {
 			case kTokenMachine:
-				parseMachine(curr, end);
+				parseMachine(curr, end, currNode);
 				break;
-				
+
 			default:
-                parseGlobalVarDecls(curr, end, jsonVars);
+                parseGlobalVarDecls(curr, end, currNode, jsonVars);
 				break;
 		}
 	}

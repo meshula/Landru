@@ -24,7 +24,7 @@ namespace Landru
 {
 
     using namespace std;
-	
+
 	class Engine::Detail
 	{
 	public:
@@ -34,14 +34,14 @@ namespace Landru
 			const char* name;
 			VarObjPtr* lib;
 		};*/
-				
+
 		Detail(Engine* engine)
         : currentElapsedTime(0)
 		{
 //			QueueRegister(messageQueue = new MessageQueue(engine),		"engine", "message");
 //			QueueRegister(tickQueue = new TickQueue(engine),			"engine", "tick");
 		}
-		
+
 		~Detail()
 		{
 		}
@@ -52,13 +52,13 @@ namespace Landru
         vector<shared_ptr<VarObj>> requires;
 
         VarObjFactory factory;
-		
+
 //		TickQueue*		tickQueue;
 //		MessageQueue*	messageQueue;
 	};
-    
+
     //    Landru::VarObj::FnTable Engine::functions;
-	
+
 	Engine::Engine(const char* name)
     : VarObj(name, &functions)
     , detail(new Detail(this))
@@ -81,35 +81,35 @@ namespace Landru
         delete _machineCache;
 		delete detail;
 	}
-    
+
     void Engine::collisionEngine(ContinuationList* ce)
     {
         _collisionEngine = ce;
         addContinuationList(ce);
     }
-    
+
     float Engine::elapsedTime() const
     {
         return detail->currentElapsedTime;
     }
-    
+
 	void Engine::Update(float dt)
 	{
         //Lab::Base::Cycles ct;
-        
+
         detail->currentElapsedTime += dt;
-        
+
         UpdateQueues(this, detail->currentElapsedTime);
-        
+
         //ct.Sample();
         //printf("Tick %d\n", ct.Total());
         //printf("--------------\n");
 	}
-    
+
     void Engine::InitFunctionTable()
     {
     }
-    
+
 #if 0
 	// Event Sources
 
@@ -117,7 +117,7 @@ namespace Landru
     {
         detail->tickQueue->registerContinuation(f, 0, pc);
     }
-		
+
     // machineType is a filter; if none, all messageItems are checked
 	void Engine::SendMessageToAll(const char* machineType, const char* message)
 	{
@@ -125,11 +125,11 @@ namespace Landru
 	}
 
 #endif
-	
+
 	//---------------------------------------------
     // Fibers
 
-		
+
     void Engine::ClearContinuations(std::shared_ptr<Fiber> vop)
     {
         ClearQueues(vop);
@@ -144,10 +144,10 @@ namespace Landru
     }
 
     void Engine::AddGlobal(const char* name, const char* lib)
-    { 
+    {
         if (!name || !lib)
             return;
-        
+
         if (detail->globals.find(name) != detail->globals.end())
             return;
 
@@ -157,7 +157,8 @@ namespace Landru
             AddGlobal(name, std::move(v));
     }
 
-    void Engine::AddRequire(const char* lib, int index) {
+    void Engine::AddRequire(const char* lib, int index)
+    {
         if (detail->requires.size() <= index)
             detail->requires.resize(index*2+1);
         detail->requires[index] = detail->factory.make(lib, lib);
@@ -171,17 +172,17 @@ namespace Landru
 
 
     void Engine::AddGlobal(const char* name, std::shared_ptr<VarObj> v)
-    { 
+    {
         if (!name || !v)
             return;
-        
+
         std::map<std::string, std::shared_ptr<VarObj>>::iterator i = detail->globals.find(name);
         if (i != detail->globals.end())
             return;
-        
+
         detail->globals[name] = v;
     }
-    
+
     std::weak_ptr<VarObj> Engine::Global(const char* name)
     {
         std::map<std::string, std::shared_ptr<VarObj>>::iterator i = detail->globals.find(name);
@@ -194,7 +195,7 @@ namespace Landru
     //---------------------------------------------
     // Run
 
-    
+
     void Engine::RunScript(const char* machineName)
     {
         std::shared_ptr<MachineCacheEntry> mce = _machineCache->findExemplar(machineName);
@@ -217,8 +218,8 @@ namespace Landru
             f->Run(&rc);
         }
     }
-    
-    
+
+
     // bound functions
 
     //static
@@ -226,24 +227,24 @@ namespace Landru
     {
         RaiseError(p->pc, "Debug break", 0);
     }
-    
+
 
     void Engine::addContinuationList(ContinuationList* cl)
     {
         QueueRegister(cl, cl->name(), "update");
     }
-    
+
     ContinuationList* Engine::continuationList(const char* name) const
     {
         for (std::vector<ContinuationList*>::const_iterator i = continuationLists.begin(); i != continuationLists.end(); ++i)
             if (!strcmp(name, (*i)->name()))
                 return *i;
-                
+
         return 0;
     }
-    
-    
-	
+
+
+
 } // Landru
 
 EXTERNC void* landruCreateEngine(char const*const workingDir)

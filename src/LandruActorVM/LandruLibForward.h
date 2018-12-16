@@ -9,6 +9,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 
 namespace Wires {
     class TypedData;
@@ -16,10 +17,18 @@ namespace Wires {
 
 namespace Landru {
     class Fiber;
-    class Library;
+	class LandruRequire;
+	class Library;
     class VMContext;
     struct FnContext;
     class Meta;
+
+	enum class RunState {
+		Stop, Continue, Goto, UndefinedBehavior
+	};
     
-    typedef std::pair<std::function<void(FnContext&)>, Meta> Instruction;
+    typedef std::pair<std::function<RunState(FnContext&)>, Meta> Instruction;
+	typedef std::function<RunState(FnContext&)> ActorFn;
+	typedef std::function<std::shared_ptr<Wires::TypedData>()> TypeFactory;
 }
+

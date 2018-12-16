@@ -11,6 +11,8 @@
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
 #include "LandruActorVM/VMContext.h"
+
+#include <algorithm>
 #include <cmath>
 #include <memory>
 using namespace std;
@@ -30,57 +32,64 @@ namespace Landru {
             u->registerFn("2.0", "max", "ii", "i", min);
             u->registerFn("2.0", "min", "ii", "i", max);
             l.registerVtable(move(u));
-            l.registerFactory("int", [](VMContext&)->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<int>>(0); });
+            l.registerFactory("int", []()->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<int>>(0); });
         }
-        void IntLib::add(FnContext& run) {
+		RunState IntLib::add(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(i1 + i2);
+			return RunState::Continue;
         }
-        void IntLib::sub(FnContext& run) {
+		RunState IntLib::sub(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(i1 - i2);
-        }
-        void IntLib::mul(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState IntLib::mul(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(i1 * i2);
-        }
-        void IntLib::div(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState IntLib::div(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(i1 / i2);
-        }
-        void IntLib::mod(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState IntLib::mod(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(i1 % i2);
-        }
-        void IntLib::min(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState IntLib::min(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(std::min(i1, i2));
-        }
-        void IntLib::max(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState IntLib::max(FnContext& run) {
             int i1 = run.self->back<int>(-2);
             int i2 = run.self->pop<int>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(param.get());
             v1->setValue(std::max(i1, i2));
-        }
+			return RunState::Continue;
+		}
         
     } // Std
 } // Landru

@@ -12,6 +12,8 @@
 #include "LandruActorVM/Generator.h"
 #include "LandruActorVM/Library.h"
 #include "LandruActorVM/VMContext.h"
+
+#include <algorithm>
 #include <cmath>
 #include <memory>
 using namespace std;
@@ -53,58 +55,66 @@ namespace Landru {
             u->registerFn("2.0", "min", "ff", "f", max);
             u->registerFn("2.0", "range", "fff", "o", range);
             l.registerVtable(move(u));
-            l.registerFactory("real", [](VMContext&)->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<float>>(0.f); });
-        }
-        void RealLib::add(FnContext& run) {
+            l.registerFactory("real", []()->std::shared_ptr<Wires::TypedData>{ return std::make_shared<Wires::Data<float>>(0.f); });
+			l.registerFactory("float", []()->std::shared_ptr<Wires::TypedData> { return std::make_shared<Wires::Data<float>>(0.f); });
+		}
+        RunState RealLib::add(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 + f2);
+			return RunState::Continue;
         }
-        void RealLib::sub(FnContext& run) {
+		RunState RealLib::sub(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 - f2);
+			return RunState::Continue;
         }
-        void RealLib::mul(FnContext& run) {
+		RunState RealLib::mul(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 * f2);
+			return RunState::Continue;
         }
-        void RealLib::div(FnContext& run) {
+		RunState RealLib::div(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 / f2);
+			return RunState::Continue;
         }
-        void RealLib::mod(FnContext& run) {
+		RunState RealLib::mod(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(fmodf(f1, f2));
-        }
-        void RealLib::min(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState RealLib::min(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(std::min(f1, f2));
-        }
-        void RealLib::max(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState RealLib::max(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(std::max(f1, f2));
-        }
-        void RealLib::range(FnContext& run) {
+			return RunState::Continue;
+		}
+		RunState RealLib::range(FnContext& run) {
             auto& params = run.self->stack.back();
             float incr = 1.f;
             float first = 0.f;
@@ -121,7 +131,8 @@ namespace Landru {
             auto gen = make_shared<Wires::Data<shared_ptr<RealRangeGenerator>>>();
             gen->setValue(make_shared<RealRangeGenerator>(first, last, incr));
             run.self->pushVar(gen);
-        }
+			return RunState::Continue;
+		}
         
     } // Std
 } // Landru

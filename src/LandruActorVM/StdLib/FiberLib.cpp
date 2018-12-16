@@ -33,76 +33,86 @@ namespace Landru {
             l.registerVtable(move(u));
         }
         
-        void FiberLib::eval(FnContext& run) {
+		RunState FiberLib::eval(FnContext& run) {
             // eval doesn't have to do anything, it's sugar.
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::add(FnContext& run) {
+		RunState FiberLib::add(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 + f2);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::sub(FnContext& run) {
+		RunState FiberLib::sub(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 - f2);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::mul(FnContext& run) {
+		RunState FiberLib::mul(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 * f2);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::div(FnContext& run) {
+		RunState FiberLib::div(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 / f2);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::min(FnContext& run) {
+		RunState FiberLib::min(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 > f2 ? f2 : f1);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::max(FnContext& run) {
+		RunState FiberLib::max(FnContext& run) {
             float f1 = run.self->back<float>(-2);
             float f2 = run.self->pop<float>();
             auto param = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(param.get());
             v1->setValue(f1 > f2 ? f1 : f2);
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::toInt(FnContext& run) {
+		RunState FiberLib::toInt(FnContext& run) {
             float i = run.self->pop<float>();
             run.self->push<int>(int(i));
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::sqrt(FnContext& run) {
+		RunState FiberLib::sqrt(FnContext& run) {
             float f = run.self->back<float>(-1);
             auto a = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<float>*>(a.get());
             v1->setValue(sqrtf(f));
-        }
+			return RunState::Continue;
+		}
         
-        void FiberLib::toggle(FnContext& run) {
+		RunState FiberLib::toggle(FnContext& run) {
             int i = run.self->back<int>(-1);
             auto a = run.self->stack.back().back();
             auto v1 = reinterpret_cast<Wires::Data<int>*>(a.get());
             v1->setValue(1 - i);
-        }
+			return RunState::Continue;
+		}
         
         //	LANDRU_DECL_FN(Fiber, send)
         //    {
@@ -112,11 +122,12 @@ namespace Landru {
         //		f->_engine->SendMessageToAll(machineTypeNameString, messageString);
         //	}
         
-        void FiberLib::newFn(FnContext& run) {
+		RunState FiberLib::newFn(FnContext& run) {
             string type = run.self->pop<string>();
             auto factory = run.vm->libs->findFactory(type.c_str());
-            auto v = factory(*run.vm);
+            auto v = factory();
             run.self->push(v);
+			return RunState::Continue;
         }
         
     } // Std

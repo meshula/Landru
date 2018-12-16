@@ -27,7 +27,8 @@ namespace Landru {
 
 
 
-    class CompilationContext {
+    class CompilationContext
+	{
     public:
 
         ~CompilationContext() {
@@ -67,7 +68,7 @@ namespace Landru {
                 jvo->setJson(i->second);
                 e->AddGlobal(i->first.c_str(), vp);
             }
-            
+
             Landru::MachineCache* m = e->machineCache();
             for (auto i = exemplars.begin(); i != exemplars.end(); ++i) {
                 m->add(e->factory(), *i);
@@ -75,15 +76,13 @@ namespace Landru {
         }
 
         vector<pair<string, string>> requiresList;
-        
         vector<shared_ptr<Landru::Exemplar>> exemplars;
-        
-        
+
     }; // CompilationContext
-    
 
 
-	
+
+
     Assembler::Assembler(CompilationContext* cc)
     : context(cc) {
         program.reserve(1000);
@@ -104,24 +103,24 @@ namespace Landru {
     int Assembler::localVariableIndex(const char* name) {
         if (localVariables.empty())
             return -1;
-        
+
         // parameters were parsed in order into the vector;
         // they are indexed backwards from the local stack frame, so if the parameters were a, b, c
         // the runtime indices are a:2 b:1 c:0
         // search from most recently pushed because of scoping, eg in this case
         // for x in range(): for y in range(): local real x ...... ; ;
         // the innermost x should be found within the y loop, and the outermost in the x loop
-        int m = localVariables.size() - 1;
+        int m = (int) localVariables.size() - 1;
         for (int i = m; i >= 0; --i)
             if (!strcmp(name, localVariables[i].name.c_str()))
-                return m - i;
+                return int(m - i);
         return -1;
     }
-    
+
     void Assembler::beginLocalVariableScope() {
         localVariableState.push_back(0);
     }
-    
+
     void Assembler::addLocalVariable(const char *name,  const char* type) {
         localVariables.push_back(LocalVariable(name, type));
         pushConstant(stringIndex(name));
@@ -129,34 +128,34 @@ namespace Landru {
         callFactory();
         localVariableState[localVariableState.size()-1] += 1;
     }
-    
+
     void Assembler::endLocalVariableScope() {
         int localsCount = localVariableState[localVariableState.size()-1];
         localVariableState.pop_back();
-        
+
         for (int i = 0; i < localsCount; ++i) {
             popLocal();
             localVariables.pop_back();
         }
     }
-    
+
     void Assembler::popLocal() {
         program.push_back(Instructions::iPopLocal);
     }
-    
+
     void Assembler::callFactory() {
         program.push_back(Instructions::iFactory);
     }
 
-        
+
     void Assembler::startAssembling()
     {
     }
-        
+
     void Assembler::finalizeAssembling()
     {
     }
-    
+
     void Assembler::addRequire(const char* name, const char* module)
     {
         context->requiresList.push_back(pair<string,string>(name, module));
@@ -192,7 +191,7 @@ namespace Landru {
 
     void Assembler::callFunction(const char* fnName)
     {
-        char* dot = strchr(fnName, '.');
+        char const*const dot = strchr(fnName, '.');
         if (dot) {
             vector<string> parts = TextScanner::Split(string(fnName), string("."));
             int index = 0;
@@ -259,15 +258,10 @@ namespace Landru {
             program.push_back(index | Instructions::iCallFunction);
         }
     }
-    
+
     void Assembler::dotChain()
     {
         program.push_back(Instructions::iDotChain); // the instruction just pops the stack
-    }
-
-    void Assembler::pushRequire(const char* name) {
-        int index = requireIndex(name) << 16;
-        program.push_back(index | Instructions::iGetRequire);
     }
 
     void Assembler::pushStringConstant(const char* str)
@@ -275,7 +269,7 @@ namespace Landru {
         pushConstant(stringIndex(str));
         createTempString();  // creates a temp StringVarObj, valid only until the semicolon is hit, all temps are reaped at the end of this run loop
     }
-        
+
     void Assembler::createTempString()
     {
         program.push_back(Instructions::iCreateTempString);
@@ -288,7 +282,8 @@ namespace Landru {
         return -1;
     }
 
-    void Assembler::storeToVar(const char *varName) {
+    void Assembler::storeToVar(const char *varName)
+	{
         std::map<std::string, int>::const_iterator i = varIndex.find(varName);
         if (i == varIndex.end()) {
             i = sharedVarIndex.find(varName);
@@ -305,7 +300,21 @@ namespace Landru {
         }
         popStore();
     }
-    
+
+	void Assembler::initializeSharedVarIfNecessary(const char * varName)
+	{
+        auto i = sharedVarIndex.find(varName);
+        if (i == sharedVarIndex.end()) {
+            RaiseError(0, "Unknown shared variable", varName);
+        }
+        else {
+            // the convention is shared variable indices start at maxVarIndices
+            // @TODO should only store if never stored
+            pushConstant(i->second + maxVarIndex);
+            popStore();
+        }
+	}
+
     void Assembler::pushSharedVarIndex(const char* varName)
     {
         std::map<std::string, int>::const_iterator i = sharedVarIndex.find(varName);
@@ -316,13 +325,25 @@ namespace Landru {
             pushConstant(i->second);
         }
     }
-        
-    void Assembler::pushGlobalVar(const char* varName)
-    {
-        // global variables will be fetched at run time by name from main
-        pushConstant(stringIndex(varName)); 
-        getGlobalVar();
-    }
+
+	void Assembler::pushGlobalVar(const char * varName)
+	{
+		pushConstant(stringIndex(varName));
+		getGlobalVar();
+	}
+
+    void Assembler::pushInstanceVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
+    void Assembler::pushGlobalVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
+    void Assembler::pushSharedVarReference(const char* varName)
+	{
+		RaiseError(0, "pushGlobalVar not implemented", varName);
+	}
 
     void Assembler::pushConstant(int i)
     {
@@ -344,7 +365,7 @@ namespace Landru {
         program.push_back(Instructions::iPushFloatConstant);
         program.push_back(i);
     }
-        
+
     void Assembler::pushRangedRandom(float r1, float r2) {
         pushFloatConstant(r2);
         pushFloatConstant(r1);
@@ -377,14 +398,14 @@ namespace Landru {
         sharedVarType.clear();
         sharedVarIndex.clear();
     }
-    
+
     void Assembler::endMachine() {
         std::unique_ptr<Exemplar> e = createExemplar();
         if (e) {
             exemplars.push_back(std::move(e));
         }
     }
-    
+
     void Assembler::subStateEnd() { program.push_back(Instructions::iSubStateEnd); }
     void Assembler::paramsStart() { program.push_back(Instructions::iParamsStart); }
     void Assembler::paramsEnd() { program.push_back(Instructions::iParamsEnd); }
@@ -393,7 +414,7 @@ namespace Landru {
     {
         program.push_back(Instructions::iNop);
     }
-        
+
     void Assembler::getGlobalVar()
     {
         program.push_back(Instructions::iGetGlobalVar);
@@ -414,12 +435,12 @@ namespace Landru {
             //RaiseError();
         }
     }
-        
+
     void Assembler::opAdd()
     {
         program.push_back(Instructions::iOpAdd);
     }
-        
+
     void Assembler::opSubtract()
     {
         program.push_back(Instructions::iOpSubtract);
@@ -444,7 +465,7 @@ namespace Landru {
     {
         program.push_back(Instructions::iOpModulus);
     }
-    
+
     void Assembler::opGreaterThan() {
         program.push_back(Instructions::iOpGreaterThan);
     }
@@ -455,12 +476,12 @@ namespace Landru {
     void Assembler::pushLocalVar(const char* varName) {
         if (localVariables.empty())
             lcRaiseError("no local parameters", 0, 0);
-        
+
         int i = localVariableIndex(varName);
         int e = i << 16;
         program.push_back(Instructions::iGetLocalVarObj | e);
     }
-        
+
     void Assembler::beginForEach(const char* name, const char* type) {
         // for each will call Run as if executing substates
         // in the case of for body in bodies, type will be varobj and name will be body
@@ -471,7 +492,7 @@ namespace Landru {
         int patch = gotoAddr();
         clauseStack.push_back(patch);
     }
-    
+
     void Assembler::endForEach() {
         localVariables.pop_back();
         subStateEnd();
@@ -483,24 +504,24 @@ namespace Landru {
     void Assembler::beginOn() {
         // empty
     }
-    
+
     void Assembler::beginOnStatements() {
         int patch = gotoAddr();
         clauseStack.push_back(patch);
     }
-    
+
     void Assembler::endOnStatements() {
         int patch = clauseStack.back();
         clauseStack.pop_back();
         _patchGoto(patch);
         subStateEnd();
     }
-    
+
     void Assembler::beginConditionalClause() {
         int patch = gotoAddr();
         clauseStack.push_back(patch);
     }
-    
+
     void Assembler::beginContraConditionalClause() {
         int patch = clauseStack.back();
         clauseStack.pop_back();
@@ -508,13 +529,13 @@ namespace Landru {
         _patchGoto(patch);
         clauseStack.push_back(patch2);
     }
-    
+
     void Assembler::endConditionalClause() {
         int patch = clauseStack.back();
         clauseStack.pop_back();
         _patchGoto(patch);
     }
-    
+
     int Assembler::gotoAddr()
     {
         program.push_back(Instructions::iGotoAddr);
@@ -609,48 +630,48 @@ namespace Landru {
     void Assembler::disassemble(const std::string& machineName, FILE* f)
     {
         fprintf(f, "\nMachine: %s\n", machineName.c_str());
-        
+
         std::vector<std::string> strings(maxStringOrd);
         strings.resize(maxStringOrd);
-        for (std::map<std::string, int>::const_iterator 
+        for (std::map<std::string, int>::const_iterator
              i = stringOrdinalMap.begin(); i != stringOrdinalMap.end(); ++i)
         {
             strings[i->second] = i->first;
         }
-        
+
         fprintf(f, "\tStrings:\n");
         int index = 0;
-        for (std::vector<std::string>::const_iterator 
+        for (std::vector<std::string>::const_iterator
              i = strings.begin(); i != strings.end(); ++i)
         {
             fprintf(f, "\t\t%d:\"%s\"\n", index, (*i).c_str());
             ++index;
         }
-        
+
         fprintf(f, "\tVariables:\n");
-        for (std::map<std::string, int>::const_iterator 
+        for (std::map<std::string, int>::const_iterator
              i = varIndex.begin(); i != varIndex.end(); ++i)
         {
             std::map<std::string, std::string>::const_iterator j = varType.find(i->first);
             fprintf(f, "\t\t%d:%s \"%s\"\n", i->second, j->second.c_str(), i->first.c_str());
         }
-        
+
         fprintf(f, "\tShared Variables:\n");
-        for (std::map<std::string, int>::const_iterator 
+        for (std::map<std::string, int>::const_iterator
              i = sharedVarIndex.begin(); i != sharedVarIndex.end(); ++i)
         {
             std::map<std::string, std::string>::const_iterator j = sharedVarType.find(i->first);
             fprintf(f, "\t\t%d:%s \"%s\"\n", i->second, j->second.c_str(), i->first.c_str());
         }
-        
+
         fprintf(f, "\tStates:\n");
-        for (std::map<std::string, int>::const_iterator 
+        for (std::map<std::string, int>::const_iterator
              i = stateAddrMap.begin(); i != stateAddrMap.end(); ++i)
         {
             // note: it would be nice if this was in the same order as the disassembly
             fprintf(f, "\t\t%02d:[%04d]%s\n", stateIndex(i->first.c_str()), i->second, i->first.c_str());
         }
-        
+
         int maxPC = (int) program.size();
         for (int i = 0; i < maxPC; ++i) {
             int skip;
@@ -670,7 +691,7 @@ namespace Landru {
         Exemplar* e = new Exemplar();
         int stateCount = maxStateOrd;
         e->stateTableLength = stateCount;
-        
+
         unsigned int* states = (unsigned int*) malloc(sizeof(unsigned int) * stateCount);
         e->stateNameIndex = (int*) malloc(sizeof(int) * stateCount);
         for (int i = 0; i < stateCount; ++i) {
@@ -692,11 +713,11 @@ namespace Landru {
             e->stateNameIndex[i] = stringIndex(it->first.c_str());
         }
         e->stateTable = states;
-        
+
         e->programStoreLength = (int) program.size();
         e->programStore = (unsigned int*)malloc(e->programStoreLength * sizeof(unsigned int));
         memcpy(e->programStore, (unsigned int*) &program[0], e->programStoreLength * sizeof(unsigned int));
-        
+
         e->varCount = maxVarIndex;
         e->varNameIndex = (int*) malloc(sizeof(int) * maxVarIndex);
         e->varTypeIndex = (int*) malloc(sizeof(int) * maxVarIndex);
@@ -708,11 +729,11 @@ namespace Landru {
                     break;
             }
             if (it == varIndex.end()) {
-                
+
                 for (it = varIndex.begin(); it != varIndex.end(); ++it) {
                     printf("%s:%d\n", it->first.c_str(), it->second);
                 }
-                
+
                 lcRaiseError("Bad var index", 0, 0);
                 return std::unique_ptr<Exemplar>(e);
             }
@@ -745,40 +766,40 @@ namespace Landru {
             }
             e->sharedVarTypeIndex[i] = stringIndex(it2->second.c_str());
         }
-        
+
         e->stringArrayLength = maxStringOrd;
-        
+
         int* stringStarts = (int*) malloc(sizeof(int) * maxStringOrd);
         e->stringArray = stringStarts;
-        
+
         // reorder the strings into a simple array
         std::vector<std::string> stringTable;
         stringTable.resize(maxStringOrd);
-        for (std::map<std::string, int>::const_iterator 
+        for (std::map<std::string, int>::const_iterator
              it = stringOrdinalMap.begin(); it != stringOrdinalMap.end(); ++it)
         {
             stringTable[it->second] = it->first;
         }
-        
+
         // calculate space required to hold all the strings
         int stringTableLength = 0;
         for (int i = 0; i < e->stringArrayLength; ++i) {
-            stringTableLength += stringTable[i].length() + 1;
+            stringTableLength += (int) stringTable[i].length() + 1;
         }
         e->stringDataLength = stringTableLength;
-        
+
         char* stringData = stringTableLength ? (char*) malloc(sizeof(char) * stringTableLength) : 0;
         e->stringData = stringData;
-        
+
         int currOff = 0;
         char* curr = const_cast<char*>(e->stringData);
         for (size_t i = 0; i < stringTable.size(); ++i) {
             strcpy(curr, stringTable[i].c_str());
             e->stringArray[i] = currOff;
-            currOff += strlen(stringTable[i].c_str()) + 1;
+            currOff += (int) strlen(stringTable[i].c_str()) + 1;
             curr = const_cast<char*>(&e->stringData[currOff]);
         }
-        
+
         for (size_t i = 0; i < stringTable.size(); ++i) {
             const char* test = &e->stringData[e->stringArray[i]];
             if (!strcmp(machineName.c_str(), test)) {
@@ -786,21 +807,35 @@ namespace Landru {
                 break;
             }
         }
-        
-        
+
+
         return std::unique_ptr<Exemplar>(e);
     }
 
-    
+	void Assembler::addGlobal(const char* name, const char* type) {
+		RaiseError(0, "global not implemented ", name);
+	}
+
     void Assembler::addGlobalBson(const char* name, shared_ptr<Lab::Bson> b) {
+		RaiseError(0, "global bson not implemented ", name);
     }
+
+	void Assembler::addGlobalString(const char* name, const char* value) {
+		RaiseError(0, "global string not implemented ", name);
+	}
+	void Assembler::addGlobalInt(const char* name, int value) {
+		RaiseError(0, "global int not implemented ", name);
+	}
+	void Assembler::addGlobalFloat(const char* name, float value) {
+		RaiseError(0, "global float not implemented ", name);
+	}
 
 
 } // Landru
 
 
 EXTERNC void landruAssembleProgram(void* rootNode)
-{    
+{
     using namespace Landru;
     ASTNode* program = (ASTNode*) rootNode;
     if (program->token == Landru::kTokenProgram) {
@@ -809,9 +844,9 @@ EXTERNC void landruAssembleProgram(void* rootNode)
     }
 }
 
-EXTERNC void landruAssembleProgramToRuntime(void* rootNode, void* runtime, 
+EXTERNC void landruAssembleProgramToRuntime(void* rootNode, void* runtime,
                                             std::vector<std::pair<std::string, Json::Value*> >* jsonVars)
-{  
+{
     using namespace Landru;
     ASTNode* program = (ASTNode*) rootNode;
     if (program->token == Landru::kTokenProgram) {

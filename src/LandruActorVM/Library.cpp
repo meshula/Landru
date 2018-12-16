@@ -10,8 +10,11 @@
 #include "VMContext.h"
 #include <LabText/TextScanner.hpp>
 
-namespace Landru {
-    std::function<std::shared_ptr<Wires::TypedData>(VMContext& vm)> Library::findFactory(const char* name) {
+namespace Landru 
+{
+
+    std::function<std::shared_ptr<Wires::TypedData>()> Library::findFactory(const char* name) 
+	{
         std::vector<std::string> nameParts = TextScanner::Split(name, ".");
         if (nameParts.size() == 1) {
             auto f = factories.find(name);
@@ -34,7 +37,8 @@ namespace Landru {
         VM_RAISE("Cannot construct object of type: " << std::string(name));
     }
     
-    Library::Vtable const*const Library::findVtable(const char* name) {
+    Library::Vtable const*const Library::findVtable(const char* name) 
+	{
         auto v = vtables.find(name);
         if (v != vtables.end())
             return v->second.get();

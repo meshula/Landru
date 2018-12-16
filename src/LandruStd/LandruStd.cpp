@@ -14,7 +14,7 @@
 #include "RealVarObj.h"
 #include "StringVarObj.h"
 #include "TimeVarObj.h"
-#include "VarObjArray.h"
+#include "LandruVM/VarObjArray.h"
 
 using namespace Landru;
 
