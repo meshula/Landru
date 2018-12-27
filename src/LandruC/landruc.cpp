@@ -2,15 +2,15 @@
 #include "Landru/defines.h"
 #include "OptionParser.h"
 
-#include "LandruCompiler/LandruCompiler.h"
+#include "Landru/LandruCompiler.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruAssembler/LandruAssembler.h"
 #include "LandruAssembler/LandruActorAssembler.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 #include "LandruActorVM/StdLib/StdLib.h"
-#include "LabText/TextScanner.h"
+#include "LabText/LabText.h"
 
 #include <chrono>
 #include <iostream>
@@ -19,7 +19,7 @@
 #include <thread>
 #include <vector>
 
-#if defined(ARCH_OS_WINDOWS)
+#if defined(LANDRU_OS_WINDOWS)
  #include <Windows.h>
 #else
  #include <dlfcn.h>
@@ -40,7 +40,7 @@ namespace {
     #   define ARCH_LIBRARY_GLOBAL  0
     #endif
 
-#if defined(ARCH_OS_WINDOWS)
+#if defined(LANDRU_OS_WINDOWS)
 	std::string ArchStrSysError(unsigned long errorCode)
 	{
 		if (errorCode == 0)
@@ -70,7 +70,7 @@ namespace {
 
     void* ArchLibraryOpen(const std::string &filename, int flag)
     {
-    #if defined(ARCH_OS_WINDOWS)
+    #if defined(LANDRU_OS_WINDOWS)
         return LoadLibrary(filename.c_str());
     #else
         return dlopen(filename.c_str(), flag);
@@ -79,7 +79,7 @@ namespace {
 
     const char* ArchLibraryError()
     {
-    #if defined(ARCH_OS_WINDOWS)
+    #if defined(LANDRU_OS_WINDOWS)
         DWORD error = ::GetLastError();
         return error ?  ArchStrSysError(error).c_str() : nullptr;
     #else
@@ -89,7 +89,7 @@ namespace {
 
     int ArchLibraryClose(void* handle)
     {
-    #if defined(ARCH_OS_WINDOWS)
+    #if defined(LANDRU_OS_WINDOWS)
         int status = ::FreeLibrary(reinterpret_cast<HMODULE>(handle));
     #else
         int status = dlclose(handle);
@@ -99,7 +99,7 @@ namespace {
 
     void* ArchLibraryGetSymbol(void* handle, const char* name)
     {
-    #if defined(ARCH_OS_WINDOWS)
+    #if defined(LANDRU_OS_WINDOWS)
         return GetProcAddress((HMODULE) handle, name);
     #else
         return dlsym(handle, name);

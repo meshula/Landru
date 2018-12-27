@@ -7,7 +7,7 @@
 //
 
 #include "Library.h"
-#include "VMContext.h"
+#include "Landru/VMContext.h"
 #include <LabText/TextScanner.hpp>
 
 namespace Landru 

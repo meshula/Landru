@@ -8,7 +8,7 @@
 
 #include "Property.h"
 #include "Library.h"
-#include "VMContext.h"
+#include "Landru/VMContext.h"
 
 namespace Landru {
     void Property::create() {

@@ -6,7 +6,7 @@
 //
 //
 
-#include "VMContext.h"
+#include "Landru/VMContext.h"
 
 #include "Exception.h"
 #include "FnContext.h"

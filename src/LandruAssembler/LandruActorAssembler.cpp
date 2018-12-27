@@ -14,10 +14,13 @@
 #include "LandruActorVM/Property.h"
 #include "LandruActorVM/State.h"
 #include "LandruActorVM/StdLib/StdLib.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 #include "LandruActorVM/WiresTypedData.h"
 #include "LabText/TextScanner.hpp"
+
+#ifdef LANDRU_HAVE_BSON
 #include "LabJson/LabBson.h"
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -819,6 +822,7 @@ namespace Landru {
 		globals[name] = prop;
 	}
 
+#ifdef LANDRU_HAVE_BSON
     void ActorAssembler::addGlobalBson(const char *name, std::shared_ptr<Lab::Bson> bson) 
 	{
 		TypeFactory factory = library()->findFactory("bson");
@@ -830,6 +834,7 @@ namespace Landru {
 		prop->assign(val, false);
 		globals[name] = prop;
     }
+   #endif
 
 	void ActorAssembler::addGlobalString(const char* name, const char* value) {
 		TypeFactory factory = library()->findFactory("string");

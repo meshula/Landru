@@ -8,7 +8,10 @@
 #include "LandruVM/Instructions.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruStd/JsonVarObj.h"
+
+#ifdef LANDRU_HAVE_BSON
 #include "LabJson/bson.h"
+#endif
 
 #include "LandruCompiler/AST.h"
 #include "LabText/TextScanner.hpp"
@@ -816,10 +819,12 @@ namespace Landru {
 		RaiseError(0, "global not implemented ", name);
 	}
 
+#ifdef LANDRU_HAVE_BSON
     void Assembler::addGlobalBson(const char* name, shared_ptr<Lab::Bson> b) {
 		RaiseError(0, "global bson not implemented ", name);
     }
-
+#endif
+    
 	void Assembler::addGlobalString(const char* name, const char* value) {
 		RaiseError(0, "global string not implemented ", name);
 	}

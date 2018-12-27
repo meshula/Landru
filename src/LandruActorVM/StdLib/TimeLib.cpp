@@ -10,7 +10,7 @@
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
 #include "LandruActorVM/State.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 #include <cmath>
 #include <memory>
 #include <set>

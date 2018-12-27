@@ -11,7 +11,7 @@
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Generator.h"
 #include "LandruActorVM/Library.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 
 #include <algorithm>
 #include <cmath>

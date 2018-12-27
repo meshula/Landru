@@ -10,7 +10,7 @@
 
 #include "ParseExpression.h"
 #include "LandruCompiler/Parser.h"
-#include "LabText/TextScanner.h"
+#include "LabText/LabText.h"
 
 #include <string.h>
 #include <stdio.h>

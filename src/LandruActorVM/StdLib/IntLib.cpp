@@ -10,7 +10,7 @@
 #include "IntLib.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 
 #include <algorithm>
 #include <cmath>

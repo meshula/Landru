@@ -9,7 +9,7 @@
 #include "FiberLib.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
-#include "LandruActorVM/VMContext.h"
+#include "Landru/VMContext.h"
 #include <cmath>
 #include <memory>
 using namespace std;

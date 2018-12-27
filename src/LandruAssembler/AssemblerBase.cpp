@@ -10,16 +10,21 @@
 #include "LandruCompiler/AST.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruCompiler/Parser.h"
+
+#ifdef LANDRU_HAVE_BSON
 #include "LabJson/LabBson.h"
-#include "LabText/itoa.h"
-#include "LabText/TextScanner.hpp"
 #include "BsonCompiler.h"
+#endif
+//#include "LabText/itoa.h"
+#include "LabText/TextScanner.hpp"
 
 #include <string.h>
 #include <map>
 
 using namespace std;
+#ifdef LANDRU_HAVE_BSON
 using Lab::Bson;
+#endif
 
 /*
  The Assembler knows the actual details of machine code, and string and variable indexing
@@ -431,8 +436,10 @@ void AssemblerBase::assemble(ASTNode* root)
 						addRequire(i->str2.c_str(), (*kind)->str2.c_str());
 					}
 					else {
+#ifdef LANDRU_HAVE_BSON
 						BsonCompiler bc;
 						addGlobalBson(i->str2.c_str(), bc.compileBson(*kind));
+#endif
 					}
 				}
 			}

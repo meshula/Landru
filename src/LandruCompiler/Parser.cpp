@@ -2,16 +2,18 @@
 // Copyright (c) 2013 Nick Porcino, All rights reserved.
 // License is MIT: http://opensource.org/licenses/MIT
 
-#include "LandruCompiler/LandruCompiler.h"
+#include "Landru/LandruCompiler.h"
 
-#include "LabText/TextScanner.h"
-#include "LabJson/json.h"
+#include "LabText/LabText.h"
 #include "LandruCompiler/Ast.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruCompiler/Parser.h"
 #include "LandruCompiler/ParseExpression.h"
 #include "LandruCompiler/Tokens.h"
-#include "LabJson/LabJson.h"
+
+#ifdef LANDRU_HAVE_JSON
+#include "LabJson/json.h"
+#endif
 
 #include <iostream>
 #include <string>
@@ -1111,6 +1113,8 @@ void parseLiteral(CurrPtr& curr, EndPtr end, ASTNode*& currNode, TokenId convers
 	more(curr, end);
 }
 
+#ifdef LANDRU_HAVE_JSON
+
 class JSONCallback : public Lab::Json::Callback {
 public:
     virtual void startArray() {
@@ -1188,6 +1192,9 @@ public:
     std::vector<ASTNode*> nodestack;
 };
 
+#endif
+
+
 /*
  globalVarDecls
  declarator EQUAL require LPAREN string RPAREN
@@ -1219,8 +1226,9 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::ve
     ASTNode* globVar = new ASTNode(kTokenGlobalVariable, name);
     currNode->addChild(globVar);
 
-    if (peekChar('{', curr, end) || peekChar('[', curr, end)) {
-
+#ifdef LANDRU_HAVE_JSON
+    if (peekChar('{', curr, end) || peekChar('[', curr, end)) 
+    {
         const char* jsonStart = curr;
 
         // Parse a JSON block.
@@ -1241,8 +1249,13 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::ve
 
         currNode = pop;
     }
-	else if (getToken(kTokenRequire, curr, end)) {
-        if (getChar('(', curr, end)) {
+	else 
+
+#endif
+    if (getToken(kTokenRequire, curr, end)) 
+    {
+        if (getChar('(', curr, end)) 
+        {
             curr = tsSkipCommentsAndWhitespace(curr, end);
             char const* value;
             uint32_t length;

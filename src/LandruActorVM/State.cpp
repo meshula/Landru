@@ -9,7 +9,7 @@
 #include "State.h"
 
 #include "FnContext.h"
-#include "VMContext.h"
+#include "Landru/VMContext.h"
 #include <cstdint>
 #include <cstdio>
 

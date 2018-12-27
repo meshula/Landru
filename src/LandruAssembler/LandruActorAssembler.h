@@ -102,7 +102,9 @@ namespace Landru {
         // requires
 		virtual void addGlobal(const char* name, const char* type) override;
 		virtual void addRequire(const char* name, const char* module) override;
+#ifdef LANDRU_HAVE_BSON
         virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson>) override;
+#endif
 		virtual void addGlobalString(const char* name, const char* value) override;
 		virtual void addGlobalInt(const char* name, int value) override;
 		virtual void addGlobalFloat(const char* name, float value) override;

@@ -170,7 +170,9 @@ namespace Landru {
         virtual void disassemble(const std::string& machineName, FILE* f) override;
 
 		virtual void addGlobal(const char* name, const char* type) override;
+#ifdef LANDRU_HAVE_BSON
 		virtual void addGlobalBson(const char* name, std::shared_ptr<Lab::Bson> b) override;
+#endif
 		virtual void addGlobalString(const char* name, const char* value) override;
 		virtual void addGlobalInt(const char* name, int value) override;
 		virtual void addGlobalFloat(const char* name, float value) override;
