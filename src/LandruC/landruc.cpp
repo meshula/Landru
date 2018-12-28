@@ -2,13 +2,13 @@
 #include "Landru/defines.h"
 #include "OptionParser.h"
 
-#include "Landru/LandruCompiler.h"
+#include "Landru/Landru.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruAssembler/LandruAssembler.h"
 #include "LandruAssembler/LandruActorAssembler.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
 #include "LandruActorVM/StdLib/StdLib.h"
 #include "LabText/LabText.h"
 
@@ -219,11 +219,9 @@ int main(int argc, char** argv)
 
 		// parse the program
 		//
-		void* rootNode = landruCreateRootNode();
-		std::vector<std::pair<std::string, Json::Value*> > jsonVars;
-		landruParseProgram(rootNode, &jsonVars, text, len);
-
-		bool success = !lcCurrentError();
+		LandruNode_t* rootNode = landruCreateRootNode();
+//		std::vector<std::pair<std::string, Json::Value*> > jsonVars;
+		bool success = !landruParseProgram(rootNode, /*&jsonVars,*/ text, len);
 
 		Landru::Library library("landru");
 		Landru::ActorAssembler laa(&library);
@@ -296,6 +294,7 @@ int main(int argc, char** argv)
 						std::cerr << "Exception caught, exiting" << std::endl;
 						run = false;
 					}
+
 					if (vmContext.undeferredMessagesPending()) {
 						continue;
 					}

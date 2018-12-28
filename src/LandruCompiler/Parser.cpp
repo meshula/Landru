@@ -2,7 +2,7 @@
 // Copyright (c) 2013 Nick Porcino, All rights reserved.
 // License is MIT: http://opensource.org/licenses/MIT
 
-#include "Landru/LandruCompiler.h"
+#include "Landru/Landru.h"
 
 #include "LabText/LabText.h"
 #include "LandruCompiler/Ast.h"
@@ -1207,9 +1207,15 @@ or declare: vars ;
 //  |     |
 //  name  library
 
-void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::vector<std::pair<std::string, Json::Value*> >* jsonVars) {
+void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode
+#ifdef LANDRU_HAVE_JSON
+    , std::vector<std::pair<std::string, Json::Value*> >* jsonVars
+#endif
+) 
+{
 	bool declareBlock = peekToken(curr, end) == kTokenDeclare;
-	if (declareBlock) {
+	if (declareBlock) 
+    {
 		parseDeclare(curr, end, currNode);
 		return;
 	}
@@ -1219,7 +1225,8 @@ void parseGlobalVarDecls(CurrPtr& curr, EndPtr end, ASTNode *& currNode, std::ve
     getDeclarator(curr, end, name);
 
     CurrPtr t = curr;
-    if (!getToken(kTokenEq, curr, end)) {
+    if (!getToken(kTokenEq, curr, end)) 
+    {
         lcRaiseError("Missing = after global declaration. Eg: \nio = require(\"io\")\n", curr, 32);
     }
 
@@ -1345,11 +1352,14 @@ void parseMachine(CurrPtr& curr, EndPtr end, ASTNode* & currNode) {
 
 
 extern "C"
-void landruParseProgram(void* rootNode,
-                        std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
+int landruParseProgram(LandruNode_t* rootNode,
+//                        std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
                         char const* buff, size_t len)
 {
-	currNode = (Landru::ASTNode*) rootNode;
+    #ifdef LANDRU_HAVE_JSON
+    std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
+    #endif
+    currNode = (Landru::ASTNode*) rootNode;
 
 	char const*const end = buff + len;
 	char const* curr = buff;
@@ -1362,10 +1372,15 @@ void landruParseProgram(void* rootNode,
 				break;
 
 			default:
-                parseGlobalVarDecls(curr, end, currNode, jsonVars);
+                parseGlobalVarDecls(curr, end, currNode
+#ifdef LANDRU_HAVE_JSON
+                    , jsonVars
+#endif
+                );
 				break;
 		}
 	}
+    return lcCurrentError();
 }
 
 
@@ -1373,32 +1388,39 @@ void landruParseProgram(void* rootNode,
 
 
 extern "C"
-void* landruCreateRootNode()
+LandruNode_t* landruCreateRootNode()
 {
     Landru::ASTNode* node = new Landru::ASTNode(kTokenProgram, "Landru");
-    return (void*) node;
+    return reinterpret_cast<LandruNode_t*>(node);
 }
 
 extern "C"
-void landruPrintAST(void* rootNode_)
+void landruReleaseRootNode(LandruNode_t* rootNode_)
 {
-    Landru::ASTNode* rootNode = (Landru::ASTNode*) rootNode_;
+    Landru::ASTNode* rootNode = reinterpret_cast<Landru::ASTNode*>(rootNode_);
+    delete rootNode;
+}
+
+extern "C"
+void landruPrintAST(LandruNode_t* rootNode_)
+{
+    Landru::ASTNode* rootNode = reinterpret_cast<Landru::ASTNode*>(rootNode_);
     if (rootNode)
         rootNode->print(0);
 }
 
 extern "C"
-void landruPrintRawAST(void* rootNode_)
+void landruPrintRawAST(LandruNode_t* rootNode_)
 {
-    Landru::ASTNode* rootNode = (Landru::ASTNode*) rootNode_;
+    Landru::ASTNode* rootNode = reinterpret_cast<Landru::ASTNode*>(rootNode_);
     if (rootNode)
         rootNode->dump(0);
 }
 
 extern "C"
-void landruToJson(void* rootNode_)
+void landruToJson(LandruNode_t* rootNode_)
 {
-    Landru::ASTNode* rootNode = (Landru::ASTNode*) rootNode_;
+    Landru::ASTNode* rootNode = reinterpret_cast<Landru::ASTNode*>(rootNode_);
     if (rootNode)
         rootNode->toJson();
 }

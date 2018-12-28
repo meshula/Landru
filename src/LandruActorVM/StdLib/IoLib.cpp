@@ -10,7 +10,7 @@
 #include "IoLib.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Library.h"
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
 #include <cmath>
 #include <iostream>
 #include <memory>

@@ -6,6 +6,7 @@
 //
 //
 
+#include "Landru/Landru.h"
 #include "LandruActorAssembler.h"
 #include "LandruActorVM/Fiber.h"
 #include "LandruActorVM/Generator.h"
@@ -14,7 +15,7 @@
 #include "LandruActorVM/Property.h"
 #include "LandruActorVM/State.h"
 #include "LandruActorVM/StdLib/StdLib.h"
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
 #include "LandruActorVM/WiresTypedData.h"
 #include "LabText/TextScanner.hpp"
 
@@ -443,7 +444,7 @@ namespace Landru {
 
 			auto factory = run.vm->libs->findFactory(generator->typeName());
 			auto local = factory();
-			auto var = run.self->push_local(std::string("gen"), std::string(generator->typeName()), local);
+			auto var = run.self->push_local(std::string("gen"), std::string(generator->typeName()), factory, local);
 
 			for (generator->begin(); !generator->done(); generator->next())
 			{
@@ -530,7 +531,7 @@ namespace Landru {
 		{
 			auto factory = run.vm->libs->findFactory(tStr.c_str());
 			auto local = factory();
-			run.self->push_local(nStr, tStr, local);
+			run.self->push_local(nStr, tStr, factory, local);
 			return RunState::Continue;
 		}, "addLocalVariable"));
 	}
@@ -1150,3 +1151,34 @@ namespace Landru {
     }
 
 } // Landru
+
+extern "C"
+LandruAssembler_t* landruCreateAssembler(LandruLibrary_t* l)
+{
+    return reinterpret_cast<LandruAssembler_t*>(new Landru::ActorAssembler(reinterpret_cast<Landru::Library*>(l)));
+}
+
+extern "C"
+void landruReleaseAssembler(LandruAssembler_t* laa_)
+{
+	Landru::ActorAssembler* laa = reinterpret_cast<Landru::ActorAssembler*>(laa_);
+	delete laa;	
+}
+
+extern "C" 
+void landruAssemble(LandruAssembler_t* laa_, LandruNode_t* rootNode)
+{
+	Landru::ActorAssembler* laa = reinterpret_cast<Landru::ActorAssembler*>(laa_);
+    laa->assemble(reinterpret_cast<Landru::ASTNode*>(rootNode));
+}
+
+extern "C"
+void landruInitializeContext(LandruAssembler_t* laa_, LandruVMContext_t* ctx_)
+{
+	Landru::ActorAssembler* laa = reinterpret_cast<Landru::ActorAssembler*>(laa_);
+	Landru::VMContext* ctx = reinterpret_cast<Landru::VMContext*>(ctx_);
+	ctx->setDefinitions(laa->assembledMachineDefinitions());
+	for (auto i : laa->assembledGlobalVariables())
+		ctx->storeGlobal(i.first, i.second);
+	ctx->instantiateLibs();
+}

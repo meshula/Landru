@@ -8,6 +8,7 @@
 
 #include "StdLib.h"
 #include "LandruActorVM/Library.h"
+#include "Landru/Landru.h"
 
 namespace Landru {
     namespace Std {
@@ -29,3 +30,8 @@ void populateLibrary(Library& l, VMContext &vm) {
     }
 } // Landru::Std
 
+extern "C"
+void landruInitializeStdLib(LandruLibrary_t* library, LandruVMContext_t* vmContext)
+{
+    Landru::Std::populateLibrary(* reinterpret_cast<Landru::Library*>(library), * reinterpret_cast<Landru::VMContext*>(vmContext));
+}

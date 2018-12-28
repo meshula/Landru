@@ -8,7 +8,7 @@
 
 #include "Property.h"
 #include "Library.h"
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
 
 namespace Landru {
     void Property::create() {
@@ -21,8 +21,8 @@ namespace Landru {
         create(); 
 	}
 
-	Property::Property(const std::string& name, const std::string& type, std::shared_ptr<Wires::TypedData>& d)
-		: name(name), type(type), assignCount(0)
+	Property::Property(const std::string& name, const std::string& type, TypeFactory tf, std::shared_ptr<Wires::TypedData>& d)
+		: name(name), type(type), assignCount(0), _typeFactory(tf)
 	{
 		create();
 		data->copy(d.get());

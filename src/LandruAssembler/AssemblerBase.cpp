@@ -443,13 +443,16 @@ void AssemblerBase::assemble(ASTNode* root)
 					}
 				}
 			}
-			else if (i->token == kTokenDeclare) {
+			else if (i->token == kTokenDeclare) 
+            {
 				// gather all global declarations
 				for (auto j : i->children)
-					if (j->token == kTokenLocalVariable) {
+					if (j->token == kTokenLocalVariable) 
+                    {
 						declarations.push_back(j);
 					}
-					else if (j->token == kTokenAssignment) {
+					else if (j->token == kTokenAssignment) 
+                    {
 						for (auto k : j->children)
 							declarations.push_back(k);
 					}
@@ -457,12 +460,40 @@ void AssemblerBase::assemble(ASTNode* root)
 		}
 
         // instantiate the globals
-		if (declarations.size() > 0) {
+		if (declarations.size() > 0) 
+        {
 			for (auto i : declarations) {
 				if (i->token == kTokenLocalVariable) {
 					string type = i->str1;
 					string name = i->str2;
-					addGlobal(name.c_str(), type.c_str());
+                    bool set_val = false;
+                    if (i->children.size())
+                    {
+                        auto i_assign = *i->children.begin();
+                        if (i_assign->token == kTokenAssignment && i_assign->children.size())
+                        {
+						    auto j = *i_assign->children.begin();
+						    if (j->token == kTokenStringLiteral) {
+							    string val = j->str2;
+							    // create string property named(name);
+							    addGlobalString(name.c_str(), val.c_str());
+                                set_val = true;
+						    }
+						    else if (j->token == kTokenIntLiteral) {
+							    int val = j->intVal;
+							    addGlobalInt(name.c_str(), val);
+                                set_val = true;
+						    }
+						    else if (j->token == kTokenFloatLiteral) {
+							    float val = j->floatVal1;
+							    addGlobalFloat(name.c_str(), val);
+                                set_val = true;
+						    }
+						    // @todo ranges, what else?
+                        }
+                    }
+                    if (!set_val)
+    					addGlobal(name.c_str(), type.c_str());
 				}
 				else if (i->token == kTokenAssignment) {
 					string name = i->str2;

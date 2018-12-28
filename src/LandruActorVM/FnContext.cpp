@@ -1,6 +1,6 @@
 
 #include "FnContext.h"
-#include "Landru/VmContext.h"
+#include "LandruActorVM/VMContext.h"
 
 namespace Landru {
 

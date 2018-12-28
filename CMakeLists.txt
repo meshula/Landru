@@ -19,8 +19,7 @@ lab_library(LandruCore
     PUBLIC_HEADERS
         include/Landru/defines.h
         include/Landru/export.h
-        include/Landru/LandruCompiler.h
-        include/Landru/VMContext.h
+        include/Landru/Landru.h
 
     INCLUDE_DIRS
         ${LANDRU_ROOT}/include
@@ -36,6 +35,7 @@ lab_library(LandruCore
         src/LandruActorVM/MachineDefinition.h
         src/LandruActorVM/Property.h
         src/LandruActorVM/State.h
+        src/LandruActorVM/VMContext.h
         src/LandruActorVM/StdLib/FiberLib.h
         src/LandruActorVM/StdLib/IntLib.h
         src/LandruActorVM/StdLib/IoLib.h
@@ -92,9 +92,16 @@ add_executable(landruc
 target_link_libraries(landruc Landru::Core)
 target_include_directories(landruc PRIVATE "${LANDRU_ROOT}/include")
 
+
+add_executable(landru-test
+    src/tests/main.cpp)
+target_link_libraries(landru-test Landru::Core)
+target_include_directories(landruc PRIVATE "${LANDRU_ROOT}/include")
+
 install (TARGETS landruc
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin)
 
 set_property(TARGET landruc PROPERTY FOLDER "apps")
+set_property(TARGET landru-test PROPERTY FOLDER "tests")

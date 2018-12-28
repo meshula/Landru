@@ -11,7 +11,7 @@
 #include "LandruActorVM/MachineDefinition.h"
 #include "LandruActorVM/Property.h"
 #include "LandruActorVM/State.h"
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
 #include "LandruActorVM/WiresTypedData.h"
 #include <iostream>
 #include <memory>
@@ -289,10 +289,10 @@ namespace Landru {
             stack.back().push_back(v);
         }
 
-		std::shared_ptr<Wires::TypedData> push_local(const std::string & name, const std::string & type,
+		std::shared_ptr<Wires::TypedData> push_local(const std::string& name, const std::string& type, TypeFactory tf,
 												     std::shared_ptr<Wires::TypedData> v)
 		{
-			locals.push_back(std::move(std::make_shared<Property>(name, type, v)));
+			locals.push_back(std::move(std::make_shared<Property>(name, type, tf, v)));
 			return (*locals.rbegin())->data;
 		}
 

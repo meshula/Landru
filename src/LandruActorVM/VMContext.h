@@ -87,11 +87,12 @@ namespace Landru {
         OnEventEvaluator();
         ~OnEventEvaluator();
 
-        OnEventEvaluator(OnEventEvaluator&& rhs) : _detail(rhs._detail)
+        OnEventEvaluator(OnEventEvaluator&& rhs) noexcept 
+        : _detail(rhs._detail) 
 		{
 			rhs._detail = nullptr;
 		}
-		OnEventEvaluator & operator=(OnEventEvaluator && rhs)
+		OnEventEvaluator & operator=(OnEventEvaluator && rhs) noexcept
 		{
 			_detail = rhs._detail;
 			rhs._detail = nullptr;

@@ -6,7 +6,8 @@
 //
 //
 
-#include "Landru/VMContext.h"
+#include "LandruActorVM/VMContext.h"
+#include "Landru/Landru.h"
 
 #include "Exception.h"
 #include "FnContext.h"
@@ -252,3 +253,63 @@ namespace Landru {
 
 
 } // Landru
+
+extern "C"
+LandruVMContext_t* landruCreateVMContext(LandruLibrary_t* lib)
+{
+    return reinterpret_cast<LandruVMContext_t*>(new Landru::VMContext(reinterpret_cast<Landru::Library*>(lib)));
+}
+
+extern "C"
+void landruReleaseVMContext(LandruVMContext_t* vmc_)
+{
+    Landru::VMContext* vmc = reinterpret_cast<Landru::VMContext*>(vmc_);
+    delete vmc;    
+}
+
+extern "C"
+void landruVMContextSetTraceEnabled(LandruVMContext_t* vmc_, bool t)
+{
+    Landru::VMContext* vmc = reinterpret_cast<Landru::VMContext*>(vmc_);
+    if (vmc)
+        vmc->traceEnabled = t;
+}
+
+extern "C"
+void landruLaunchMachine(LandruVMContext_t* vmc_, char const*const name)
+{
+    Landru::VMContext* vmc = reinterpret_cast<Landru::VMContext*>(vmc_);
+    if (!vmc)
+        return;
+    
+    vmc->launchQueue.push(Landru::VMContext::LaunchRecord(name, Landru::Fiber::Stack()));
+}
+
+extern "C"
+bool landruUpdate(LandruVMContext_t* vmc_, double now)
+{
+    Landru::VMContext* vmc = reinterpret_cast<Landru::VMContext*>(vmc_);
+    if (!vmc)
+        return false;
+
+    bool updating = false;
+    do
+    {
+  	    try 
+        {
+		    // run everything
+		    vmc->update(now);
+	    }
+	    catch (Landru::Exception & exc) {
+		    std::cerr << "Caught Landru exception: " << std::endl << exc.s << std::endl;
+            break;
+	    }
+	    catch (...) {
+		    std::cerr << "Exception caught, exiting" << std::endl;
+            break;
+	    }
+    }
+    while (vmc->undeferredMessagesPending() || !vmc->launchQueue.empty());
+
+    return vmc->deferredMessagesPending();
+}
