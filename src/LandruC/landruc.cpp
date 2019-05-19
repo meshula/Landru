@@ -2,6 +2,9 @@
 #include "Landru/defines.h"
 #include "OptionParser.h"
 
+#include "LandruLang/LandruLexParse.h"
+#include "LandruVMVI/VirtualMachine.h"
+
 #include "Landru/Landru.h"
 #include "LandruCompiler/lcRaiseError.h"
 #include "LandruAssembler/LandruAssembler.h"
@@ -216,6 +219,12 @@ int main(int argc, char** argv)
 		fclose(f);
 
 		std::cout << "Compiling " << path << std::endl;
+
+        std::shared_ptr<llp::AST> prg = landru_lex_parse(text, len);
+        landru_ast_print(prg);
+        std::shared_ptr<lvmvi::Exemplar::Machine> machine = landru_compile(prg);
+        landru_machine_print(machine);
+        return 1;
 
 		// parse the program
 		//

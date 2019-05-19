@@ -871,21 +871,25 @@ void parseParamList(CurrPtr& curr, EndPtr end) {
     std::vector<ASTNode*> nodeStack; // this is where the things that get parameters go
 
     ASTNode* paramNode = 0;
-    for (auto i = paramList.begin(); i != paramList.end(); ++i) {
+    for (auto i = paramList.begin(); i != paramList.end(); ++i) 
+    {
         const std::string& s = *i;
         const char* strstart = s.c_str();
         const char* strend = strstart + s.size();
 
-        if (s == "(") {
+        if (s == "(") 
+        {
             nodeStack.push_back(currNode);
             currNode = new ASTNode(kTokenParameters);
         }
-        else if (s == ")") {
+        else if (s == ")") 
+        {
             paramNode = currNode;
             currNode = nodeStack.back();
             nodeStack.pop_back();
         }
-        else if (*(strend - 1) == '#') {
+        else if (*(strend - 1) == '#') 
+        {
             if (!paramNode)
                 lcRaiseError("Missing parameters for function", curr, 32);
 

@@ -14,7 +14,7 @@
 #endif
 
 #include "LandruCompiler/AST.h"
-#include "LabText/TextScanner.hpp"
+#include "LabText/LabText.h"
 #include "LandruVM/Engine.h"
 #include "LandruVM/VarObj.h"
 #include "LandruVM/MachineCache.h"
@@ -28,7 +28,7 @@ using namespace std;
 
 namespace Landru {
 
-
+    using lab::Text::StrView;
 
     class CompilationContext
 	{
@@ -196,18 +196,19 @@ namespace Landru {
     {
         char const*const dot = strchr(fnName, '.');
         if (dot) {
-            vector<string> parts = TextScanner::Split(string(fnName), string("."));
+            vector<StrView> parts = lab::Text::Split(StrView{ fnName, strlen(fnName) }, '.');
             int index = 0;
 
             // a dotted function will either be on a local parameter, a require, or an a local variable, or on a class shared variable
-            int i = localVariableIndex(parts[index].c_str());
+            string pi(parts[index].curr, parts[index].sz);
+            int i = localVariableIndex(pi.c_str());
             if (i >= 0) {
                 // local parameter, push the local parameter index
                 int e = i << 16;
                 program.push_back(e | Instructions::iGetLocalVarObj);
             }
             else {
-                i = context->requiresIndex(parts[index].c_str());
+                i = context->requiresIndex(pi.c_str());
                 if (i >= 0) {
                     // it's a require, push the require index
                     int e = i << 16;
@@ -215,12 +216,12 @@ namespace Landru {
                 }
                 else {
                     // is it an instance or shared variable?
-                    std::map<std::string, int>::const_iterator i = varIndex.find(parts[index].c_str());
+                    std::map<std::string, int>::const_iterator i = varIndex.find(pi.c_str());
                     if (i == varIndex.end()) {
-                        RaiseError(0, "Unknown Variable", parts[index].c_str());
+                        RaiseError(0, "Unknown Variable", pi.c_str());
                     }
                     else {
-                        if (sharedVarType.find(parts[index]) != sharedVarType.end()) {
+                        if (sharedVarType.find(pi) != sharedVarType.end()) {
                             /// @TODO make shared variables a separate chunk
                             // the convention is shared variable indices start at maxVarIndices
                             int index = (i->second + maxVarIndex) << 16;
@@ -235,7 +236,8 @@ namespace Landru {
 
             // second part will either be local or class shared on the var on stack top
             ++index;
-            i = stringIndex(parts[index].c_str()) << 16;
+            pi = string(parts[index].curr, parts[index].sz);
+            i = stringIndex(pi.c_str()) << 16;
             if (parts.size() == 2) {
                 // push the local string index because at compile time, the function index on the target object is not known
                 program.push_back(i | Instructions::iCallFunction);
@@ -243,14 +245,15 @@ namespace Landru {
             else {
                 program.push_back(i | Instructions::iGetVarFromVar);
                 ++index;
-                i = stringIndex(parts[index].c_str()) << 16;
+                pi = string(parts[index].curr, parts[index].sz);
+                i = stringIndex(pi.c_str()) << 16;
                 if (parts.size() == 3) {
                     // push the local string index because at compile time, the function index on the target object is not known
                     program.push_back(i | Instructions::iCallFunction);
                 }
                 else {
                     RaiseError(0, "TODO Finish rewriting this as a recurrence", 0);
-                    int i = stringIndex(parts[index].c_str()) << 16;
+                    int i = stringIndex(pi.c_str()) << 16;
                     program.push_back(i | Instructions::iGetVarFromVar);
                     ++index;
                 }

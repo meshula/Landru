@@ -15,8 +15,7 @@
 #include "LabJson/LabBson.h"
 #include "BsonCompiler.h"
 #endif
-//#include "LabText/itoa.h"
-#include "LabText/TextScanner.hpp"
+#include "LabText/LabText.h"
 
 #include <string.h>
 #include <map>
@@ -31,6 +30,8 @@ using Lab::Bson;
  */
 
 namespace Landru {
+
+    using lab::Text::StrView;
 
     AssemblerBase::~AssemblerBase() {
     }
@@ -151,8 +152,9 @@ void AssemblerBase::assembleNode(ASTNode* root) {
 
         case kTokenGetVariable: {
             ASSEMBLER_TRACE(kTokenGetVariable);
-            vector<string> parts = TextScanner::Split(root->str2, '.', false, false);
-            const char* name = parts[0].c_str();
+            vector<StrView> parts = lab::Text::Split(StrView{ root->str2.c_str(), root->str2.size() }, '.');
+            std::string tname(parts[0].curr, parts[0].sz);
+            const char* name = tname.c_str();
             if (isLocalVar(name)) {
                 pushLocalVar(name);
             }
@@ -173,8 +175,9 @@ void AssemblerBase::assembleNode(ASTNode* root) {
 
 		case kTokenGetVariableReference: {
             ASSEMBLER_TRACE(kTokenGetVariableReference);
-            vector<string> parts = TextScanner::Split(root->str2, '.', false, false);
-            const char* name = parts[0].c_str();
+            vector<StrView> parts = lab::Text::Split(StrView{ root->str2.c_str(), root->str2.size() }, '.');
+            std::string tname(parts[0].curr, parts[0].sz);
+            const char* name = tname.c_str();
             if (isLocalVar(name)) {
                 AB_RAISE("Cannot reference local variables. " << root->str2);
             }

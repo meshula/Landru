@@ -17,7 +17,7 @@
 #include "LandruActorVM/StdLib/StdLib.h"
 #include "LandruActorVM/VMContext.h"
 #include "LandruActorVM/WiresTypedData.h"
-#include "LabText/TextScanner.hpp"
+#include "LabText/LabText.h"
 
 #ifdef LANDRU_HAVE_BSON
 #include "LabJson/LabBson.h"
@@ -38,7 +38,7 @@ using namespace std;
 using Lab::Bson;
 
 namespace Landru {
-
+    using lab::Text::StrView;
 
 	//-------------------
 	// assembler context \______________________________________________
@@ -565,189 +565,201 @@ namespace Landru {
 		return r;
 	}
 
-	void ActorAssembler::callFunction(const char *fnName)
-	{
-		string f(fnName);
-		vector<string> parts = TextScanner::Split(f, string("."));
-		if (parts.size() == 0)
-			AB_RAISE("Invalid function name" << f);
+    void ActorAssembler::callFunction(const char *fnName)
+    {
+        string f(fnName);
+        vector<StrView> parts = lab::Text::Split({ fnName, strlen(fnName) }, '.');
+        if (parts.size() == 0)
+            AB_RAISE("Invalid function name" << f);
 
-		enum class CallOn {
-			callOnSelf, callOnProperty, callOnRequire
-		};
+        enum class CallOn {
+            callOnSelf, callOnProperty, callOnRequire
+        };
 
-		CallOn callOn = CallOn::callOnSelf;
+        CallOn callOn = CallOn::callOnSelf;
 
-		int index = 0;
+        int index = 0;
 
-		while (index < parts.size() - 1) {
-			if (_context->currMachineDefinition->properties.find(parts[index]) != _context->currMachineDefinition->properties.end()) {
-				callOn = CallOn::callOnProperty;
-				break;
-			}
-			if (_context->requireAliases.find(parts[index]) != _context->requireAliases.end()) {
-				callOn = CallOn::callOnRequire;
-				break;
-			}
-			if (globals.find(parts[index]) != globals.end()) {
-				callOn = CallOn::callOnProperty;
-				break;
-			}
-			AB_RAISE("Unknown identifier " << parts[index] << " while parsing " << fnName);
-		}
+        while (index < parts.size() - 1) {
+            std::string t(parts[index].curr, parts[index].sz);
+            if (_context->currMachineDefinition->properties.find(t) != _context->currMachineDefinition->properties.end()) {
+                callOn = CallOn::callOnProperty;
+                break;
+            }
+            if (_context->requireAliases.find(t) != _context->requireAliases.end()) {
+                callOn = CallOn::callOnRequire;
+                break;
+            }
+            if (globals.find(t) != globals.end()) {
+                callOn = CallOn::callOnProperty;
+                break;
+            }
+            AB_RAISE("Unknown identifier " << t << " while parsing " << fnName);
+        }
 
-		// finally got to a function to call
-		switch (callOn) {
-		case CallOn::callOnSelf: {
-			Library::Vtable const*const lib = _context->libs->findVtable("fiber");
-			if (!lib) {
-				AB_RAISE("No library named fiber exists");
-			}
+        // finally got to a function to call
+        switch (callOn) {
+        case CallOn::callOnSelf: {
+            std::string t(parts[index].curr, parts[index].sz);
+            Library::Vtable const*const lib = _context->libs->findVtable("fiber");
+            if (!lib) {
+                AB_RAISE("No library named fiber exists");
+            }
 
-			auto fnEntry = lib->function(parts[index].c_str());
-			if (!fnEntry)
-				AB_RAISE("Function named \"" << parts[index] << "\" does not exist on library: fiber");
+            auto fnEntry = lib->function(t.c_str());
+            if (!fnEntry)
+                AB_RAISE("Function named \"" << t << "\" does not exist on library: fiber");
 
-			auto fn = fnEntry->fn;
-			string str = "self call to " + parts[index];
-			_context->currInstr.back()->emplace_back(Instruction([fn, str](FnContext& run)->RunState
-			{
-				return fn(run);
-			}, str.c_str()));
-			break;
-		}
+            auto fn = fnEntry->fn;
+            string str = "self call to " + t;
+            _context->currInstr.back()->emplace_back(Instruction([fn, str](FnContext& run)->RunState
+            {
+                return fn(run);
+            }, str.c_str()));
+            break;
+        }
 
-		case CallOn::callOnRequire: {
-			auto requiresDef = _context->requireAliases.find(parts[0]);
-			if (requiresDef == _context->requireAliases.end()) {
-				// don't allow use of libs unless referenced by a require statement
-				AB_RAISE("Can't find require library " << parts[0]);
-			}
+        case CallOn::callOnRequire: {
+            std::string t(parts[0].curr, parts[0].sz);
 
-			int partIndex = 1;
+            auto requiresDef = _context->requireAliases.find(t);
+            if (requiresDef == _context->requireAliases.end()) {
+                // don't allow use of libs unless referenced by a require statement
+                AB_RAISE("Can't find require library " << t);
+            }
 
-			Library::Vtable const* lib = nullptr;
-			if (parts.size() == 1) {
-				lib = _context->libs->findVtable(parts[0].c_str());
-				if (!lib)
-					AB_RAISE("No std library named " << parts[0] << " exists");
-			}
-			else if (parts.size() == 2) {
-				lib = _context->libs->findVtable(parts[0].c_str());
-				if (!lib)
-					for (auto& i : _context->libs->libraries) {
-						if (i.name == parts[0]) {
-							lib = i.findVtable(parts[0].c_str());
-							if (!lib)
-								AB_RAISE("No vtable for library named " << parts[0]);
-						}
-					}
-			}
-			else {
-				std::vector<Library> * libraries = &_context->libs->libraries;
-				Library * l = nullptr;
-				for (int part = 0; part < parts.size() - 1; ++part) {
-					bool found = false;
-					for (auto& i : *libraries) {
-						if (i.name == parts[part]) {
-							libraries = &i.libraries;
-							l = &i;
-							found = true;
-							break;
-						}
-					}
-					if (!found)
-						AB_RAISE("Couldn't find function " << f);
-				}
-				lib = l->findVtable(parts[parts.size() - 2].c_str());
-				if (!lib)
-					AB_RAISE("Couldn't find function in " << parts[parts.size() - 2]);
+            int partIndex = 1;
 
-				partIndex = int(parts.size()) - 1;
-			}
+            Library::Vtable const* lib = nullptr;
+            if (parts.size() == 1) {
+                lib = _context->libs->findVtable(t.c_str());
+                if (!lib)
+                    AB_RAISE("No std library named " << t << " exists");
+            }
+            else if (parts.size() == 2) {
+                lib = _context->libs->findVtable(t.c_str());
+                if (!lib)
+                    for (auto& i : _context->libs->libraries) {
+                        if (i.name == t) {
+                            lib = i.findVtable(t.c_str());
+                            if (!lib)
+                                AB_RAISE("No vtable for library named " << t);
+                        }
+                    }
+            }
+            else {
+                std::vector<Library> * libraries = &_context->libs->libraries;
+                Library * l = nullptr;
+                for (int part = 0; part < parts.size() - 1; ++part) {
+                    bool found = false;
+                    for (auto& i : *libraries) {
+                        if (parts[part] == i.name.c_str()) {
+                            libraries = &i.libraries;
+                            l = &i;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                        AB_RAISE("Couldn't find function " << f);
+                }
+                std::string t(parts[parts.size() - 2].curr, parts[parts.size() - 2].sz);
+                lib = l->findVtable(t.c_str());
+                if (!lib)
+                    AB_RAISE("Couldn't find function in " << f);
 
-			auto fnEntry = lib->function(parts[partIndex].c_str());
-			if (!fnEntry)
-				AB_RAISE("Function " << parts[partIndex] << " does not exist on library: " << parts[0]);
+                partIndex = int(parts.size()) - 1;
+            }
 
-			auto fn = fnEntry->fn;
-			string str = "library call on " + parts[0] + " to " + parts[partIndex];
-			string libraryName = lib->name;
-			_context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState
-			{
-				FnContext fnRun(run);
-				return fn(fnRun);
-			}, str.c_str()));
-			break;
-		}
+            std::string t2(parts[partIndex].curr, parts[partIndex].sz);
+            auto fnEntry = lib->function(t2.c_str());
+            if (!fnEntry)
+                AB_RAISE("Could not find Function in library " << f);
 
-		case CallOn::callOnProperty:
-			auto machineProperty = _context->currMachineDefinition->properties.find(parts[0]);
-			string type;
-			if (machineProperty == _context->currMachineDefinition->properties.end()) {
-				auto globalProperty = globals.find(parts[0]);
-				if (globalProperty == globals.end())
-					AB_RAISE("Property " << parts[0] << " not found for function call " << f);
-				type = globalProperty->second->type;
-			}
-			else
-				type = machineProperty->second->type;
+            auto fn = fnEntry->fn;
+            string str = "library call on " + f;
+            string libraryName = lib->name;
+            _context->currInstr.back()->emplace_back(Instruction([fn, libraryName](FnContext& run)->RunState
+            {
+                FnContext fnRun(run);
+                return fn(fnRun);
+            }, str.c_str()));
+            break;
+        }
 
-			vector<string> typeParts = TextScanner::Split(type, ".");
+        case CallOn::callOnProperty:
+        {
+            std::string p0(parts[0].curr, parts[0].sz);
+            auto machineProperty = _context->currMachineDefinition->properties.find(p0);
+            string type;
+            if (machineProperty == _context->currMachineDefinition->properties.end()) {
+                auto globalProperty = globals.find(p0);
+                if (globalProperty == globals.end())
+                    AB_RAISE("Property not found for function call " << f);
+                type = globalProperty->second->type;
+            }
+            else
+                type = machineProperty->second->type;
 
-			if (typeParts.size() == 0) {
-				// type must be a std type
-				Library::Vtable const*const lib = _context->libs->findVtable(typeParts[0].c_str());
-				if (!lib) {
-					AB_RAISE("No std library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
-				}
-				AB_RAISE("@TODO callOnProperty");
-				_context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
-				{
-					// we know what the lambda to call is, but we're going to have to look up the property named parts[0] at runtime
-					// call function on require parts[index] and then clear the params
-					// &&& @TODO
-					return RunState::UndefinedBehavior;
-				}, "callOnStdProperty"));
-			}
-			else {
-				bool found = false;
-				for (auto& i : _context->libs->libraries) {
-					if (i.name == typeParts[0]) {
-						// found the right library, find the vtable on the library, eg audio.buffer
-						Library::Vtable const*const lib = i.findVtable(typeParts[1].c_str());
-						if (!lib)
-							AB_RAISE("No library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
-						auto fnEntry = lib->function(parts[1].c_str());
-						if (!fnEntry)
-							AB_RAISE("Function " << parts[1] << " does not exist on library: " << parts[0]);
+            vector<StrView> typeParts = lab::Text::Split({ type.c_str(), type.size() }, '.');
 
-						auto fn = fnEntry->fn;
-						string str = "library call on property '" + parts[0] + "' to " + type + "." + parts[1];
-						string propertyName = parts[0];
-						string libName = i.name;
-						_context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run)->RunState
-						{
-							FnContext fnRun(run);
-							auto property = run.vm->findInstance(run.self, propertyName);
-							if (!property) {
-								property = run.vm->findGlobal(propertyName);
-								if (!property)
-									VM_RAISE("Couldn't find property: " << propertyName);
-							}
-							fnRun.var = property->data.get();
-							return fn(fnRun);
-						}, str.c_str()));
-						found = true;
-						break;
-					}
-				}
-				if (!found)
-					AB_RAISE("No library named " << typeParts[0] << " exists for function call " << f << " on property of type " << type);
-			}
-			break;
-		}
-	}
+            if (typeParts.size() == 0) {
+                // type must be a std type
+                std::string tp0(typeParts[0].curr, typeParts[0].sz);
+                Library::Vtable const*const lib = _context->libs->findVtable(tp0.c_str());
+                if (!lib) {
+                    AB_RAISE("No std library named exists for function call on property " << type);
+                }
+                AB_RAISE("@TODO callOnProperty");
+                _context->currInstr.back()->emplace_back(Instruction([](FnContext& run)->RunState
+                {
+                    // we know what the lambda to call is, but we're going to have to look up the property named parts[0] at runtime
+                    // call function on require parts[index] and then clear the params
+                    // &&& @TODO
+                    return RunState::UndefinedBehavior;
+                }, "callOnStdProperty"));
+            }
+            else {
+                bool found = false;
+                for (auto& i : _context->libs->libraries) {
+                    if (typeParts[0] == i.name.c_str()) {
+                        // found the right library, find the vtable on the library, eg audio.buffer
+                        std::string tp1(typeParts[1].curr, typeParts[1].sz);
+                        Library::Vtable const*const lib = i.findVtable(tp1.c_str());
+                        if (!lib)
+                            AB_RAISE("No library exists for function call " << f << " on property of type " << type);
+                        std::string p1(parts[1].curr, parts[1].sz);
+                        auto fnEntry = lib->function(p1.c_str());
+                        if (!fnEntry)
+                            AB_RAISE("Function does not exist on library: " << f);
+
+                        auto fn = fnEntry->fn;
+                        string str = "library call on property " + f;
+                        string propertyName(parts[0].curr, parts[0].sz);
+                        string libName = i.name;
+                        _context->currInstr.back()->emplace_back(Instruction([propertyName, libName, fn](FnContext& run)->RunState
+                        {
+                            FnContext fnRun(run);
+                            auto property = run.vm->findInstance(run.self, propertyName);
+                            if (!property) {
+                                property = run.vm->findGlobal(propertyName);
+                                if (!property)
+                                    VM_RAISE("Couldn't find property: " << propertyName);
+                            }
+                            fnRun.var = property->data.get();
+                            return fn(fnRun);
+                        }, str.c_str()));
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    AB_RAISE("No library exists for function call " << f << " on property of type " << type);
+            }
+            break;
+        }
+        } //switch
+    }
 
 	void ActorAssembler::storeToVar(const char *name)
 	{

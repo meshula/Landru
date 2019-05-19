@@ -12,14 +12,15 @@
 #include "LandruCompiler/AST.h"
 #include "LandruActorVM/VMContext.h"
 #include "Landru/Landru.h"
-#include <LabText/TextScanner.hpp>
+#include <LabText/LabText.h>
 
 namespace Landru 
 {
+    using lab::Text::StrView;
 
     std::function<std::shared_ptr<Wires::TypedData>()> Library::findFactory(const char* name) 
 	{
-        std::vector<std::string> nameParts = TextScanner::Split(name, ".");
+        std::vector<StrView> nameParts = lab::Text::Split(StrView{ name, strlen(name) }, '.');
         if (nameParts.size() == 1) {
             auto f = factories.find(name);
             if (f == factories.end()) {
@@ -29,8 +30,8 @@ namespace Landru
         }
         else {
             for (auto& i : libraries) {
-                if (i.name == nameParts[0]) {
-                    auto f = i.factories.find(nameParts[1]);
+                if (nameParts[0] == i.name.c_str()) {
+                    auto f = i.factories.find(std::string(nameParts[1].curr, nameParts[1].sz));
                     if (f == i.factories.end()) {
                         VM_RAISE("Cannot construct object of type: " << std::string(name));
                     }

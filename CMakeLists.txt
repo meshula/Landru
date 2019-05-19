@@ -6,11 +6,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(LANDRU_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH 
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(Utilities)
 include(Settings)
-#include(Packages)
+find_package(LabText)
+
+add_subdirectory(third-party/entt)
 
 lab_library(LandruCore
     TYPE STATIC
@@ -53,6 +56,7 @@ lab_library(LandruCore
         src/LandruCompiler/Parser.h
         src/LandruCompiler/TokenDefs.h
         src/LandruCompiler/Tokens.h
+        src/LandruLang/LandruLexParse.h
 
     CPPFILES
         src/LandruCompiler/Parser.cpp
@@ -78,16 +82,23 @@ lab_library(LandruCore
         src/LandruCompiler/ParseExpression.cpp
         src/LandruCompiler/Parser.cpp
         src/LandruCompiler/Tokens.cpp
-
+        src/LandruLang/LandruAstPrint.cpp
+        src/LandruLang/LandruLexParse.cpp
+        src/LandruVMVI/VirtualMachineCompile.cpp
+        src/LandruVMVI/VirtualMachineLoad.cpp
+        src/LandruVMVI/VirtualMachinePrint.cpp
+        src/LandruVMVI/VirtualMachineRuntime.cpp
 
     LIBRARIES
         Lab::Text
 )
 
+target_link_libraries(LandruCore EnTT)
 
-add_executable(landruc 
-    src/LandruC/landruc.cpp 
-    src/LandruC/OptionParser.h 
+
+add_executable(landruc
+    src/LandruC/landruc.cpp
+    src/LandruC/OptionParser.h
     src/LandruC/OptionParser.cpp)
 target_link_libraries(landruc Landru::Core)
 target_include_directories(landruc PRIVATE "${LANDRU_ROOT}/include")

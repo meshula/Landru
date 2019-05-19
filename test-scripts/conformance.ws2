@@ -1,0 +1,136 @@
+
+time  = require "time"
+io    = require "io"
+
+audio = require "audio"
+
+machine test_math
+{
+    state main {
+        empty()
+        x = test(1 + (2 * 3) / 7 / (5+4))
+        y = foo(1 + sin(20 + 5))
+    }
+}
+
+machine ping_poing_launch_main{
+  state main{ io.print("ping ")
+              on time.after(0.5) { launch("pong") } 
+  }
+}
+
+machine pong {
+  state main { io.print("pong ") }
+}
+
+
+declare{
+    string h = "global-h-string"
+    int i = 9
+}
+
+machine ping_point_state_main
+{  
+  state ping {io.print("ping! ")
+              on time.after(0.5) {goto pong} }
+  state pong {io.print("pong! ")
+                on time.after(0.5)  {goto ping} }
+  state main  {goto ping}
+}
+
+machine main{
+    declare{
+        int a
+        shared int a0 = 1
+        int b = 2
+        float c
+        float d = 4
+        float e = 5.0
+        string f = "f-string"
+        shared string g = "shared-g-string"
+    }
+
+    state main{
+        declare{
+            int j = 10
+        }
+        io.print("a = ", a, " b = ", b, " c = ", c, "\n")
+        io.print("d = ", d, " e = ", e, " f = ", f, "\n")
+        io.print("Shared a0 = ", a0, " shared g = ", g, "\n")
+        io.print("Global string h = ", h, "\n")
+        io.print("Global int i = ", i, "\n")
+        io.print("Local j = ", j, "\n")
+    }
+}
+
+
+declare {
+    audio.buffer snare
+    float sr
+}
+
+machine main_audio
+{    
+    declare {
+        audio.context ac
+    } 
+
+    state main
+    {
+        sr = ac.sampleRate()
+        io.print("sample rate ", sr, "\n")
+        snare = audio.buffer.load(ac, io.resolve("snare.wav"), sr)
+        snare.play()
+        on time.after(5)
+        {
+            io.print("Time's up, it was swell\n")
+            goto done
+        }
+    }   
+
+    state done { io.print("Machine finished\n") }
+}
+
+
+
+gl = require "gl"
+
+machine main_gl
+{
+    declare
+    {
+        gl.window w
+    }
+
+    state main
+    {
+        w = gl.createWindow(640, 480, "Hello World")
+        on time.after(300)
+        {   
+            io.print("Time's up, it was swell\n")
+            goto done
+        }            
+        on gl.windowClosed(w)
+        {
+            io.print("Goodbye cruel world\n")
+            goto done
+        }
+
+
+        on gl.windowResized(w)
+        {
+            declare
+            {
+                param float width
+                param float height
+            }
+            io.print("resized to ", width, " height ", height, "\n")
+        }
+    }
+
+    state done
+    {
+        io.print("Machine finished")
+    }
+}
+
