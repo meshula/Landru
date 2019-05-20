@@ -46,14 +46,14 @@ char pe_getChar(pe_CurrPtr& curr, pe_EndPtr end)
 }
 
 // advances cursor past a token
-int pe_getToken(pe_CurrPtr& curr, pe_EndPtr end)
+void pe_getToken(pe_CurrPtr& curr, pe_EndPtr end)
 {
     pe_more(curr, end);
     char const* tokenStr;
     uint32_t length;
     const char* next = tsGetNameSpacedTokenAlphaNumeric(curr, end, '.', &tokenStr, &length);
     curr = next;
-    return next - curr;
+    //return next - curr;
 }
 
 void pe_getNameSpacedToken(pe_CurrPtr& curr, pe_EndPtr end)

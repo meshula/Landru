@@ -6,14 +6,15 @@
 
 namespace llp
 {
-    enum class Scope
-    {
+	enum class Scope
+	{
+		unknown,
         machine, require, declaration,
         state, statement, function, assignment, expression, type, keyword, literal
     };
     struct AST
     {
-        Scope scope;
+		Scope scope = Scope::unknown;
         std::string name;
         std::vector<std::string> values;
         std::vector<std::shared_ptr<AST>> children;

@@ -1,5 +1,4 @@
 
-#include <Landru/Landru.h>
 #include <thread>
 #include <chrono>
 
@@ -41,7 +40,8 @@ machine main:
 
 void test_declarations()
 {
-        // runtime environment
+#if 0
+	// runtime environment
     LandruLibrary_t* library = landruCreateLibrary("landru");
     LandruVMContext_t* vmContext = landruCreateVMContext(library);
     landruInitializeStdLib(library, vmContext);
@@ -91,6 +91,7 @@ void test_declarations()
     landruReleaseRootNode(rootNode);
     landruReleaseLibrary(library);
     landruReleaseVMContext(vmContext);
+#endif
 
     printf("Run successfully completed\n");
 }

@@ -37,11 +37,11 @@ namespace lvmvi
         struct Variable
         {
             enum class Scope { self, local, global };
-            Scope             scope;
+            Scope             scope = Scope::self;
             string            name;
             enum class Type { int_type, float_type, string_type };
-            Type              type;
-            variant<int, float, string> value;
+			Type              type = Type::int_type;
+			variant<int, float, string> value = int(0);
         };
 
         struct State

@@ -1,6 +1,6 @@
 
 #include "LandruLexParse.h"
-#include "LandruCompiler/ParseExpression.h"
+#include "ParseExpression.h"
 #include <LabText/LabText.h>
 #include <functional>
 #include <memory>
@@ -12,6 +12,9 @@ namespace llp
 {
     struct StrViewP
     {
+		StrViewP() = default;
+		~StrViewP() = default;
+
         StrViewP& operator=(const StrViewP& rh)
         {
             valid = rh.valid;
@@ -756,8 +759,6 @@ StrViewP l_expression(StrView curr, std::shared_ptr<AST> ast, std::vector<llp::S
         return { true, curr, "" };
     }
     return { false, start, "invalid expression" };
-
-
 
 
     StrViewP res = logical_term(start, ast, diagnostic);
