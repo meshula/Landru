@@ -36,8 +36,8 @@ namespace lvmvi
 
         struct Variable
         {
-            enum class Scope { self, local, global };
-            Scope             scope = Scope::self;
+            enum class Scope { local, global };
+            Scope             scope = Scope::local;
             string            name;
             enum class Type { int_type, float_type, string_type };
 			Type              type = Type::int_type;

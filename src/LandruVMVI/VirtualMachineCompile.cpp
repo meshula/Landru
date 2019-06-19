@@ -1,7 +1,8 @@
 
-#include "VirtualMachine.h"
 #include "VirtualMachine.hpp"
+#include "LandruLang/LandruAST.h"
 #include "LandruLang/LandruLexParse.h"
+#include "LandruLang/LandruMachineExemplar.h"
 
 #include <LabText/LabText.h>
 
@@ -242,8 +243,13 @@ namespace lvmvi
 
 }
 
-std::shared_ptr<lvmvi::Exemplar::Machine> landru_compile(std::shared_ptr<llp::AST> ast)
+LandruMachineExemplar* landru_compile(LandruAST* ast)
 {
-    auto result = lvmvi::compile_machine(ast);
-    return result.value;
+    lvmvi::CompileResult<lvmvi::Exemplar::Machine> result = lvmvi::compile_machine(ast->ast);
+    if (!result.valid)
+        return nullptr;
+
+    LandruMachineExemplar* machine = new LandruMachineExemplar();
+    machine->machine = result.value;
+    return machine;
 }

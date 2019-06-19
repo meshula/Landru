@@ -19,7 +19,8 @@ namespace llp
         std::vector<std::string> values;
         std::vector<std::shared_ptr<AST>> children;
     };
+
+    std::shared_ptr<llp::AST> landru_lex_parse(char const*const in, size_t sz);
+    void landru_ast_print(std::shared_ptr<llp::AST>);
 }
 
-std::shared_ptr<llp::AST> landru_lex_parse(char const*const in, size_t sz);
-void landru_ast_print(std::shared_ptr<llp::AST>);

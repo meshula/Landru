@@ -29,8 +29,12 @@ lab_library(LandruCore
         src
 
     PRIVATE_HEADERS
+        src/LandruLang/LandruAST.h
         src/LandruLang/LandruLexParse.h
         src/LandruLang/ParseExpression.h
+        src/LandruVMVI/Library.h
+        src/LandruVMVI/StateContext.h
+        src/LandruVMVI/VirtualMachine.hpp
 
     CPPFILES
         src/LandruLang/LandruAstPrint.cpp

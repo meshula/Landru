@@ -1,5 +1,7 @@
 
+#include "Landru/Landru.h"
 #include "LandruLexParse.h"
+#include "LandruAST.h"
 #include <iostream>
 
 namespace {
@@ -43,3 +45,8 @@ void landru_ast_print(std::shared_ptr<llp::AST> ast)
     print_AST(ast, 0);
 }
 
+EXTERNC void landru_ast_print(LandruAST* ast)
+{
+    if (LandruAST::valid(ast))
+        print_AST(ast->ast, 0);
+}

@@ -1,5 +1,8 @@
 
+#include "Landru/Landru.h"
+
 #include "LandruLexParse.h"
+#include "LandruAST.h"
 #include "ParseExpression.h"
 #include <LabText/LabText.h>
 #include <functional>
@@ -67,20 +70,38 @@ namespace llp
     StrViewP RBRAC(StrView curr, std::shared_ptr<AST> ast, std::vector<llp::StrViewP>& diagnostic);
     StrViewP LPAREN(StrView curr, std::shared_ptr<AST> ast, std::vector<llp::StrViewP>& diagnostic);
     StrViewP RPAREN(StrView curr, std::shared_ptr<AST> ast, std::vector<llp::StrViewP>& diagnostic);
+} // namespace llp
+
+
+EXTERNC LandruAST* landru_lex_parse(char const*const in, size_t sz)
+{
+    LandruAST* ast = new LandruAST();
+    ast->ast = llp::landru_lex_parse(in, sz);
+    return ast;
 }
 
-std::shared_ptr<llp::AST> landru_lex_parse(char const*const in, size_t sz)
+EXTERNC void landru_destroy_ast(LandruAST* ast)
+{
+    if (LandruAST::valid(ast))
+    {
+        delete ast;
+    }
+}
+
+
+
+namespace llp {
+
+std::shared_ptr<AST> landru_lex_parse(char const*const in, size_t sz)
 {
     StrView src{ in, sz };
     std::vector<llp::StrViewP> diagnostic;
-    std::shared_ptr<llp::AST> program = std::make_shared<llp::AST>();
+    std::shared_ptr<llp::AST> program = std::make_shared<AST>();
     program->scope = llp::Scope::machine;
     program->name = "program";
     llp::StrViewP curr = llp::landruProgram(src, program, diagnostic);
     return program;
 }
-
-namespace llp {
 
 enum class Keyword
 {

@@ -2,7 +2,8 @@
 #include "OptionParser.h"
 
 #include "LandruLang/LandruLexParse.h"
-#include "LandruVMVI/VirtualMachine.h"
+#include "LandruLang/LandruAST.h"
+#include "Landru/Landru.h"
 
 #include <LabText/LabText.h>
 
@@ -141,12 +142,20 @@ int main(int argc, char** argv)
 		text[len] = '\0';
 		fclose(f);
 
-		std::cout << "Compiling " << path << std::endl;
+        if (verbose)
+    		std::cout << "Compiling " << path << std::endl;
 
-        std::shared_ptr<llp::AST> prg = landru_lex_parse(text, len);
-        landru_ast_print(prg);
-        std::shared_ptr<lvmvi::Exemplar::Machine> machine = landru_compile(prg);
+        LandruAST* ast = landru_lex_parse(text, len);
+        landru_ast_print(ast);
+        LandruMachineExemplar* machine = landru_compile(ast);
         landru_machine_print(machine);
+
+        LandruEC* exec_context = landru_create_execution_context();
+        landru_machine_instantiate(exec_context, machine);  // instantiate the root context.
+        landru_runtime_update(exec_context);
+
+        landru_destroy_execution_context(exec_context);
+        landru_destroy_ast(ast);
         return 1;
 	}
 	else

@@ -2,7 +2,8 @@
 // Copyright (c) 2013 Nick Porcino, All rights reserved.
 // License is MIT: http://opensource.org/licenses/MIT
 
-#pragma once
+#ifndef LANDRU_H
+#define LANDRU_H
 
 #ifdef __cplusplus
 #define EXTERNC extern "C"
@@ -10,41 +11,22 @@
 #define EXTERNC
 #endif
 
-#include "defines.h"
 #include "export.h"
 
-#include <string>
-#include <vector>
+struct LandruAST;
+struct LandruEC;
+struct LandruMachineExemplar;
 
-//namespace Json { class Value; }
+EXTERNC LandruAST* landru_lex_parse(char const*const in, size_t sz);
+EXTERNC void landru_ast_print(LandruAST*);
+EXTERNC void landru_destroy_ast(LandruAST*);
 
-struct LandruNode_t {};
-struct LandruLibrary_t {};
-struct LandruVMContext_t {};
-struct LandruAssembler_t {};
+EXTERNC LandruEC* landru_create_execution_context();
+EXTERNC void landru_runtime_update(LandruEC*);
+EXTERNC void landru_destroy_execution_context(LandruEC*);
+EXTERNC void landru_machine_instantiate(LandruEC* context, LandruMachineExemplar* machine);
 
-EXTERNC LandruNode_t* landruCreateRootNode();
-EXTERNC int   landruParseProgram(LandruNode_t* rootNode, 
-//                                 std::vector<std::pair<std::string, Json::Value*> >* jsonVars,
-                                 char const* buff, size_t len);
-EXTERNC void  landruPrintAST(LandruNode_t* rootNode);
-EXTERNC void  landruPrintRawAST(LandruNode_t* rootNode);
-EXTERNC void  landruToJson(LandruNode_t* rootNode);
+LandruMachineExemplar* landru_compile(LandruAST*);
+void landru_machine_print(LandruMachineExemplar*);
 
-EXTERNC LandruLibrary_t* landruCreateLibrary(char const*const name);
-EXTERNC LandruVMContext_t* landruCreateVMContext(LandruLibrary_t* lib);
-EXTERNC void landruInitializeStdLib(LandruLibrary_t* library, LandruVMContext_t* vmContext);
-
-EXTERNC LandruAssembler_t* landruCreateAssembler(LandruLibrary_t*);
-EXTERNC int landruLoadRequiredLibraries(LandruAssembler_t*, LandruNode_t* root_node, LandruLibrary_t* library, LandruVMContext_t* vmContext);
-EXTERNC void landruAssemble(LandruAssembler_t*, LandruNode_t* rootNode);
-EXTERNC void landruVMContextSetTraceEnabled(LandruVMContext_t*, bool);
-EXTERNC void landruInitializeContext(LandruAssembler_t*, LandruVMContext_t*);
-EXTERNC void landruLaunchMachine(LandruVMContext_t*, char const*const name);
-
-EXTERNC bool landruUpdate(LandruVMContext_t*, double now);
-
-EXTERNC void landruReleaseAssembler(LandruAssembler_t*);
-EXTERNC void landruReleaseRootNode(LandruNode_t*);
-EXTERNC void landruReleaseLibrary(LandruLibrary_t*);
-EXTERNC void landruReleaseVMContext(LandruVMContext_t*);
+#endif

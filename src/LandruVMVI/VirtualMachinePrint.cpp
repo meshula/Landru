@@ -1,5 +1,6 @@
-#include "VirtualMachine.h"
+
 #include "VirtualMachine.hpp"
+#include "LandruLang/LandruMachineExemplar.h"
 #include <iostream>
 #include <string>
 
@@ -97,7 +98,7 @@ namespace lvmvi
 
 }
 
-void landru_machine_print(std::shared_ptr<lvmvi::Exemplar::Machine> machine)
+void landru_machine_print(LandruMachineExemplar* machine)
 {
-    lvmvi::machine_print(0, machine);
+    lvmvi::machine_print(0, machine->machine);
 }
