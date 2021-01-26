@@ -11,8 +11,8 @@ set(CMAKE_MODULE_PATH
 
 include(Utilities)
 include(Settings)
-find_package(LabText)
 
+add_subdirectory(third/LabText)
 add_subdirectory(third-party/entt)
 
 lab_library(LandruCore

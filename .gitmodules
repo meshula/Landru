@@ -1,3 +1,6 @@
 [submodule "third-party/entt"]
 	path = third-party/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "third/LabText"]
+	path = third/LabText
+	url = git@github.com:meshula/LabText
