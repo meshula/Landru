@@ -124,6 +124,12 @@ namespace lvmvi
         vector<Statement> exec;
     };
 
+    struct VariableScope
+    {
+        entity machine; // variables to be found on this machine
+        string state;           // variables to be found on this state
+    };
+
     struct LaunchRecord
     {
         entt::entity machine_e;
@@ -195,7 +201,11 @@ namespace lvmvi
             return {};
         }
 
-        void add_state(string prefix, shared_ptr<Exemplar::State> state, map<string, CompiledStateData>& state_data)
+        void add_state(vector<VariableScope>& vss, 
+                       shared_ptr<Exemplar::Machine> machine,
+                       string prefix, 
+                       shared_ptr<Exemplar::State> state, 
+                       map<string, CompiledStateData>& state_data)
         {
             map<string, Var> vars;
             for (auto& i : state->variables)
@@ -283,14 +293,205 @@ namespace lvmvi
                         }
                         else
                         {
-                            // must be a variable to look up and push on the stack
-                            if (vars.find(ev) != vars.end())
+                            if (ev == "*")
+                            {
+                                exec.push_back({ 0, [](StateContext& sc, int argc)
+                                {
+                                    size_t aidx = sc.stack.size() - 2;
+                                    size_t bidx = sc.stack.size() - 1;
+                                    size_t at = sc.stack[aidx].index();
+                                    size_t bt = sc.stack[bidx].index();
+                                    if (at == bt)
+                                    {
+                                        if (at == 0)
+                                        {
+                                            int a = std::get<int>(sc.stack[aidx]);
+                                            int b = std::get<int>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a * b;
+                                        }
+                                        else if (at == 1)
+                                        {
+                                            float a = std::get<float>(sc.stack[aidx]);
+                                            float b = std::get<float>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a * b;
+                                        }
+                                        else
+                                        {
+                                            // string
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // promote to float
+                                        float a = (at == 0) ? static_cast<float>(std::get<int>(sc.stack[aidx])) : std::get<float>(sc.stack[aidx]);
+                                        float b = (bt == 0) ? static_cast<float>(std::get<int>(sc.stack[bidx])) : std::get<float>(sc.stack[bidx]);
+                                        sc.stack.pop_back();
+                                        sc.stack[aidx] = a * b;
+                                    }
+                                } });
+                            }
+                            else if (ev == "/")
+                            {
+                                exec.push_back({ 0, [](StateContext& sc, int argc)
+                                {
+                                    size_t aidx = sc.stack.size() - 2;
+                                    size_t bidx = sc.stack.size() - 1;
+                                    size_t at = sc.stack[aidx].index();
+                                    size_t bt = sc.stack[bidx].index();
+                                    if (at == bt)
+                                    {
+                                        if (at == 0)
+                                        {
+                                            int a = std::get<int>(sc.stack[aidx]);
+                                            int b = std::get<int>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a / b;
+                                        }
+                                        else if (at == 1)
+                                        {
+                                            float a = std::get<float>(sc.stack[aidx]);
+                                            float b = std::get<float>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a / b;
+                                        }
+                                        else
+                                        {
+                                            // string
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // promote to float
+                                        float a = (at == 0) ? static_cast<float>(std::get<int>(sc.stack[aidx])) : std::get<float>(sc.stack[aidx]);
+                                        float b = (bt == 0) ? static_cast<float>(std::get<int>(sc.stack[bidx])) : std::get<float>(sc.stack[bidx]);
+                                        sc.stack.pop_back();
+                                        sc.stack[aidx] = a / b;
+                                    }
+                                } });
+                            }
+                            else if (ev == "+")
+                            {
+                                exec.push_back({ 0, [](StateContext& sc, int argc)
+                                {
+                                    size_t aidx = sc.stack.size() - 2;
+                                    size_t bidx = sc.stack.size() - 1;
+                                    size_t at = sc.stack[aidx].index();
+                                    size_t bt = sc.stack[bidx].index();
+                                    if (at == bt)
+                                    {
+                                        if (at == 0)
+                                        {
+                                            int a = std::get<int>(sc.stack[aidx]);
+                                            int b = std::get<int>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a + b;
+                                        }
+                                        else if (at == 1)
+                                        {
+                                            float a = std::get<float>(sc.stack[aidx]);
+                                            float b = std::get<float>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a + b;
+                                        }
+                                        else
+                                        {
+                                            // string
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // promote to float
+                                        float a = (at == 0) ? static_cast<float>(std::get<int>(sc.stack[aidx])) : std::get<float>(sc.stack[aidx]);
+                                        float b = (bt == 0) ? static_cast<float>(std::get<int>(sc.stack[bidx])) : std::get<float>(sc.stack[bidx]);
+                                        sc.stack.pop_back();
+                                        sc.stack[aidx] = a + b;
+                                    }
+                                } });
+                            }
+                            else if (ev == "-")
+                            {
+                                exec.push_back({ 0, [](StateContext& sc, int argc)
+                                {
+                                    size_t aidx = sc.stack.size() - 2;
+                                    size_t bidx = sc.stack.size() - 1;
+                                    size_t at = sc.stack[aidx].index();
+                                    size_t bt = sc.stack[bidx].index();
+                                    if (at == bt)
+                                    {
+                                        if (at == 0)
+                                        {
+                                            int a = std::get<int>(sc.stack[aidx]);
+                                            int b = std::get<int>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a - b;
+                                        }
+                                        else if (at == 1)
+                                        {
+                                            float a = std::get<float>(sc.stack[aidx]);
+                                            float b = std::get<float>(sc.stack[bidx]);
+                                            sc.stack.pop_back();
+                                            sc.stack[aidx] = a - b;
+                                        }
+                                        else
+                                        {
+                                            // string
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // promote to float
+                                        float a = (at == 0) ? static_cast<float>(std::get<int>(sc.stack[aidx])) : std::get<float>(sc.stack[aidx]);
+                                        float b = (bt == 0) ? static_cast<float>(std::get<int>(sc.stack[bidx])) : std::get<float>(sc.stack[bidx]);
+                                        sc.stack.pop_back();
+                                        sc.stack[aidx] = a - b;
+                                    }
+                                } });
+                            }
+                            else if (vars.find(ev) != vars.end())
                             {
                                 // it's a state local variable
                             }
+/*                            else if (auto var_it = machine->variables.find(ev); var_it != machine->variables.end())
+                            {
+                                // it's a machine variable
+                                shared_ptr<Variable> var = var_it->second;
+                                if (var->scope == Variable::Scope::local)
+                                {
+                                    // it's local to the machine
+                                }
+                                else
+                                {
+                                    // it's shared by all machines
+                                }
+                            }*/
                             else
                             {
                                 // traverse all the scopes upwards
+                                for (auto i = vss.rbegin(); i != vss.rend(); ++i)
+                                {
+                                    auto& machine_vars = registry.get<VarsRen>((*i).machine);
+                                    auto j = machine_vars.vars.find(ev);
+                                    if (j != machine_vars.vars.end())
+                                    {
+                                        ++pushed;
+                                        entity m = i->machine;
+                                        exec.push_back({ 0,[m, ev, this](StateContext& sc, int argc)
+                                            {
+                                                if (registry.valid(m))
+                                                {
+                                                    auto& machine_vars = registry.get<VarsRen>(m);
+                                                    auto j = machine_vars.vars.find(ev);
+                                                    if (j != machine_vars.vars.end())
+                                                    {
+                                                        sc.stack.push_back(j->second.value);
+                                                    }
+                                                }
+                                            } });
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -315,25 +516,27 @@ namespace lvmvi
                 }
             }
 
-            state_data[prefix + ":" + state->name] = CompiledStateData{ vars, exec };
+            string state_name = prefix + ":" + state->name;
+            state_data[state_name] = CompiledStateData{ vars, exec };
 
-            for (auto& s : state->states)
-                add_state(prefix + ":" + s->name, s, state_data);
+            // need a stack of variable scopes due to nested states and machines
+            for (auto& substate : state->states)
+            {
+                vss.push_back({ 0, state_name });
+                add_state(vss, machine, state_name + ":" + substate->name, substate, state_data);
+                vss.pop_back();
+            }
         }
 
-        void add_states(shared_ptr<Exemplar::Machine> machine, std::string prefix)
+        void add_states(vector<VariableScope>& vss, shared_ptr<Exemplar::Machine> machine, std::string prefix)
         {
             if (compiled_state_cache.find(machine->name) == compiled_state_cache.end())
             {
                 map<string, CompiledStateData> state_map;
                 for (auto& s : machine->states)
-                    add_state("", s, state_map);
+                    add_state(vss, machine, "", s, state_map);
 
                 compiled_state_cache[prefix + "/" + machine->name] = state_map;
-            }
-            for (auto& i : machine->machines)
-            {
-                add_states(i, prefix + "/" + machine->name);
             }
         }
 
@@ -401,12 +604,12 @@ namespace lvmvi
                 for (auto& i : machine_exemplar->variables)
                 {
                     shared_ptr<Exemplar::Variable> v = std::make_shared<Exemplar::Variable>();
-                    *v = *i.get();
+                    *v = *i.second.get();
 
-                    switch (i->scope)
+                    switch (i.second->scope)
                     {
                     case Exemplar::Variable::Scope::global:
-                        shared_vars[i->name] = { v->type, v->value };
+                        shared_vars[i.second->name] = { v->type, v->value };
                         break;
                     }
                 }
@@ -416,7 +619,7 @@ namespace lvmvi
             return machine_class_e;
         }
 
-        void launch(shared_ptr<Exemplar::Machine> machine, std::string prefix)
+        void launch(shared_ptr<Exemplar::Machine> machine, std::string prefix, vector<VariableScope>& varScopeStack)
         {
             string prefixed_name = prefix + "/" + machine->name;
 
@@ -437,23 +640,29 @@ namespace lvmvi
             for (auto& i : machine->variables)
             {
                 shared_ptr<Exemplar::Variable> v = std::make_shared<Exemplar::Variable>();
-                *v = *i.get();
+                *v = *i.second.get();
 
-                if (i->scope == Exemplar::Variable::Scope::local)
-                    machine_local_vars[i->name] = { v->type, v->value };
+                if (i.second->scope == Exemplar::Variable::Scope::local)
+                    machine_local_vars[i.second->name] = { v->type, v->value };
             }
             registry.assign<VarsRen>(machine_e, std::move(machine_local_vars)); // machine has local vars
 
             auto requires = get_requires(machine->requires);
-            add_states(machine, prefix);
+
+            varScopeStack.push_back({ machine_e, "" });
+            add_states(varScopeStack, machine, prefix);
+
             awaiting_launch.push_back({ machine_e, ":main" }); // nested machines launch from outer to inner.
 
             for (auto& i : machine->machines)
             {
                 // recurse as many nested mains as there are
                 if (i->name == "main")
-                    launch(i, prefixed_name);
+                {
+                    launch(i, prefixed_name, varScopeStack);
+                }
             }
+            varScopeStack.pop_back();
         }
 
 
@@ -522,7 +731,8 @@ void landru_machine_instantiate(LandruEC* wcontext, LandruMachineExemplar* wmach
     std::shared_ptr<lvmvi::ExecutionContext> ec = wcontext->ec;
     std::shared_ptr<Machine> machine = wmachine->machine;
     std::lock_guard lock(ec->registry_mutex);
-    ec->launch(machine, "");
+    vector<VariableScope> varScopeStack;
+    ec->launch(machine, "", varScopeStack);
 }
 
 void landru_runtime_update(LandruEC* ecptr)

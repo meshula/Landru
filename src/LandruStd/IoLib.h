@@ -27,7 +27,7 @@ namespace lvmvi
 					else if (auto pval = std::get_if<std::string>(&j))
 						printf("%s", (*pval).c_str());
                 }
-                stack.resize(sc.stack.size() - argc);
+                sc.stack.resize(sc.stack.size() - argc);
             };
         }
 

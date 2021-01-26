@@ -82,7 +82,7 @@ namespace lvmvi
         {
             cout << pad << "declare\n" << pad << "{\n";
             for (auto v: machine->variables)
-                variable_print(indent + 4, v);
+                variable_print(indent + 4, v.second);
             cout << pad << "}\n";
         }
 

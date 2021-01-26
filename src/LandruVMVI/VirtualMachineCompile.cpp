@@ -208,7 +208,7 @@ namespace lvmvi
                         if (!result.valid)
                             return { false, {}, "Could not compile declaration" };
 
-                        machine->variables.push_back(result.value);
+                        machine->variables[result.value->name] = result.value;
                     }
                     break;
                 }
@@ -220,7 +220,7 @@ namespace lvmvi
                         if (!result.valid)
                             return { false, {}, "Could not compile declaration" };
 
-                        machine->variables.push_back(result.value);
+                        machine->variables[result.value->name] = result.value;
                     }
                     break;
                 }

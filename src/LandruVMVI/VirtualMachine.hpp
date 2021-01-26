@@ -1,6 +1,7 @@
 #pragma once
 
 #include <LabText/LabText.h>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -8,10 +9,11 @@
 
 namespace lvmvi
 {
-    using std::string;
-    using std::vector;
+    using std::map;
     using std::shared_ptr;
+    using std::string;
     using std::variant;
+    using std::vector;
     using lab::Text::StrView;
 
     namespace Exemplar
@@ -55,13 +57,11 @@ namespace lvmvi
 
         struct Machine
         {
-            vector<Require>   requires;
-
-            string            name;
-            vector<shared_ptr<Variable>>  variables;
-            vector<shared_ptr<State>>     states;
-
-            vector<shared_ptr<Machine>>   machines;
+            string                            name;
+            vector<Require>                   requires;
+            map<string, shared_ptr<Variable>> variables;
+            vector<shared_ptr<State>>         states;
+            vector<shared_ptr<Machine>>       machines;
         };
     } // Exemplar
 

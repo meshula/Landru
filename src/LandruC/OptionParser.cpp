@@ -708,7 +708,7 @@ bool OptionParser::Parse(int argc, char** argv)
                 return false;
             }
             
-            std::string arg(&argv[i][1]);
+            std::string arg(&argv[i][argType == shortArg? 1 : 2]);
             std::string val;
             bool gotArg = false;
             
